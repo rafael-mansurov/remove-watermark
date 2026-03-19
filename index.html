@@ -1018,7 +1018,7 @@
               <div class="control-desc">Обработать это фото и перейти к следующему</div>
             </div>
             <div class="control-row">
-              <div class="control-key"><kbd>S</kbd> / <kbd>N</kbd></div>
+              <div class="control-key">Кнопка «Пропустить»</div>
               <div class="control-desc">Пропустить фото без обработки</div>
             </div>
             <div class="control-row">
@@ -1095,9 +1095,14 @@
   let cvReady = false;
   let pendingSetup = false;
   let cvReadyMarked = false;
+  let cvInitPollTimer = null;
   function markOpenCvReady() {
     if (cvReadyMarked) return;
     cvReadyMarked = true;
+    if (cvInitPollTimer) {
+      clearInterval(cvInitPollTimer);
+      cvInitPollTimer = null;
+    }
     cvReady = true;
     const s = document.getElementById('cvStatus');
     s.innerHTML = '<span class="cv-dot"></span> OpenCV готов';
@@ -1117,6 +1122,21 @@
       return;
     }
     cv.onRuntimeInitialized = markOpenCvReady;
+    // Fallback for browsers where onRuntimeInitialized is missed.
+    let attempts = 0;
+    cvInitPollTimer = setInterval(() => {
+      attempts += 1;
+      if (typeof cv !== 'undefined' && typeof cv.Mat === 'function' && typeof cv.imread === 'function') {
+        markOpenCvReady();
+        return;
+      }
+      if (attempts >= 80) {
+        clearInterval(cvInitPollTimer);
+        cvInitPollTimer = null;
+        const s = document.getElementById('cvStatus');
+        s.innerHTML = '<span class="cv-dot"></span> OpenCV не загрузился. Обновите страницу.';
+      }
+    }, 100);
   }
 
   // ── State ───────────────────────────────────────────────────
@@ -1130,7 +1150,7 @@
   let resultMat = null;  // BGR result (preview resolution)
   let region = { x1: 0.45, y1: 0.88, x2: 1.0, y2: 1.0 };
   let drag = null;
-  const HANDLE_R = 8;
+  const HANDLE_R = 6;
   let dw = 0, dh = 0, dispScale = 1; // display canvas size & scale from img pixels to canvas pixels
   let prevScale = 1;                  // scale from full-res to preview-res
   let debounceTimer = null;
