@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Удалить водяной знак онлайн — remove_watermark · браузер и Python</title>
-<meta name="description" content="Удали водяной знак с фото прямо в браузере — без загрузки файлов на сервер. Или скачай Python-скрипт remove_watermark.py для пакетной обработки на macOS.">
+<meta name="description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta name="keywords" content="удалить водяной знак с фото, убрать белый текст с картинки, watermark remover онлайн, python скрипт, OpenCV, macOS, браузер">
 <meta name="author" content="Rafael Mansurov">
 <meta name="robots" content="index,follow">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/">
 <meta property="og:title" content="Удалить водяной знак онлайн — remove_watermark">
-<meta property="og:description" content="Удали водяной знак прямо в браузере или скачай Python-скрипт для пакетной обработки. Всё локально — файлы никуда не уходят.">
+<meta property="og:description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 <meta property="og:image:alt" content="remove_watermark — удаление водяного знака с фото">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Удалить водяной знак онлайн — remove_watermark">
-<meta name="twitter:description" content="Удаляет белый текст и водяные знаки с любых фото прямо в браузере. Python, OpenCV, работает локально.">
+<meta name="twitter:description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
 <meta name="twitter:image:alt" content="remove_watermark — удаление водяного знака с фото">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -94,7 +94,7 @@
     z-index: 1;
     max-width: 760px;
     margin: 0 auto;
-    padding: 80px 24px 120px;
+    padding: 80px 24px 80px;
   }
 
   /* ── HEADER ── */
@@ -118,6 +118,8 @@
     margin-bottom: 24px;
     background: rgba(34,211,238,0.05);
   }
+
+  .badge-mobile { display: none; }
 
   .badge::before {
     content: '';
@@ -534,6 +536,27 @@
     margin: 0;
   }
 
+  .upload-notice {
+    display: none;
+    max-width: 560px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.5;
+    color: #fca5a5;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  .upload-notice.visible { display: block; }
+
+  .upload-notice.success {
+    color: #86efac;
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.35);
+  }
+
   /* OpenCV status */
   .cv-status {
     display: inline-flex;
@@ -824,6 +847,15 @@
   }
 
   @media (max-width: 560px) {
+    .badge {
+      white-space: nowrap;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 4px 8px;
+      gap: 4px;
+    }
+    .badge-desktop { display: none; }
+    .badge-mobile { display: inline; }
     .canvas-split {
       grid-template-columns: 1fr;
     }
@@ -841,19 +873,22 @@
 
   <!-- HEADER -->
   <header class="header">
-    <div class="badge">Работает в браузере · Бесплатно · Без регистрации</div>
-    <h1>Убрать водяной знак с фото</h1>
+    <div class="badge">
+      <span class="badge-desktop">Работает в&nbsp;браузере · Бесплатно · Без&nbsp;регистрации</span>
+      <span class="badge-mobile">Бесплатно · Без&nbsp;регистрации</span>
+    </div>
+    <h1>Убрать водяной знак с&nbsp;фото</h1>
     <p class="subtitle">
-      Загрузи фото — водяной знак исчезнет прямо в браузере.
-      Файлы никуда не уходят, всё происходит на твоём устройстве. Если обрабатываешь много файлов, можно использовать Python-скрипт.
+      Загрузи фото — водяной знак исчезнет прямо в&nbsp;браузере.
+      Файлы никуда не уходят, всё происходит на&nbsp;твоём устройстве
     </p>
   </header>
 
   <!-- SECTION 01: BROWSER TOOL -->
   <section class="section">
     <div class="section-label">01 / Инструмент</div>
-    <h2>Удалить в браузере</h2>
-    <p>Загрузи фото — всё обрабатывается локально, файлы никуда не уходят.</p>
+    <h2>Удалить в&nbsp;браузере</h2>
+    <p>Выдели зону с&nbsp;водяным знаком, подстрой параметры и скачай результат</p>
 
     <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" multiple style="display:none">
 
@@ -868,6 +903,7 @@
       <p class="upload-or">или</p>
       <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Выбрать файлы</button>
       <p class="upload-hint">JPG · PNG · WEBP · BMP — можно несколько сразу</p>
+      <p class="upload-notice" id="uploadNotice"></p>
       <div class="cv-status" id="cvStatus">
         <span class="cv-dot"></span> Загрузка OpenCV…
       </div>
@@ -895,19 +931,19 @@
       <div class="slider-row">
         <div class="slider-group">
           <div class="slider-label">
-            THRESHOLD
+            ЧУВСТВИТЕЛЬНОСТЬ К БЕЛОМУ
             <span id="thrVal">180</span>
           </div>
           <input type="range" id="thrSlider" min="1" max="255" value="180">
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем выше — тем меньше захватывается. Начни с 180.</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем выше — тем меньше захватывается. Начни с 180</div>
         </div>
         <div class="slider-group">
           <div class="slider-label">
-            RADIUS
+            СИЛА УДАЛЕНИЯ
             <span id="radVal">3</span>
           </div>
           <input type="range" id="radSlider" min="1" max="20" value="3">
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Радиус закрашивания. Обычно хватает 3-5.</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Радиус закрашивания. Обычно хватает 3-5</div>
         </div>
       </div>
 
@@ -919,15 +955,15 @@
           Скачать и далее
         </button>
       </div>
-      <p class="action-hint">После скачивания автоматически откроется следующее фото.</p>
+      <p class="action-hint">После скачивания автоматически откроется следующее фото</p>
     </div>
   </section>
 
   <!-- SECTION 02: TERMINAL ALTERNATIVE -->
   <section class="section">
     <div class="section-label">02 / Альтернатива</div>
-    <h2>Запустить в терминале</h2>
-    <p style="margin-bottom:20px;">Если нужна пакетная обработка или работа без браузера.</p>
+    <h2>Запустить в&nbsp;терминале</h2>
+    <p style="margin-bottom:20px;">Если нужна пакетная обработка или работа без&nbsp;браузера</p>
 
     <details>
       <summary>Показать инструкции</summary>
@@ -980,14 +1016,14 @@
         <div class="details-section">
           <div class="details-section-label">02c / Запуск</div>
           <h3>Как запустить</h3>
-          <p>После скачивания просто открой Терминал на macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с фото (не отдельный файл).</p>
+          <p>После скачивания просто открой Терминал на&nbsp;macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в&nbsp;папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с&nbsp;фото (не отдельный файл).</p>
           <div class="cmd">
             <span class="cmd-prompt">$</span>
             <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
             <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">copy</button>
           </div>
           <p style="margin-top:10px; font-size:13px;">
-            Обработанные фото сохраняются в папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
+            Обработанные фото сохраняются в&nbsp;папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
             Уже обработанные файлы пропускаются автоматически.
           </p>
         </div>
@@ -1130,6 +1166,7 @@
         cvInitPollTimer = null;
         const s = document.getElementById('cvStatus');
         s.innerHTML = '<span class="cv-dot"></span> OpenCV не загрузился. Обновите страницу.';
+        showUploadNotice('OpenCV не загрузился. Обнови страницу. Если не помогло — попробуй Chrome или Safari и отключи блокировщики для сайта.');
       }
     }, 100);
   }
@@ -1177,6 +1214,16 @@
   const radVal       = document.getElementById('radVal');
   const fileCounter  = document.getElementById('fileCounter');
   const fileNameEl   = document.getElementById('fileName');
+  const uploadNotice = document.getElementById('uploadNotice');
+
+  function showUploadNotice(message, type = 'error') {
+    uploadNotice.textContent = message;
+    uploadNotice.className = type === 'success' ? 'upload-notice visible success' : 'upload-notice visible';
+  }
+  function clearUploadNotice() {
+    uploadNotice.textContent = '';
+    uploadNotice.className = 'upload-notice';
+  }
 
   // ── Upload ───────────────────────────────────────────────────
   function isSupportedImage(file) {
@@ -1190,10 +1237,11 @@
 
   fileInput.addEventListener('change', (e) => {
     if (!e.target.files.length) return;
+    clearUploadNotice();
     const selected = Array.from(e.target.files);
     const supported = selected.filter(isSupportedImage);
     if (!supported.length) {
-      alert('Этот формат браузер не поддерживает. Выберите JPG, PNG, WEBP, BMP или GIF.');
+      showUploadNotice('Этот формат не поддерживается. Выбери JPG, PNG, WEBP, BMP или GIF.');
       return;
     }
     loadFiles(supported);
@@ -1203,11 +1251,14 @@
   uploadZone.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
+    clearUploadNotice();
     const f = Array.from(e.dataTransfer.files).filter(isSupportedImage);
     if (f.length) loadFiles(f);
+    else showUploadNotice('Не нашел подходящих файлов в выбранном наборе. Нужны JPG, PNG, WEBP, BMP или GIF.');
   });
 
   function loadFiles(arr) {
+    clearUploadNotice();
     resetEditorState();
     files = arr;
     fileIdx = 0;
@@ -1236,7 +1287,7 @@
     };
     imgEl.onerror = () => {
       URL.revokeObjectURL(url);
-      alert('Не удалось открыть изображение. Проверьте формат файла (лучше JPG/PNG/WEBP).');
+      showUploadNotice('Не удалось открыть изображение. Попробуй другой файл (лучше JPG/PNG/WEBP).');
     };
     imgEl.src = url;
   }
@@ -1438,6 +1489,7 @@
             editorWrap.style.display = 'none';
             uploadZone.style.display = 'flex';
             fileInput.value = '';
+            showUploadNotice(`Готово! Обработано файлов: ${files.length}. Можно загрузить новую партию.`, 'success');
           }
         }, 'image/jpeg', 0.97);
 
@@ -1466,6 +1518,7 @@
     editorWrap.style.display = 'none';
     uploadZone.style.display = 'flex';
     fileInput.value = '';
+    clearUploadNotice();
   });
 
   // ── Sliders ───────────────────────────────────────────────────
@@ -1537,9 +1590,9 @@
   leftCanvas.addEventListener('mousemove', (e) => { updateCanvasCursor(e); moveDrag(e); });
   leftCanvas.addEventListener('mouseup', endDrag);
   leftCanvas.addEventListener('mouseleave', () => { leftCanvas.style.cursor = 'default'; });
-  leftCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e); }, {passive:false});
-  leftCanvas.addEventListener('touchmove',  (e) => { e.preventDefault(); moveDrag(e); }, {passive:false});
-  leftCanvas.addEventListener('touchend',   (e) => { e.preventDefault(); endDrag(e); },  {passive:false});
+  leftCanvas.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
+  leftCanvas.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
+  leftCanvas.addEventListener('touchend', onCanvasTouchEnd, { passive: false });
 
   function startDrag(e) {
     if (!imgEl) return;
@@ -1547,9 +1600,12 @@
     const c = getCorner(x, y);
     if (c !== null) {
       drag = { type:'corner', corner:c };
+      return true;
     } else if (insideRect(x, y)) {
       drag = { type:'move', start:{x,y}, orig:{...region} };
+      return true;
     }
+    return false;
   }
   function moveDrag(e) {
     if (!drag || !imgEl) return;
@@ -1583,6 +1639,23 @@
   function endDrag() {
     drag = null;
     leftCanvas.style.cursor = 'default';
+  }
+
+  function onCanvasTouchStart(e) {
+    const started = startDrag(e);
+    if (started) e.preventDefault();
+  }
+
+  function onCanvasTouchMove(e) {
+    if (!drag) return;
+    e.preventDefault();
+    moveDrag(e);
+  }
+
+  function onCanvasTouchEnd(e) {
+    if (!drag) return;
+    e.preventDefault();
+    endDrag();
   }
 </script>
 <script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady()"></script>
