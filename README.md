@@ -2,6 +2,10 @@
 
 Локальный Python-скрипт для удаления белого текста и водяных знаков с фото через интерактивный редактор зоны.
 
+## Сайт проекта
+
+[https://rafael-mansurov.github.io/remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
+
 ## Возможности
 
 - Пакетная обработка изображений в папке.
