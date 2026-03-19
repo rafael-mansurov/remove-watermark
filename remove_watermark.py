@@ -168,7 +168,7 @@ def show_editor(img: np.ndarray, filename: str,
     dw = max(1, int(w * scale))
     dh = max(1, int(h * scale))
 
-    WIN = f"[{idx}/{total}] {filename}  |  ENTER=OK  S=Skip  ESC=Quit"
+    WIN = f"[{idx}/{total}] {filename}  |  ENTER=OK  S/N=Skip  ESC=Quit"
     cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WIN, dw * 2, dh)
 
@@ -256,12 +256,12 @@ def show_editor(img: np.ndarray, filename: str,
         draw_editor(canvas, img, x1n, y1n, x2n, y2n, thr, rad, dw, dh, scale)
         cv2.imshow(WIN, canvas)
 
-        key = cv2.waitKey(20) & 0xFF
+        key = cv2.waitKey(50) & 0xFF
         if key in (13, 32):
             action = "process"
             rx1, ry1, rx2, ry2 = x1n, y1n, x2n, y2n
             break
-        elif key in (ord('s'), ord('S')):
+        elif key in (ord('s'), ord('S'), ord('n'), ord('N')):
             action = "skip"
             break
         elif key == 27:
