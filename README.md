@@ -6,6 +6,10 @@
 
 [https://rafael-mansurov.github.io/remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
 
+## Важно
+
+Используйте скрипт только для изображений, которые принадлежат вам или для которых у вас есть явное разрешение на редактирование. Соблюдайте авторские права и условия использования контента.
+
 ## Возможности
 
 - Пакетная обработка изображений в папке.
@@ -18,13 +22,15 @@
 
 - macOS
 - Python 3.9+
-- Пакеты: `opencv-python`, `numpy`
+- Пакеты из `requirements.txt`
 
 ## Установка
 
 ```bash
 brew install python
-pip3 install opencv-python numpy
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Быстрый старт
@@ -64,6 +70,19 @@ python3 remove_watermark.py -i ~/Pictures/cases --region 0.40 0.86 1.0 1.0
 
 `jpg`, `jpeg`, `png`, `bmp`, `tiff`, `tif`, `webp`
 
+## Локальная разработка
+
+```bash
+git clone https://github.com/rafael-mansurov/remove-watermark.git
+cd remove-watermark
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 remove_watermark.py
+```
+
+По умолчанию артефакты обработки (`cleaned/`) и служебные файлы Python исключены из git через `.gitignore`.
+
 ## Управление в редакторе
 
 - Перетаскивание углов - изменение размера зоны.
@@ -82,9 +101,14 @@ python3 remove_watermark.py -i ~/Pictures/cases --region 0.40 0.86 1.0 1.0
 
 - Скрипт лучше всего работает для светлых/белых водяных знаков.
 - Для сложных текстур иногда нужно вручную подбирать `Threshold` и `Radius`.
+- Интерактивный выбор папки через Finder использует `osascript` (ориентировано на macOS).
 
 ## Автор
 
 Rafael Mansurov  
 Telegram: [@mansurov_rafael](https://t.me/mansurov_rafael)
+
+## License
+
+MIT — см. файл `LICENSE`.
 
