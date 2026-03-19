@@ -3,39 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Удаление водяного знака с фото · remove_watermark.py</title>
-<meta name="description" content="Скрипт remove_watermark.py удаляет белый текст и водяные знаки с любых фото на macOS. Выдели зону поверх изображения — скрипт уберёт надпись и сохранит результат в cleaned/.">
-<meta name="keywords" content="удалить водяной знак с фото, убрать белый текст с картинки, watermark remover, python скрипт, OpenCV, macOS">
+<title>Удалить водяной знак онлайн — remove_watermark · браузер и Python</title>
+<meta name="description" content="Удали водяной знак с фото прямо в браузере — без загрузки файлов на сервер. Или скачай Python-скрипт remove_watermark.py для пакетной обработки на macOS.">
+<meta name="keywords" content="удалить водяной знак с фото, убрать белый текст с картинки, watermark remover онлайн, python скрипт, OpenCV, macOS, браузер">
 <meta name="author" content="Rafael Mansurov">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/">
-<meta property="og:title" content="remove_watermark.py — удаление белого текста и водяного знака с фото">
-<meta property="og:description" content="Скачай remove_watermark.py: выдели зону с белым текстом на фото, обрабатывай папку снимков — результат в cleaned/. Работает с любыми изображениями.">
+<meta property="og:title" content="Удалить водяной знак онлайн — remove_watermark">
+<meta property="og:description" content="Удали водяной знак прямо в браузере или скачай Python-скрипт для пакетной обработки. Всё локально — файлы никуда не уходят.">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="remove_watermark.py — удаление водяного знака с фото">
+<meta property="og:image:alt" content="remove_watermark — удаление водяного знака с фото">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="remove_watermark.py — удаление водяного знака с фото">
-<meta name="twitter:description" content="Удаляет белый текст и водяные знаки с любых фото. Python, OpenCV, macOS, работает локально.">
+<meta name="twitter:title" content="Удалить водяной знак онлайн — remove_watermark">
+<meta name="twitter:description" content="Удаляет белый текст и водяные знаки с любых фото прямо в браузере. Python, OpenCV, работает локально.">
 <meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
-<meta name="twitter:image:alt" content="remove_watermark.py — удаление водяного знака с фото">
+<meta name="twitter:image:alt" content="remove_watermark — удаление водяного знака с фото">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "remove_watermark.py",
-  "alternateName": "Удаление белого текста и водяного знака с фото",
-  "operatingSystem": "macOS",
+  "@type": "WebApplication",
+  "name": "remove_watermark",
+  "alternateName": "Удаление водяного знака с фото онлайн",
+  "operatingSystem": "Any",
   "applicationCategory": "MultimediaApplication",
-  "description": "Python-скрипт для удаления белого текста и водяных знаков с любых фотографий: интерактивный выбор зоны, пакетная обработка папок.",
-  "softwareVersion": "1.0.0",
+  "description": "Удаляет белый текст и водяные знаки с фотографий прямо в браузере — обработка локальная, файлы никуда не уходят. Также доступен Python-скрипт для пакетной обработки.",
+  "url": "https://rafael-mansurov.github.io/remove-watermark/",
   "author": {
     "@type": "Person",
     "name": "Rafael Mansurov"
@@ -406,6 +406,11 @@
     border-color: #2563eb;
   }
 
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   pre {
     margin: 0;
     padding: 20px 20px;
@@ -471,6 +476,350 @@
   .cm { color: #6272a4; font-style: italic; }
   .nm { color: #bd93f9; }
   .op { color: #ff79c6; }
+
+  /* ── BROWSER TOOL ── */
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: 12px;
+    padding: 48px 32px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    cursor: default;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+  }
+
+  .upload-zone.dragover {
+    border-color: var(--blue);
+    background: var(--blue-glow);
+  }
+
+  .upload-icon {
+    flex-shrink: 0;
+  }
+
+  .upload-title {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .upload-or {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: -8px 0;
+  }
+
+  .upload-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+
+  /* OpenCV status */
+  .cv-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 5px 12px;
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    background: var(--surface2);
+    margin-top: 4px;
+    transition: color 0.3s, border-color 0.3s;
+  }
+
+  .cv-status.ready {
+    color: var(--green);
+    border-color: rgba(16,185,129,0.35);
+    background: rgba(16,185,129,0.06);
+  }
+
+  .cv-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+    animation: pulse 2s ease infinite;
+  }
+
+  .cv-status.ready .cv-dot {
+    animation: none;
+    opacity: 1;
+  }
+
+  /* Editor wrap */
+  .editor-wrap {
+    display: none;
+  }
+
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .file-counter {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .file-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    max-width: 380px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  /* Canvas split */
+  .canvas-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .canvas-panel {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 180px;
+  }
+
+  .canvas-panel canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .canvas-label {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #leftCanvas {
+    cursor: crosshair;
+  }
+
+  .processing-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8,10,13,0.65);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 3;
+  }
+
+  .processing-overlay.visible {
+    opacity: 1;
+  }
+
+  /* Sliders */
+  .slider-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .slider-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+  }
+
+  .slider-label span {
+    color: var(--cyan);
+    font-size: 12px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    accent-color: var(--blue);
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--blue);
+    cursor: pointer;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+    transition: box-shadow 0.15s;
+  }
+
+  input[type="range"]:hover::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.25);
+  }
+
+  /* Action row */
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Details / collapsible */
+  details {
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  details summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    padding: 14px 18px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  details summary::-webkit-details-marker { display: none; }
+
+  details summary:hover {
+    background: rgba(59,130,246,0.05);
+  }
+
+  details summary::before {
+    content: '▶';
+    font-size: 8px;
+    color: var(--blue);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  details[open] summary::before {
+    transform: rotate(90deg);
+  }
+
+  details summary::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border2);
+  }
+
+  .details-body {
+    padding: 24px 24px 28px;
+    border-top: 1px solid var(--border2);
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .details-section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .details-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .details-section p {
+    color: var(--text-mid);
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .details-section p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 560px) {
+    .canvas-split {
+      grid-template-columns: 1fr;
+    }
+    .slider-row {
+      grid-template-columns: 1fr;
+    }
+    .action-row {
+      flex-wrap: wrap;
+    }
+  }
 </style>
 </head>
 <body>
@@ -487,102 +836,188 @@
     </p>
   </header>
 
-  <!-- INSTALL -->
+  <!-- SECTION 01: BROWSER TOOL -->
   <section class="section">
-    <div class="section-label">01 / Установка</div>
-    <h2>Зависимости</h2>
-    <p>Открой Терминал, вставь команду и нажми ENTER.</p>
-    <div class="cmd">
-      <span class="cmd-prompt">$</span>
-      <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
-      <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">copy</button>
+    <div class="section-label">01 / Инструмент</div>
+    <h2>Удалить в браузере</h2>
+    <p>Загрузи фото — всё обрабатывается локально, файлы никуда не уходят.</p>
+
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="uploadZone">
+      <svg class="upload-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="26" width="28" height="4" rx="2" fill="none" stroke="var(--blue)" stroke-width="2"/>
+        <path d="M20 22 L20 8" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M13 15 L20 8 L27 15" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p class="upload-title">Перетащи фото сюда</p>
+      <p class="upload-or">или</p>
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Выбрать файлы</button>
+      <p class="upload-hint">JPG · PNG · WEBP · BMP — можно несколько сразу</p>
+      <div class="cv-status" id="cvStatus">
+        <span class="cv-dot"></span> Загрузка OpenCV…
+      </div>
     </div>
-  </section>
 
-  <!-- DOWNLOAD + CODE -->
-  <section class="section">
-    <div class="section-label">02 / Скачать скрипт</div>
-    <h2>remove_watermark.py</h2>
-    <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
+    <!-- Editor wrap -->
+    <div class="editor-wrap" id="editorWrap">
+      <div class="editor-header">
+        <span class="file-counter" id="fileCounter">1 / 1</span>
+        <span class="file-name" id="fileName"></span>
+      </div>
 
-    <div class="code-block">
-      <div class="code-toolbar">
-        <div class="code-toolbar-left">
-          <div class="dots">
-            <div class="dot dot-r"></div>
-            <div class="dot dot-y"></div>
-            <div class="dot dot-g"></div>
+      <div class="canvas-split">
+        <div class="canvas-panel">
+          <div class="canvas-label">ORIGINAL (drag corners)</div>
+          <canvas id="leftCanvas"></canvas>
+        </div>
+        <div class="canvas-panel">
+          <div class="canvas-label">RESULT</div>
+          <canvas id="rightCanvas"></canvas>
+          <div class="processing-overlay" id="processing">Обработка…</div>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-group">
+          <div class="slider-label">
+            THRESHOLD
+            <span id="thrVal">180</span>
           </div>
-          <span class="code-filename">remove_watermark.py</span>
+          <input type="range" id="thrSlider" min="1" max="255" value="180">
         </div>
-        <div class="code-toolbar-right">
-          <button class="btn btn-ghost" id="copyBtn" onclick="copyCode()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Копировать
-          </button>
-          <a class="btn btn-primary" id="downloadBtn" href="#" onclick="downloadScript(event)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Скачать .py
-          </a>
+        <div class="slider-group">
+          <div class="slider-label">
+            RADIUS
+            <span id="radVal">3</span>
+          </div>
+          <input type="range" id="radSlider" min="1" max="20" value="3">
         </div>
       </div>
-      <pre id="codeBlock"><span style="color:var(--text-dim);font-style:italic;">Загрузка скрипта…</span></pre>
+
+      <div class="action-row">
+        <button class="btn btn-ghost" id="skipBtn">S / Пропустить</button>
+        <button class="btn btn-ghost" id="resetBtn">↩ Новые файлы</button>
+        <button class="btn btn-primary" id="downloadBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать
+        </button>
+      </div>
     </div>
   </section>
 
-  <!-- RUN -->
+  <!-- SECTION 02: TERMINAL ALTERNATIVE -->
   <section class="section">
-    <div class="section-label">03 / Запуск</div>
-    <h2>Как запустить</h2>
-    <p>После скачивания просто открой Терминал на macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с фото (не отдельный файл).</p>
-    <div class="cmd">
-      <span class="cmd-prompt">$</span>
-      <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
-      <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">copy</button>
-    </div>
-    <p style="margin-top:10px; font-size:13px;">
-      Обработанные фото сохраняются в папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
-      Уже обработанные файлы пропускаются автоматически.
-    </p>
+    <div class="section-label">02 / Альтернатива</div>
+    <h2>Запустить в терминале</h2>
+    <p style="margin-bottom:20px;">Если нужна пакетная обработка или работа без браузера.</p>
+
+    <details>
+      <summary>Показать инструкции</summary>
+      <div class="details-body">
+
+        <!-- 02a: Install -->
+        <div class="details-section">
+          <div class="details-section-label">02a / Установка</div>
+          <h3>Зависимости</h3>
+          <p>Открой Терминал, вставь команду и нажми ENTER.</p>
+          <div class="cmd">
+            <span class="cmd-prompt">$</span>
+            <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
+            <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">copy</button>
+          </div>
+        </div>
+
+        <!-- 02b: Download + Code -->
+        <div class="details-section">
+          <div class="details-section-label">02b / Скачать скрипт</div>
+          <h3>remove_watermark.py</h3>
+          <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
+
+          <div class="code-block">
+            <div class="code-toolbar">
+              <div class="code-toolbar-left">
+                <div class="dots">
+                  <div class="dot dot-r"></div>
+                  <div class="dot dot-y"></div>
+                  <div class="dot dot-g"></div>
+                </div>
+                <span class="code-filename">remove_watermark.py</span>
+              </div>
+              <div class="code-toolbar-right">
+                <button class="btn btn-ghost" id="copyBtn" onclick="copyCode()">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Копировать
+                </button>
+                <a class="btn btn-primary" id="dlScriptBtn" href="#" onclick="downloadScript(event)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Скачать .py
+                </a>
+              </div>
+            </div>
+            <pre id="codeBlock"><span style="color:var(--text-dim);font-style:italic;">Загрузка скрипта…</span></pre>
+          </div>
+        </div>
+
+        <!-- 02c: Run -->
+        <div class="details-section">
+          <div class="details-section-label">02c / Запуск</div>
+          <h3>Как запустить</h3>
+          <p>После скачивания просто открой Терминал на macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с фото (не отдельный файл).</p>
+          <div class="cmd">
+            <span class="cmd-prompt">$</span>
+            <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
+            <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">copy</button>
+          </div>
+          <p style="margin-top:10px; font-size:13px;">
+            Обработанные фото сохраняются в папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
+            Уже обработанные файлы пропускаются автоматически.
+          </p>
+        </div>
+
+        <!-- 02d: Controls -->
+        <div class="details-section">
+          <div class="details-section-label">02d / Редактор</div>
+          <h3>Управление</h3>
+          <p>Перед каждым фото открывается окно. Слева — оригинал с выделением зоны, справа — результат в реальном времени.</p>
+
+          <div class="controls" style="margin-top:16px;">
+            <div class="control-row">
+              <div class="control-key">Drag: углы</div>
+              <div class="control-desc">Изменить размер зоны удаления</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key">Drag: середина</div>
+              <div class="control-desc">Переместить зону целиком</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key">Threshold</div>
+              <div class="control-desc">Порог яркости — выше = только самые белые пиксели</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key">Radius</div>
+              <div class="control-desc">Радиус inpainting (рекомендуется 2–5)</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key"><kbd>ENTER</kbd> / <kbd>SPACE</kbd></div>
+              <div class="control-desc">Обработать это фото и перейти к следующему</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key"><kbd>S</kbd> / <kbd>N</kbd></div>
+              <div class="control-desc">Пропустить фото без обработки</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key"><kbd>ESC</kbd></div>
+              <div class="control-desc">Выйти из программы</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </details>
   </section>
 
-  <!-- CONTROLS -->
-  <section class="section">
-    <div class="section-label">04 / Редактор</div>
-    <h2>Управление</h2>
-    <p>Перед каждым фото открывается окно. Слева — оригинал с выделением зоны, справа — результат в реальном времени.</p>
-
-    <div class="controls" style="margin-top:16px;">
-      <div class="control-row">
-        <div class="control-key">Drag: углы</div>
-        <div class="control-desc">Изменить размер зоны удаления</div>
-      </div>
-      <div class="control-row">
-        <div class="control-key">Drag: середина</div>
-        <div class="control-desc">Переместить зону целиком</div>
-      </div>
-      <div class="control-row">
-        <div class="control-key">Threshold</div>
-        <div class="control-desc">Порог яркости — выше = только самые белые пиксели</div>
-      </div>
-      <div class="control-row">
-        <div class="control-key">Radius</div>
-        <div class="control-desc">Радиус inpainting (рекомендуется 2–5)</div>
-      </div>
-      <div class="control-row">
-        <div class="control-key"><kbd>ENTER</kbd> / <kbd>SPACE</kbd></div>
-        <div class="control-desc">Обработать это фото и перейти к следующему</div>
-      </div>
-      <div class="control-row">
-        <div class="control-key"><kbd>S</kbd> / <kbd>N</kbd></div>
-        <div class="control-desc">Пропустить фото без обработки</div>
-      </div>
-      <div class="control-row">
-        <div class="control-key"><kbd>ESC</kbd></div>
-        <div class="control-desc">Выйти из программы</div>
-      </div>
-    </div>
-  </section>
   <!-- FOOTER -->
   <footer class="footer">
     <span class="footer-note">
@@ -598,6 +1033,9 @@
 </div>
 
 <script>
+  /* ══════════════════════════════════════════════════════
+     EXISTING JS — RAW_URL fetch, copyCmd, copyCode, downloadScript
+  ══════════════════════════════════════════════════════ */
   const RAW_URL = 'https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/remove_watermark.py';
 
   const codeBlock = document.getElementById('codeBlock');
@@ -634,6 +1072,402 @@
     a.download = 'remove_watermark.py';
     a.click();
   }
+
+  /* ══════════════════════════════════════════════════════
+     BROWSER TOOL — OpenCV watermark removal
+  ══════════════════════════════════════════════════════ */
+
+  // ── OpenCV loading ──────────────────────────────────────────
+  let cvReady = false;
+  function onOpenCvReady() {
+    cvReady = true;
+    const s = document.getElementById('cvStatus');
+    s.innerHTML = '<span class="cv-dot"></span> OpenCV готов';
+    s.className = 'cv-status ready';
+  }
+
+  // ── State ───────────────────────────────────────────────────
+  let files = [];
+  let fileIdx = 0;
+  let imgEl = null;
+  let cvSrc = null;      // RGBA full res
+  let cvBGR = null;      // BGR full res (for download)
+  let cvPrevSrc = null;  // RGBA preview (scaled ≤900px)
+  let cvPrevBGR = null;  // BGR preview (for live inpaint)
+  let resultMat = null;  // BGR result (preview resolution)
+  let region = { x1: 0.45, y1: 0.88, x2: 1.0, y2: 1.0 };
+  let drag = null;
+  const HANDLE_R = 8;
+  let dw = 0, dh = 0, dispScale = 1; // display canvas size & scale from img pixels to canvas pixels
+  let prevScale = 1;                  // scale from full-res to preview-res
+  let debounceTimer = null;
+  const PREVIEW_MAX = 900;
+
+  // ── DOM refs ─────────────────────────────────────────────────
+  const uploadZone   = document.getElementById('uploadZone');
+  const fileInput    = document.getElementById('fileInput');
+  const editorWrap   = document.getElementById('editorWrap');
+  const leftCanvas   = document.getElementById('leftCanvas');
+  const rightCanvas  = document.getElementById('rightCanvas');
+  const processingEl = document.getElementById('processing');
+  const thrSlider    = document.getElementById('thrSlider');
+  const radSlider    = document.getElementById('radSlider');
+  const thrVal       = document.getElementById('thrVal');
+  const radVal       = document.getElementById('radVal');
+  const fileCounter  = document.getElementById('fileCounter');
+  const fileNameEl   = document.getElementById('fileName');
+
+  // ── Upload ───────────────────────────────────────────────────
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) loadFiles(Array.from(e.target.files));
+  });
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const f = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (f.length) loadFiles(f);
+  });
+
+  function loadFiles(arr) {
+    files = arr;
+    fileIdx = 0;
+    uploadZone.style.display = 'none';
+    editorWrap.style.display = 'block';
+    loadFile(fileIdx);
+  }
+
+  function loadFile(i) {
+    fileCounter.textContent = `${i + 1} / ${files.length}`;
+    fileNameEl.textContent = files[i].name;
+    const url = URL.createObjectURL(files[i]);
+    imgEl = new Image();
+    imgEl.onload = () => {
+      URL.revokeObjectURL(url);
+      setupMats();
+      setupCanvas();
+      drawLeft();
+      scheduleProcess();
+    };
+    imgEl.src = url;
+  }
+
+  // ── OpenCV mat setup ─────────────────────────────────────────
+  function setupMats() {
+    [cvSrc, cvBGR, cvPrevSrc, cvPrevBGR, resultMat].forEach(m => m && m.delete());
+
+    cvSrc = cv.imread(imgEl);
+    cvBGR = new cv.Mat();
+    cv.cvtColor(cvSrc, cvBGR, cv.COLOR_RGBA2BGR);
+
+    const s = Math.min(1, PREVIEW_MAX / Math.max(imgEl.width, imgEl.height));
+    prevScale = s;
+    const pw = Math.round(imgEl.width * s);
+    const ph = Math.round(imgEl.height * s);
+    const dsize = new cv.Size(pw, ph);
+
+    cvPrevSrc = new cv.Mat();
+    cv.resize(cvSrc, cvPrevSrc, dsize, 0, 0, cv.INTER_AREA);
+    cvPrevBGR = new cv.Mat();
+    cv.resize(cvBGR, cvPrevBGR, dsize, 0, 0, cv.INTER_AREA);
+    dsize.delete();
+    resultMat = null;
+  }
+
+  // ── Canvas setup ─────────────────────────────────────────────
+  function setupCanvas() {
+    const container = leftCanvas.parentElement;
+    const maxW = container.clientWidth || 360;
+    const ratio = imgEl.height / imgEl.width;
+    dw = Math.min(maxW, imgEl.width);
+    dh = Math.round(dw * ratio);
+    if (dh > 400) { dh = 400; dw = Math.round(dh / ratio); }
+    dispScale = dw / imgEl.width;
+    leftCanvas.width  = dw; leftCanvas.height = dh;
+    rightCanvas.width = dw; rightCanvas.height = dh;
+  }
+
+  // ── Draw left (original + selection + mask highlight) ────────
+  function drawLeft() {
+    const ctx = leftCanvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0, dw, dh);
+
+    const W = imgEl.width, H = imgEl.height;
+    const sx1 = Math.round(region.x1 * W * dispScale);
+    const sy1 = Math.round(region.y1 * H * dispScale);
+    const sx2 = Math.round(region.x2 * W * dispScale);
+    const sy2 = Math.round(region.y2 * H * dispScale);
+    const sw = sx2 - sx1, sh = sy2 - sy1;
+    if (sw > 0 && sh > 0) {
+      // dim overlay
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(sx1, sy1, sw, sh);
+      // mask highlight via opencv
+      drawMaskHighlight(ctx, sx1, sy1, sw, sh);
+      // box
+      ctx.strokeStyle = 'rgba(0,200,255,0.9)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sx1, sy1, sw, sh);
+      // handles
+      for (const [cx, cy] of [[sx1,sy1],[sx2,sy1],[sx1,sy2],[sx2,sy2]]) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(cx - HANDLE_R, cy - HANDLE_R, HANDLE_R*2, HANDLE_R*2);
+        ctx.strokeStyle = '#0082dc';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - HANDLE_R, cy - HANDLE_R, HANDLE_R*2, HANDLE_R*2);
+      }
+      // label
+      ctx.fillStyle = '#00dcff';
+      ctx.font = '12px monospace';
+      ctx.fillText(`thr:${thrSlider.value}  r:${radSlider.value}`, sx1 + 2, Math.max(sy1 - 6, 14));
+    }
+  }
+
+  function drawMaskHighlight(ctx, sx1, sy1, sw, sh) {
+    if (!cvPrevSrc) return;
+    const thr = parseInt(thrSlider.value);
+    const px1 = Math.round(region.x1 * cvPrevSrc.cols);
+    const py1 = Math.round(region.y1 * cvPrevSrc.rows);
+    const px2 = Math.round(region.x2 * cvPrevSrc.cols);
+    const py2 = Math.round(region.y2 * cvPrevSrc.rows);
+    if (px2 <= px1 || py2 <= py1) return;
+    try {
+      const rect = new cv.Rect(px1, py1, px2-px1, py2-py1);
+      const roi  = cvPrevSrc.roi(rect);
+      const gray = new cv.Mat();
+      cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+      const roiW = px2-px1, roiH = py2-py1;
+      const buf = new Uint8ClampedArray(roiW * roiH * 4);
+      for (let i = 0; i < roiW * roiH; i++) {
+        if (gray.data[i] > thr) {
+          buf[i*4]=255; buf[i*4+1]=60; buf[i*4+2]=0; buf[i*4+3]=140;
+        }
+      }
+      const id = new ImageData(buf, roiW, roiH);
+      const tmp = document.createElement('canvas');
+      tmp.width = roiW; tmp.height = roiH;
+      tmp.getContext('2d').putImageData(id, 0, 0);
+      ctx.drawImage(tmp, sx1, sy1, sw, sh);
+      roi.delete(); gray.delete();
+    } catch(e) {}
+  }
+
+  // ── Inpaint (preview res) ─────────────────────────────────────
+  function scheduleProcess() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runProcess, 350);
+  }
+
+  function runProcess() {
+    if (!cvReady || !cvPrevBGR) return;
+    const thr = parseInt(thrSlider.value);
+    const rad = parseInt(radSlider.value);
+    const H = cvPrevBGR.rows, W = cvPrevBGR.cols;
+    const x1 = Math.max(0, Math.round(region.x1 * W));
+    const y1 = Math.max(0, Math.round(region.y1 * H));
+    const x2 = Math.min(W, Math.round(region.x2 * W));
+    const y2 = Math.min(H, Math.round(region.y2 * H));
+    if (x2 <= x1 || y2 <= y1) return;
+
+    processingEl.classList.add('visible');
+    // Use requestAnimationFrame to allow browser to paint the overlay first
+    requestAnimationFrame(() => {
+      try {
+        const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
+        const rect = new cv.Rect(x1, y1, x2-x1, y2-y1);
+        const roi  = cvPrevSrc.roi(rect);
+        const gray = new cv.Mat();
+        cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+        const bright = new cv.Mat();
+        cv.threshold(gray, bright, thr, 255, cv.THRESH_BINARY);
+        const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5));
+        cv.dilate(bright, bright, kernel, new cv.Point(-1,-1), 2);
+        const maskRoi = mask.roi(rect);
+        bright.copyTo(maskRoi);
+
+        if (resultMat) resultMat.delete();
+        resultMat = new cv.Mat();
+        cv.inpaint(cvPrevBGR, mask, resultMat, rad, cv.INPAINT_TELEA);
+
+        const rgba = new cv.Mat();
+        cv.cvtColor(resultMat, rgba, cv.COLOR_BGR2RGBA);
+        cv.imshow(rightCanvas, rgba);
+
+        roi.delete(); gray.delete(); bright.delete(); kernel.delete(); maskRoi.delete(); mask.delete(); rgba.delete();
+      } catch(e) {
+        console.error('inpaint error', e);
+      }
+      processingEl.classList.remove('visible');
+    });
+  }
+
+  // ── Download (full resolution) ────────────────────────────────
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    if (!cvReady || !cvBGR) return;
+    const btn = document.getElementById('downloadBtn');
+    btn.textContent = 'Обработка…';
+    btn.disabled = true;
+    requestAnimationFrame(() => {
+      try {
+        const thr = parseInt(thrSlider.value);
+        const rad = parseInt(radSlider.value);
+        const H = cvBGR.rows, W = cvBGR.cols;
+        const x1 = Math.max(0, Math.round(region.x1 * W));
+        const y1 = Math.max(0, Math.round(region.y1 * H));
+        const x2 = Math.min(W, Math.round(region.x2 * W));
+        const y2 = Math.min(H, Math.round(region.y2 * H));
+
+        const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
+        const rect = new cv.Rect(x1, y1, x2-x1, y2-y1);
+        const roi  = cvSrc.roi(rect);
+        const gray = new cv.Mat();
+        cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+        const bright = new cv.Mat();
+        cv.threshold(gray, bright, thr, 255, cv.THRESH_BINARY);
+        const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5));
+        cv.dilate(bright, bright, kernel, new cv.Point(-1,-1), 2);
+        const maskRoi = mask.roi(rect);
+        bright.copyTo(maskRoi);
+
+        const result = new cv.Mat();
+        cv.inpaint(cvBGR, mask, result, rad, cv.INPAINT_TELEA);
+        const rgba = new cv.Mat();
+        cv.cvtColor(result, rgba, cv.COLOR_BGR2RGBA);
+
+        const dlCanvas = document.createElement('canvas');
+        dlCanvas.width = W; dlCanvas.height = H;
+        cv.imshow(dlCanvas, rgba);
+        dlCanvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'cleaned_' + files[fileIdx].name.replace(/\.[^.]+$/, '') + '.jpg';
+          a.click();
+          URL.revokeObjectURL(url);
+          // advance to next file
+          fileIdx++;
+          if (fileIdx < files.length) {
+            loadFile(fileIdx);
+          } else {
+            editorWrap.style.display = 'none';
+            uploadZone.style.display = 'flex';
+            fileInput.value = '';
+          }
+        }, 'image/jpeg', 0.97);
+
+        roi.delete(); gray.delete(); bright.delete(); kernel.delete(); maskRoi.delete(); mask.delete(); result.delete(); rgba.delete();
+      } catch(e) {
+        console.error('download error', e);
+      }
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Скачать';
+      btn.disabled = false;
+    });
+  });
+
+  // ── Skip / Reset ──────────────────────────────────────────────
+  document.getElementById('skipBtn').addEventListener('click', () => {
+    fileIdx++;
+    if (fileIdx < files.length) loadFile(fileIdx);
+    else {
+      editorWrap.style.display = 'none';
+      uploadZone.style.display = 'flex';
+      fileInput.value = '';
+    }
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    editorWrap.style.display = 'none';
+    uploadZone.style.display = 'flex';
+    fileInput.value = '';
+  });
+
+  // ── Sliders ───────────────────────────────────────────────────
+  thrSlider.addEventListener('input', () => { thrVal.textContent = thrSlider.value; drawLeft(); scheduleProcess(); });
+  radSlider.addEventListener('input', () => { radVal.textContent = radSlider.value; scheduleProcess(); });
+
+  // ── Keyboard shortcuts ────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (editorWrap.style.display === 'none' || editorWrap.style.display === '') return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('downloadBtn').click(); }
+    if (e.key === 's' || e.key === 'S' || e.key === 'n' || e.key === 'N') document.getElementById('skipBtn').click();
+  });
+
+  // ── Mouse drag ────────────────────────────────────────────────
+  function getCorner(mx, my) {
+    const W = imgEl.width, H = imgEl.height;
+    const pts = [
+      [region.x1*W*dispScale, region.y1*H*dispScale],
+      [region.x2*W*dispScale, region.y1*H*dispScale],
+      [region.x1*W*dispScale, region.y2*H*dispScale],
+      [region.x2*W*dispScale, region.y2*H*dispScale],
+    ];
+    for (let i=0; i<pts.length; i++) {
+      if (Math.abs(mx-pts[i][0])<=HANDLE_R+4 && Math.abs(my-pts[i][1])<=HANDLE_R+4) return i;
+    }
+    return null;
+  }
+  function insideRect(mx, my) {
+    const W = imgEl.width, H = imgEl.height;
+    const sx1=region.x1*W*dispScale, sy1=region.y1*H*dispScale;
+    const sx2=region.x2*W*dispScale, sy2=region.y2*H*dispScale;
+    return mx>sx1 && mx<sx2 && my>sy1 && my<sy2;
+  }
+  function canvasPos(e) {
+    const r = leftCanvas.getBoundingClientRect();
+    const scaleX = leftCanvas.width / r.width;
+    const scaleY = leftCanvas.height / r.height;
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+  }
+
+  leftCanvas.addEventListener('mousedown', startDrag);
+  leftCanvas.addEventListener('mousemove', moveDrag);
+  leftCanvas.addEventListener('mouseup', endDrag);
+  leftCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e); }, {passive:false});
+  leftCanvas.addEventListener('touchmove',  (e) => { e.preventDefault(); moveDrag(e); }, {passive:false});
+  leftCanvas.addEventListener('touchend',   (e) => { e.preventDefault(); endDrag(e); },  {passive:false});
+
+  function startDrag(e) {
+    if (!imgEl) return;
+    const {x, y} = canvasPos(e);
+    const c = getCorner(x, y);
+    if (c !== null) {
+      drag = { type:'corner', corner:c };
+    } else if (insideRect(x, y)) {
+      drag = { type:'move', start:{x,y}, orig:{...region} };
+    }
+  }
+  function moveDrag(e) {
+    if (!drag || !imgEl) return;
+    const {x, y} = canvasPos(e);
+    const W = imgEl.width, H = imgEl.height;
+    const ix = Math.max(0, Math.min(1, x / (W * dispScale)));
+    const iy = Math.max(0, Math.min(1, y / (H * dispScale)));
+    if (drag.type === 'corner') {
+      const c = drag.corner;
+      if (c===0) { region.x1=ix; region.y1=iy; }
+      else if (c===1) { region.x2=ix; region.y1=iy; }
+      else if (c===2) { region.x1=ix; region.y2=iy; }
+      else { region.x2=ix; region.y2=iy; }
+    } else {
+      const dx = (x - drag.start.x) / (W * dispScale);
+      const dy = (y - drag.start.y) / (H * dispScale);
+      const nw = drag.orig.x2 - drag.orig.x1;
+      const nh = drag.orig.y2 - drag.orig.y1;
+      region.x1 = Math.max(0, Math.min(1-nw, drag.orig.x1+dx));
+      region.y1 = Math.max(0, Math.min(1-nh, drag.orig.y1+dy));
+      region.x2 = region.x1 + nw;
+      region.y2 = region.y1 + nh;
+    }
+    // normalise
+    const tmp = { x1:Math.min(region.x1,region.x2), y1:Math.min(region.y1,region.y2),
+                  x2:Math.max(region.x1,region.x2), y2:Math.max(region.y1,region.y2) };
+    region = tmp;
+    drawLeft();
+    scheduleProcess();
+  }
+  function endDrag() { drag = null; }
 </script>
+<script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady()"></script>
 </body>
 </html>
