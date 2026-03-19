@@ -305,12 +305,12 @@
     justify-content: center;
     font-family: var(--mono);
     font-size: 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
+    background: rgba(59,130,246,0.14);
+    border: 1px solid rgba(59,130,246,0.42);
     border-bottom-width: 2px;
     border-radius: 4px;
     padding: 1px 6px;
-    color: var(--text);
+    color: #dbeafe;
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
@@ -449,11 +449,18 @@
   .footer-note a {
     color: var(--cyan);
     text-decoration: none;
-    transition: color 0.15s, opacity 0.15s;
+    padding: 1px 6px;
+    margin: 0 -6px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: color 0.15s, opacity 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
   }
   .footer-note a:hover {
-    color: #67e8f9;
-    opacity: 0.9;
+    color: #a5f3fc;
+    opacity: 1;
+    background: rgba(34,211,238,0.14);
+    border-color: rgba(34,211,238,0.4);
+    box-shadow: 0 0 0 3px rgba(34,211,238,0.15);
   }
 
   /* ── ANIMATIONS ── */
@@ -717,6 +724,13 @@
     gap: 8px;
   }
 
+  .action-hint {
+    margin-top: 8px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
   /* Details / collapsible */
   details {
     border: 1px solid var(--border2);
@@ -832,7 +846,6 @@
     <p class="subtitle">
       Удаляет белый текст и водяные знаки с любых фото.
       Интерактивный редактор зоны перед каждым снимком — тяни за углы, смотри результат сразу.
-      Работает полностью локально, без интернета.
     </p>
   </header>
 
@@ -842,7 +855,7 @@
     <h2>Удалить в браузере</h2>
     <p>Загрузи фото — всё обрабатывается локально, файлы никуда не уходят.</p>
 
-    <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" multiple style="display:none">
 
     <!-- Upload zone -->
     <div class="upload-zone" id="uploadZone">
@@ -897,13 +910,14 @@
       </div>
 
       <div class="action-row">
-        <button class="btn btn-ghost" id="skipBtn">S / Пропустить</button>
+        <button class="btn btn-ghost" id="skipBtn">Пропустить</button>
         <button class="btn btn-ghost" id="resetBtn">↩ Новые файлы</button>
         <button class="btn btn-primary" id="downloadBtn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Скачать
+          Скачать и далее
         </button>
       </div>
+      <p class="action-hint">После скачивания автоматически откроется следующее фото.</p>
     </div>
   </section>
 
@@ -1080,7 +1094,10 @@
   // ── OpenCV loading ──────────────────────────────────────────
   let cvReady = false;
   let pendingSetup = false;
-  function onOpenCvReady() {
+  let cvReadyMarked = false;
+  function markOpenCvReady() {
+    if (cvReadyMarked) return;
+    cvReadyMarked = true;
     cvReady = true;
     const s = document.getElementById('cvStatus');
     s.innerHTML = '<span class="cv-dot"></span> OpenCV готов';
@@ -1091,6 +1108,15 @@
       drawLeft();
       scheduleProcess();
     }
+  }
+  function onOpenCvReady() {
+    if (typeof cv === 'undefined') return;
+    // Runtime can be ready slightly after script load.
+    if (typeof cv.Mat === 'function' && typeof cv.imread === 'function') {
+      markOpenCvReady();
+      return;
+    }
+    cv.onRuntimeInitialized = markOpenCvReady;
   }
 
   // ── State ───────────────────────────────────────────────────
@@ -1125,15 +1151,31 @@
   const fileNameEl   = document.getElementById('fileName');
 
   // ── Upload ───────────────────────────────────────────────────
+  function isSupportedImage(file) {
+    const t = (file.type || '').toLowerCase();
+    if (t.startsWith('image/jpeg') || t.startsWith('image/png') || t.startsWith('image/webp') || t.startsWith('image/bmp') || t.startsWith('image/gif')) {
+      return true;
+    }
+    const n = (file.name || '').toLowerCase();
+    return /\.(jpe?g|png|webp|bmp|gif)$/i.test(n);
+  }
+
   fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length) loadFiles(Array.from(e.target.files));
+    if (!e.target.files.length) return;
+    const selected = Array.from(e.target.files);
+    const supported = selected.filter(isSupportedImage);
+    if (!supported.length) {
+      alert('Этот формат браузер не поддерживает. Выберите JPG, PNG, WEBP, BMP или GIF.');
+      return;
+    }
+    loadFiles(supported);
   });
   uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
   uploadZone.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
-    const f = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    const f = Array.from(e.dataTransfer.files).filter(isSupportedImage);
     if (f.length) loadFiles(f);
   });
 
@@ -1163,6 +1205,10 @@
       } else {
         pendingSetup = true;
       }
+    };
+    imgEl.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert('Не удалось открыть изображение. Проверьте формат файла (лучше JPG/PNG/WEBP).');
     };
     imgEl.src = url;
   }
@@ -1374,7 +1420,7 @@
       } catch(e) {
         console.error('download error', e);
       }
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Скачать';
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Скачать и далее';
       btn.disabled = false;
     });
   });
@@ -1403,7 +1449,6 @@
   document.addEventListener('keydown', (e) => {
     if (editorWrap.style.display === 'none' || editorWrap.style.display === '') return;
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('downloadBtn').click(); }
-    if (e.key === 's' || e.key === 'S' || e.key === 'n' || e.key === 'N') document.getElementById('skipBtn').click();
   });
 
   // ── Mouse drag ────────────────────────────────────────────────
