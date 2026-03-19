@@ -6,7 +6,7 @@
 
 ## Сайт проекта
 
-[remove-watermark](https://rafael-mansurov.github.io/remove-watermark/)
+[remove-watermark.io](https://rafael-mansurov.github.io/remove-watermark/)
 
 ## Важно
 

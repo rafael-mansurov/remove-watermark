@@ -38,7 +38,7 @@
   "url": "https://rafael-mansurov.github.io/remove-watermark/",
   "author": {
     "@type": "Person",
-    "name": "Rafael Mansurov"
+    "name": "Рафаэль Мансуров"
   }
 }
 </script>
@@ -867,8 +867,21 @@
     }
   }
 </style>
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+  (function(m,e,t,r,i,k,a){
+      m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+      m[i].l=1*new Date();
+      for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+      k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+  })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=108150760', 'ym');
+
+  ym(108150760, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<!-- /Yandex.Metrika counter -->
 </head>
 <body>
+<noscript><div><img src="https://mc.yandex.ru/watch/108150760" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <div class="wrap">
 
   <!-- HEADER -->
@@ -879,14 +892,14 @@
     </div>
     <h1>Убрать водяной знак с&nbsp;фото</h1>
     <p class="subtitle">
-      Загрузи фото — водяной знак исчезнет прямо в&nbsp;браузере.
+      Загрузи фото и водяной знак исчезнет прямо в&nbsp;браузере.
       Файлы никуда не уходят, всё происходит на&nbsp;твоём устройстве
     </p>
   </header>
 
   <!-- SECTION 01: BROWSER TOOL -->
   <section class="section">
-    <div class="section-label">01 / Инструмент</div>
+    <div class="section-label">Онлайн-версия</div>
     <h2>Удалить в&nbsp;браузере</h2>
     <p>Выдели зону с&nbsp;водяным знаком, подстрой параметры и скачай результат</p>
 
@@ -902,7 +915,7 @@
       <p class="upload-title">Перетащи фото сюда</p>
       <p class="upload-or">или</p>
       <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Выбрать файлы</button>
-      <p class="upload-hint">JPG · PNG · WEBP · BMP — можно несколько сразу</p>
+      <p class="upload-hint">JPG · PNG · WEBP · BMP. Можно несколько фото за раз</p>
       <p class="upload-notice" id="uploadNotice"></p>
       <div class="cv-status" id="cvStatus">
         <span class="cv-dot"></span> Загрузка OpenCV…
@@ -948,14 +961,14 @@
       </div>
 
       <div class="action-row">
-        <button class="btn btn-ghost" id="skipBtn">Пропустить</button>
-        <button class="btn btn-ghost" id="resetBtn">↩ Новые файлы</button>
+        <button class="btn btn-ghost" id="skipBtn">Пропустить фото</button>
+        <button class="btn btn-ghost" id="resetBtn">↩ Загрузить ещё фото</button>
         <button class="btn btn-primary" id="downloadBtn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Скачать и далее
+          Скачать
         </button>
       </div>
-      <p class="action-hint">Превью может быть чуть размытым — это нормально. Скачанный файл будет в&nbsp;хорошем качестве</p>
+      <p class="action-hint">Превью может быть чуть размытым и это нормально. Скачанный файл будет в&nbsp;хорошем качестве</p>
     </div>
   </section>
 
