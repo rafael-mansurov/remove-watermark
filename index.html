@@ -841,11 +841,11 @@
 
   <!-- HEADER -->
   <header class="header">
-    <div class="badge">Python · macOS · OpenCV</div>
-    <h1>remove_<span>watermark</span>.py</h1>
+    <div class="badge">Работает в браузере · Бесплатно · Без регистрации</div>
+    <h1>Убрать водяной знак с фото</h1>
     <p class="subtitle">
-      Удаляет белый текст и водяные знаки с любых фото.
-      Интерактивный редактор зоны перед каждым снимком — тяни за углы, смотри результат сразу.
+      Загрузи фото — водяной знак исчезнет прямо в браузере.
+      Файлы никуда не уходят, всё происходит на твоём устройстве. Если обрабатываешь много файлов, можно использовать Python-скрипт.
     </p>
   </header>
 
@@ -882,11 +882,11 @@
 
       <div class="canvas-split">
         <div class="canvas-panel">
-          <div class="canvas-label">ORIGINAL (drag corners)</div>
+          <div class="canvas-label">ОРИГИНАЛ (тяни за углы)</div>
           <canvas id="leftCanvas"></canvas>
         </div>
         <div class="canvas-panel">
-          <div class="canvas-label">RESULT</div>
+          <div class="canvas-label">РЕЗУЛЬТАТ</div>
           <canvas id="rightCanvas"></canvas>
           <div class="processing-overlay" id="processing">Обработка…</div>
         </div>
@@ -899,6 +899,7 @@
             <span id="thrVal">180</span>
           </div>
           <input type="range" id="thrSlider" min="1" max="255" value="180">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем выше — тем меньше захватывается. Начни с 180.</div>
         </div>
         <div class="slider-group">
           <div class="slider-label">
@@ -906,6 +907,7 @@
             <span id="radVal">3</span>
           </div>
           <input type="range" id="radSlider" min="1" max="20" value="3">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Радиус закрашивания. Обычно хватает 3-5.</div>
         </div>
       </div>
 
@@ -1030,7 +1032,7 @@
 
   <!-- FOOTER -->
   <footer class="footer">
-    <span class="footer-note">remove_watermark.py · macOS · Python 3.9+</span>
+    <span class="footer-note">remove watermark</span>
     <a class="btn btn-primary" href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
       Написать автору
@@ -1141,7 +1143,8 @@
   let cvPrevSrc = null;  // RGBA preview (scaled ≤900px)
   let cvPrevBGR = null;  // BGR preview (for live inpaint)
   let resultMat = null;  // BGR result (preview resolution)
-  let region = { x1: 0.45, y1: 0.88, x2: 1.0, y2: 1.0 };
+  const DEFAULT_REGION = { x1: 0.45, y1: 0.88, x2: 1.0, y2: 1.0 };
+  let region = { ...DEFAULT_REGION };
   let drag = null;
   const HANDLE_R = 5;
   let dw = 0, dh = 0, dispScale = 1; // display canvas size & scale from img pixels to canvas pixels
@@ -1151,6 +1154,14 @@
   function renderInitialPreview() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(runProcess, 10);
+  }
+  function resetEditorState() {
+    clearTimeout(debounceTimer);
+    [cvSrc, cvBGR, cvPrevSrc, cvPrevBGR, resultMat].forEach(m => m && m.delete());
+    cvSrc = null; cvBGR = null; cvPrevSrc = null; cvPrevBGR = null; resultMat = null;
+    region = { ...DEFAULT_REGION };
+    drag = null;
+    pendingSetup = false;
   }
 
   // ── DOM refs ─────────────────────────────────────────────────
@@ -1197,6 +1208,7 @@
   });
 
   function loadFiles(arr) {
+    resetEditorState();
     files = arr;
     fileIdx = 0;
     uploadZone.style.display = 'none';
@@ -1422,6 +1434,7 @@
           if (fileIdx < files.length) {
             loadFile(fileIdx);
           } else {
+            resetEditorState();
             editorWrap.style.display = 'none';
             uploadZone.style.display = 'flex';
             fileInput.value = '';
@@ -1442,12 +1455,14 @@
     fileIdx++;
     if (fileIdx < files.length) loadFile(fileIdx);
     else {
+      resetEditorState();
       editorWrap.style.display = 'none';
       uploadZone.style.display = 'flex';
       fileInput.value = '';
     }
   });
   document.getElementById('resetBtn').addEventListener('click', () => {
+    resetEditorState();
     editorWrap.style.display = 'none';
     uploadZone.style.display = 'flex';
     fileInput.value = '';
