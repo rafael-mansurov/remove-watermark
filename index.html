@@ -1079,11 +1079,18 @@
 
   // ── OpenCV loading ──────────────────────────────────────────
   let cvReady = false;
+  let pendingSetup = false;
   function onOpenCvReady() {
     cvReady = true;
     const s = document.getElementById('cvStatus');
     s.innerHTML = '<span class="cv-dot"></span> OpenCV готов';
     s.className = 'cv-status ready';
+    if (pendingSetup && imgEl) {
+      pendingSetup = false;
+      setupMats();
+      drawLeft();
+      scheduleProcess();
+    }
   }
 
   // ── State ───────────────────────────────────────────────────
@@ -1101,7 +1108,7 @@
   let dw = 0, dh = 0, dispScale = 1; // display canvas size & scale from img pixels to canvas pixels
   let prevScale = 1;                  // scale from full-res to preview-res
   let debounceTimer = null;
-  const PREVIEW_MAX = 900;
+  const PREVIEW_MAX = 500;
 
   // ── DOM refs ─────────────────────────────────────────────────
   const uploadZone   = document.getElementById('uploadZone');
@@ -1145,10 +1152,17 @@
     imgEl = new Image();
     imgEl.onload = () => {
       URL.revokeObjectURL(url);
-      setupMats();
       setupCanvas();
-      drawLeft();
-      scheduleProcess();
+      // Show image immediately even before OpenCV is ready
+      const ctx = leftCanvas.getContext('2d');
+      ctx.drawImage(imgEl, 0, 0, dw, dh);
+      if (cvReady) {
+        setupMats();
+        drawLeft();
+        scheduleProcess();
+      } else {
+        pendingSetup = true;
+      }
     };
     imgEl.src = url;
   }
