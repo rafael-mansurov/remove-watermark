@@ -285,7 +285,7 @@
     font-size: 12px;
     color: var(--cyan);
     padding: 9px 14px;
-    background: var(--surface);
+    background: rgba(34,211,238,0.06);
     display: flex;
     align-items: center;
   }
@@ -636,7 +636,7 @@
   }
 
   #leftCanvas {
-    cursor: crosshair;
+    cursor: default;
   }
 
   .processing-overlay {
@@ -1018,10 +1018,6 @@
               <div class="control-desc">Обработать это фото и перейти к следующему</div>
             </div>
             <div class="control-row">
-              <div class="control-key">Кнопка «Пропустить»</div>
-              <div class="control-desc">Пропустить фото без обработки</div>
-            </div>
-            <div class="control-row">
               <div class="control-key"><kbd>ESC</kbd></div>
               <div class="control-desc">Выйти из программы</div>
             </div>
@@ -1034,13 +1030,10 @@
 
   <!-- FOOTER -->
   <footer class="footer">
-    <span class="footer-note">
-      remove_watermark.py · macOS · Python 3.9+ · Telegram:
-      <a href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">@mansurov_rafael</a>
-    </span>
-    <a class="btn btn-primary" href="#" onclick="downloadScript(event)">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Скачать скрипт
+    <span class="footer-note">remove_watermark.py · macOS · Python 3.9+</span>
+    <a class="btn btn-primary" href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+      Написать автору
     </a>
   </footer>
 
@@ -1107,11 +1100,11 @@
     const s = document.getElementById('cvStatus');
     s.innerHTML = '<span class="cv-dot"></span> OpenCV готов';
     s.className = 'cv-status ready';
-    if (pendingSetup && imgEl) {
+    if (imgEl) {
       pendingSetup = false;
       setupMats();
       drawLeft();
-      scheduleProcess();
+      renderInitialPreview();
     }
   }
   function onOpenCvReady() {
@@ -1150,11 +1143,15 @@
   let resultMat = null;  // BGR result (preview resolution)
   let region = { x1: 0.45, y1: 0.88, x2: 1.0, y2: 1.0 };
   let drag = null;
-  const HANDLE_R = 6;
+  const HANDLE_R = 5;
   let dw = 0, dh = 0, dispScale = 1; // display canvas size & scale from img pixels to canvas pixels
   let prevScale = 1;                  // scale from full-res to preview-res
   let debounceTimer = null;
   const PREVIEW_MAX = 500;
+  function renderInitialPreview() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runProcess, 10);
+  }
 
   // ── DOM refs ─────────────────────────────────────────────────
   const uploadZone   = document.getElementById('uploadZone');
@@ -1215,13 +1212,12 @@
     imgEl.onload = () => {
       URL.revokeObjectURL(url);
       setupCanvas();
-      // Show image immediately even before OpenCV is ready
-      const ctx = leftCanvas.getContext('2d');
-      ctx.drawImage(imgEl, 0, 0, dw, dh);
+      // Show selection frame immediately even before OpenCV is ready.
+      drawLeft();
       if (cvReady) {
         setupMats();
         drawLeft();
-        scheduleProcess();
+        renderInitialPreview();
       } else {
         pendingSetup = true;
       }
@@ -1297,10 +1293,6 @@
         ctx.lineWidth = 2;
         ctx.strokeRect(cx - HANDLE_R, cy - HANDLE_R, HANDLE_R*2, HANDLE_R*2);
       }
-      // label
-      ctx.fillStyle = '#00dcff';
-      ctx.font = '12px monospace';
-      ctx.fillText(`thr:${thrSlider.value}  r:${radSlider.value}`, sx1 + 2, Math.max(sy1 - 6, 14));
     }
   }
 
@@ -1499,9 +1491,37 @@
     return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
   }
 
+  function updateCanvasCursor(e) {
+    if (!imgEl) {
+      leftCanvas.style.cursor = 'default';
+      return;
+    }
+    if (drag) {
+      if (drag.type === 'move') {
+        leftCanvas.style.cursor = 'grabbing';
+        return;
+      }
+      const corner = drag.corner;
+      leftCanvas.style.cursor = (corner === 0 || corner === 3) ? 'nwse-resize' : 'nesw-resize';
+      return;
+    }
+    const { x, y } = canvasPos(e);
+    const corner = getCorner(x, y);
+    if (corner !== null) {
+      leftCanvas.style.cursor = (corner === 0 || corner === 3) ? 'nwse-resize' : 'nesw-resize';
+      return;
+    }
+    if (insideRect(x, y)) {
+      leftCanvas.style.cursor = 'grab';
+      return;
+    }
+    leftCanvas.style.cursor = 'default';
+  }
+
   leftCanvas.addEventListener('mousedown', startDrag);
-  leftCanvas.addEventListener('mousemove', moveDrag);
+  leftCanvas.addEventListener('mousemove', (e) => { updateCanvasCursor(e); moveDrag(e); });
   leftCanvas.addEventListener('mouseup', endDrag);
+  leftCanvas.addEventListener('mouseleave', () => { leftCanvas.style.cursor = 'default'; });
   leftCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e); }, {passive:false});
   leftCanvas.addEventListener('touchmove',  (e) => { e.preventDefault(); moveDrag(e); }, {passive:false});
   leftCanvas.addEventListener('touchend',   (e) => { e.preventDefault(); endDrag(e); },  {passive:false});
@@ -1545,7 +1565,10 @@
     drawLeft();
     scheduleProcess();
   }
-  function endDrag() { drag = null; }
+  function endDrag() {
+    drag = null;
+    leftCanvas.style.cursor = 'default';
+  }
 </script>
 <script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady()"></script>
 </body>
