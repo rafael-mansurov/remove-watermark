@@ -21,21 +21,21 @@
   <text x="96" y="150" font-family="'Courier New', Courier, monospace" font-size="13" fill="#22d3ee" letter-spacing="1.4">PYTHON · MACOS · OPENCV</text>
 
   <!-- Main title -->
-  <text font-family="'Courier New', Courier, monospace" font-size="76" font-weight="600" letter-spacing="-2">
-    <tspan x="60" y="265" fill="#ffffff">remove_</tspan><tspan fill="#3b82f6">watermark</tspan><tspan fill="#ffffff">.py</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="56" font-weight="600" letter-spacing="-1">
+    <tspan x="60" y="280" fill="#ffffff">remove_</tspan><tspan fill="#3b82f6">watermark</tspan><tspan fill="#ffffff">.py</tspan>
   </text>
 
   <!-- Subtitle -->
-  <text x="60" y="322" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#64748b" font-weight="300">Удаляет белый текст и водяные знаки с любых фото.</text>
-  <text x="60" y="354" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#64748b" font-weight="300">Интерактивный редактор зоны. Работает локально.</text>
+  <text x="60" y="340" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#64748b" font-weight="300">Удаляет белый текст и водяные знаки с любых фото.</text>
+  <text x="60" y="372" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#64748b" font-weight="300">Интерактивный редактор зоны. Работает локально.</text>
 
   <!-- Divider -->
-  <line x1="60" y1="408" x2="680" y2="408" stroke="#1e2530" stroke-width="1"/>
+  <line x1="60" y1="422" x2="680" y2="422" stroke="#1e2530" stroke-width="1"/>
 
   <!-- Footer -->
-  <text x="60" y="442" font-family="'Courier New', Courier, monospace" font-size="15" fill="#3b82f6">@mansurov_rafael</text>
-  <text x="230" y="442" font-family="'Courier New', Courier, monospace" font-size="15" fill="#252d3a">  ·  </text>
-  <text x="270" y="442" font-family="'Courier New', Courier, monospace" font-size="15" fill="#334155">github.com/rafael-mansurov/remove-watermark</text>
+  <text x="60" y="456" font-family="'Courier New', Courier, monospace" font-size="15" fill="#3b82f6">@mansurov_rafael</text>
+  <text x="230" y="456" font-family="'Courier New', Courier, monospace" font-size="15" fill="#252d3a">  ·  </text>
+  <text x="270" y="456" font-family="'Courier New', Courier, monospace" font-size="15" fill="#334155">github.com/rafael-mansurov/remove-watermark</text>
 
   <!-- Right panel: terminal mockup -->
   <rect x="790" y="90" width="350" height="450" rx="10" fill="#0f1318" stroke="#1e2530" stroke-width="1"/>
