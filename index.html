@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Удаление водяного знака с фото · remove_watermark.py</title>
+<meta name="description" content="Скрипт remove_watermark.py удаляет белый текст и водяные знаки с любых фото на macOS. Выдели зону поверх изображения — скрипт уберёт надпись и сохранит результат в cleaned/.">
+<meta name="keywords" content="удалить водяной знак с фото, убрать белый текст с картинки, watermark remover, python скрипт, OpenCV, macOS">
+<meta name="author" content="Rafael Mansurov">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="remove_watermark.py — удаление белого текста и водяного знака с фото">
+<meta property="og:description" content="Скачай remove_watermark.py: выдели зону с белым текстом на фото, обрабатывай папку снимков — результат в cleaned/. Работает с любыми изображениями.">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="remove_watermark.py — удаление водяного знака с фото">
+<meta name="twitter:description" content="Удаляет белый текст и водяные знаки с любых фото. Python, OpenCV, macOS, работает локально.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "remove_watermark.py",
+  "alternateName": "Удаление белого текста и водяного знака с фото",
+  "operatingSystem": "macOS",
+  "applicationCategory": "MultimediaApplication",
+  "description": "Python-скрипт для удаления белого текста и водяных знаков с любых фотографий: интерактивный выбор зоны, пакетная обработка папок.",
+  "softwareVersion": "1.0.0",
+  "author": {
+    "@type": "Person",
+    "name": "Rafael Mansurov"
+  }
+}
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080a0d;
+    --surface: #0f1318;
+    --surface2: #161b22;
+    --border: #1e2530;
+    --border2: #252d3a;
+    --blue: #3b82f6;
+    --blue-dim: #1d4ed8;
+    --blue-glow: rgba(59,130,246,0.15);
+    --cyan: #22d3ee;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-mid: #94a3b8;
+    --green: #10b981;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 80px 24px 120px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    margin-bottom: 72px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid rgba(34,211,238,0.25);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    background: rgba(34,211,238,0.05);
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+
+  h1 span { color: var(--blue); }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--text-mid);
+    font-weight: 300;
+    max-width: 520px;
+    line-height: 1.65;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 52px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .section:nth-child(2) { animation-delay: 0.08s; }
+  .section:nth-child(3) { animation-delay: 0.14s; }
+  .section:nth-child(4) { animation-delay: 0.20s; }
+  .section:nth-child(5) { animation-delay: 0.26s; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border2);
+  }
+
+  h2 {
+    font-size: 19px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    color: var(--text-mid);
+    margin-bottom: 12px;
+  }
+
+  .section p a {
+    color: var(--cyan);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .section p a:hover {
+    color: #67e8f9;
+  }
+
+  /* ── CMD BLOCK ── */
+  .cmd {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .cmd:hover { border-color: var(--blue-dim); }
+
+  .cmd-prompt {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--blue);
+    padding: 12px 14px;
+    background: rgba(59,130,246,0.07);
+    border-right: 1px solid var(--border2);
+    white-space: nowrap;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .cmd-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    padding: 12px 16px;
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .cmd-copy {
+    background: none;
+    border: none;
+    border-left: 1px solid var(--border2);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .cmd-copy:hover { color: var(--blue); background: var(--blue-glow); }
+  .cmd-copy.copied { color: var(--green); }
+
+  /* ── CONTROLS LIST ── */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .control-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .control-row:hover { border-color: var(--border2); }
+
+  .control-key {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    padding: 9px 14px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+  }
+
+  .control-desc {
+    font-size: 13px;
+    color: var(--text-mid);
+    padding: 9px 14px;
+    background: rgba(15,19,24,0.5);
+    display: flex;
+    align-items: center;
+  }
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: var(--text);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .code-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .code-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+  }
+
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .code-toolbar-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 6px 14px;
+    border: 1px solid;
+    transition: all 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border2);
+    color: var(--text-mid);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: var(--blue-glow);
+  }
+
+  .btn-ghost.copied {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+  }
+
+  pre {
+    margin: 0;
+    padding: 20px 20px;
+    overflow: auto;
+    max-height: 420px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #c9d1d9;
+    tab-size: 4;
+  }
+
+  pre::-webkit-scrollbar { width: 6px; height: 6px; }
+  pre::-webkit-scrollbar-track { background: transparent; }
+  pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .footer-note {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .footer-note a {
+    color: var(--cyan);
+    text-decoration: none;
+    transition: color 0.15s, opacity 0.15s;
+  }
+  .footer-note a:hover {
+    color: #67e8f9;
+    opacity: 0.9;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 56px 0;
+  }
+
+  /* highlight color inside pre */
+  .kw { color: #ff79c6; }
+  .fn { color: #8be9fd; }
+  .st { color: #f1fa8c; }
+  .cm { color: #6272a4; font-style: italic; }
+  .nm { color: #bd93f9; }
+  .op { color: #ff79c6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="badge">Python · macOS · OpenCV</div>
+    <h1>remove_<span>watermark</span>.py</h1>
+    <p class="subtitle">
+      Удаляет белый текст и водяные знаки с любых фото.
+      Интерактивный редактор зоны перед каждым снимком — тяни за углы, смотри результат сразу.
+      Работает полностью локально, без интернета.
+    </p>
+  </header>
+
+  <!-- INSTALL -->
+  <section class="section">
+    <div class="section-label">01 / Установка</div>
+    <h2>Зависимости</h2>
+    <p>Открой Терминал, вставь команду и нажми ENTER.</p>
+    <div class="cmd">
+      <span class="cmd-prompt">$</span>
+      <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
+      <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">copy</button>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD + CODE -->
+  <section class="section">
+    <div class="section-label">02 / Скачать скрипт</div>
+    <h2>remove_watermark.py</h2>
+    <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
+
+    <div class="code-block">
+      <div class="code-toolbar">
+        <div class="code-toolbar-left">
+          <div class="dots">
+            <div class="dot dot-r"></div>
+            <div class="dot dot-y"></div>
+            <div class="dot dot-g"></div>
+          </div>
+          <span class="code-filename">remove_watermark.py</span>
+        </div>
+        <div class="code-toolbar-right">
+          <button class="btn btn-ghost" id="copyBtn" onclick="copyCode()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Копировать
+          </button>
+          <a class="btn btn-primary" id="downloadBtn" href="#" onclick="downloadScript(event)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Скачать .py
+          </a>
+        </div>
+      </div>
+      <pre id="codeBlock">#!/usr/bin/env python3
+"""Remove white text and watermark from photos. Interactive editor per image."""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+
+SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
+
+MAX_DISPLAY_W = 1100
+HANDLE_R = 5
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", "-i", default=None)
+    parser.add_argument(
+        "--region", nargs=4, type=float,
+        metavar=("X1", "Y1", "X2", "Y2"),
+        default=[0.45, 0.88, 1.0, 1.0],
+    )
+    parser.add_argument("--no-skip", action="store_true",
+                        help="Overwrite already processed files")
+    return parser.parse_args()
+
+
+def collect_images(input_dir: Path) -> list[Path]:
+    return sorted([
+        p for p in input_dir.iterdir()
+        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTS
+    ])
+
+
+def build_mask(img: np.ndarray, region: list[float], threshold: int) -> np.ndarray:
+    h, w = img.shape[:2]
+    x1 = int(region[0] * w)
+    y1 = int(region[1] * h)
+    x2 = int(region[2] * w)
+    y2 = int(region[3] * h)
+    x1, x2 = max(0, x1), min(w, x2)
+    y1, y2 = max(0, y1), min(h, y2)
+
+    mask = np.zeros((h, w), dtype=np.uint8)
+    if x2 <= x1 or y2 <= y1:
+        return mask
+
+    roi = img[y1:y2, x1:x2]
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    _, bright = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    bright = cv2.dilate(bright, kernel, iterations=2)
+    mask[y1:y2, x1:x2] = bright
+    return mask
+
+
+def process_image(img: np.ndarray, region: list[float],
+                  threshold: int, radius: int) -> np.ndarray:
+    mask = build_mask(img, region, threshold)
+    return cv2.inpaint(img, mask, radius, cv2.INPAINT_TELEA)
+
+
+def save_image(img: np.ndarray, out_path: Path, orig_path: Path):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    ext = orig_path.suffix.lower()
+    if ext in (".jpg", ".jpeg"):
+        cv2.imwrite(str(out_path), img, [cv2.IMWRITE_JPEG_QUALITY, 97])
+    else:
+        cv2.imwrite(str(out_path), img)
+
+
+def draw_editor(canvas, img, rx1, ry1, rx2, ry2, thr, rad, dw, dh, scale):
+    h, w = img.shape[:2]
+    valid = rx2 > rx1 and ry2 > ry1
+
+    left_img = img.copy()
+    if valid:
+        overlay = left_img.copy()
+        cv2.rectangle(overlay, (rx1, ry1), (rx2, ry2), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, 0.25, left_img, 0.75, 0, left_img)
+        region_f = [rx1 / w, ry1 / h, rx2 / w, ry2 / h]
+        mask = build_mask(img, region_f, thr)
+        blue = left_img.copy()
+        blue[mask > 0] = (255, 60, 0)
+        cv2.addWeighted(blue, 0.55, left_img, 0.45, 0, left_img)
+
+    left_s = cv2.resize(left_img, (dw, dh))
+
+    if valid:
+        sx1 = int(rx1 * scale); sy1 = int(ry1 * scale)
+        sx2 = int(rx2 * scale); sy2 = int(ry2 * scale)
+        cv2.rectangle(left_s, (sx1, sy1), (sx2, sy2), (0, 200, 255), 2)
+        for cx, cy in [(sx1, sy1), (sx2, sy1), (sx1, sy2), (sx2, sy2)]:
+            cv2.rectangle(left_s, (cx - HANDLE_R, cy - HANDLE_R),
+                          (cx + HANDLE_R, cy + HANDLE_R), (255, 255, 255), -1)
+            cv2.rectangle(left_s, (cx - HANDLE_R, cy - HANDLE_R),
+                          (cx + HANDLE_R, cy + HANDLE_R), (0, 130, 220), 2)
+        cv2.putText(left_s, f"thr:{thr}  r:{rad}",
+                    (sx1, max(sy1 - 6, 14)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 220, 255), 1, cv2.LINE_AA)
+
+    cv2.putText(left_s, "ORIGINAL  (drag corners)", (8, 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 220, 0), 1, cv2.LINE_AA)
+
+    if valid:
+        region_f = [rx1 / w, ry1 / h, rx2 / w, ry2 / h]
+        mask = build_mask(img, region_f, thr)
+        result_img = cv2.inpaint(img, mask, rad, cv2.INPAINT_TELEA)
+    else:
+        result_img = img.copy()
+
+    right_s = cv2.resize(result_img, (dw, dh))
+    cv2.putText(right_s, "RESULT", (8, 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 220, 0), 1, cv2.LINE_AA)
+
+    canvas[:dh, :dw] = left_s
+    canvas[:dh, dw:dw * 2] = right_s
+
+
+def show_editor(img, filename, region, threshold, radius, idx, total):
+    h, w = img.shape[:2]
+    scale = min(1.0, MAX_DISPLAY_W / (w * 2))
+    dw = max(1, int(w * scale))
+    dh = max(1, int(h * scale))
+
+    WIN = f"[{idx}/{total}] {filename}  |  ENTER=OK  S/N=Skip  ESC=Quit"
+    cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(WIN, dw * 2, dh)
+    cv2.createTrackbar("Threshold", WIN, threshold, 255, lambda v: None)
+    cv2.createTrackbar("Radius",    WIN, radius,    20,  lambda v: None)
+
+    rx1 = int(region[0] * w); ry1 = int(region[1] * h)
+    rx2 = int(region[2] * w); ry2 = int(region[3] * h)
+
+    drag = {"active": False, "corner": None, "move_start": None, "orig": None}
+
+    def hit_corner(mx, my):
+        corners = [
+            (int(rx1 * scale), int(ry1 * scale)),
+            (int(rx2 * scale), int(ry1 * scale)),
+            (int(rx1 * scale), int(ry2 * scale)),
+            (int(rx2 * scale), int(ry2 * scale)),
+        ]
+        for i, (cx, cy) in enumerate(corners):
+            if abs(mx - cx) <= HANDLE_R + 4 and abs(my - cy) <= HANDLE_R + 4:
+                return i
+        return None
+
+    def inside_rect(mx, my):
+        sx1 = int(rx1 * scale); sy1 = int(ry1 * scale)
+        sx2 = int(rx2 * scale); sy2 = int(ry2 * scale)
+        return sx1 < mx < sx2 and sy1 < my < sy2
+
+    def on_mouse(event, mx, my, flags, _):
+        nonlocal rx1, ry1, rx2, ry2
+        if mx > dw:
+            return
+        if event == cv2.EVENT_LBUTTONDOWN:
+            c = hit_corner(mx, my)
+            if c is not None:
+                drag["active"] = True
+                drag["corner"] = c
+            elif inside_rect(mx, my):
+                drag["active"] = True
+                drag["corner"] = "move"
+                drag["move_start"] = (mx, my)
+                drag["orig"] = (rx1, ry1, rx2, ry2)
+        elif event == cv2.EVENT_MOUSEMOVE and drag["active"]:
+            ix = int(mx / scale); iy = int(my / scale)
+            ix = max(0, min(w, ix)); iy = max(0, min(h, iy))
+            c = drag["corner"]
+            if c == 0:   rx1, ry1 = ix, iy
+            elif c == 1: rx2, ry1 = ix, iy
+            elif c == 2: rx1, ry2 = ix, iy
+            elif c == 3: rx2, ry2 = ix, iy
+            elif c == "move":
+                dx = int((mx - drag["move_start"][0]) / scale)
+                dy = int((my - drag["move_start"][1]) / scale)
+                ox1, oy1, ox2, oy2 = drag["orig"]
+                nw = ox2 - ox1; nh = oy2 - oy1
+                nx1 = max(0, min(w - nw, ox1 + dx))
+                ny1 = max(0, min(h - nh, oy1 + dy))
+                rx1, ry1, rx2, ry2 = nx1, ny1, nx1 + nw, ny1 + nh
+        elif event == cv2.EVENT_LBUTTONUP:
+            drag["active"] = False
+            drag["corner"] = None
+
+    cv2.setMouseCallback(WIN, on_mouse)
+    print(f"\n  [{idx}/{total}] {filename}")
+    print("    Drag corners or move the box with mouse")
+    print("    ENTER/SPACE = process  |  S or N = skip  |  ESC = quit")
+
+    canvas = np.zeros((dh, dw * 2, 3), dtype=np.uint8)
+    action = "process"
+
+    while True:
+        thr = max(1, cv2.getTrackbarPos("Threshold", WIN))
+        rad = max(1, cv2.getTrackbarPos("Radius",    WIN))
+        x1n = min(rx1, rx2); x2n = max(rx1, rx2)
+        y1n = min(ry1, ry2); y2n = max(ry1, ry2)
+        draw_editor(canvas, img, x1n, y1n, x2n, y2n, thr, rad, dw, dh, scale)
+        cv2.imshow(WIN, canvas)
+        key = cv2.waitKey(50) & 0xFF
+        if key in (13, 32):
+            action = "process"
+            rx1, ry1, rx2, ry2 = x1n, y1n, x2n, y2n
+            break
+        elif key in (ord("s"), ord("S"), ord("n"), ord("N")):
+            action = "skip"
+            break
+        elif key == 27:
+            action = "quit"
+            break
+
+    cv2.destroyWindow(WIN)
+    return [rx1 / w, ry1 / h, rx2 / w, ry2 / h], thr, rad, action
+
+
+def main():
+    args = parse_args()
+
+    if not args.input or not Path(args.input).exists():
+        script = 'tell app "Finder" to POSIX path of (choose folder with prompt "Select photos folder:")'
+        res = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+        chosen = res.stdout.strip()
+        if not chosen:
+            print("Cancelled.")
+            sys.exit(0)
+        args.input = chosen
+
+    input_dir = Path(args.input)
+    if not input_dir.is_dir():
+        print(f"[Error] Not a directory: {input_dir}")
+        sys.exit(1)
+
+    output_dir = input_dir / "cleaned"
+    skip_existing = not args.no_skip
+
+    images = collect_images(input_dir)
+    if not images:
+        print(f"[!] No images found in: {input_dir}")
+        sys.exit(1)
+
+    print(f"\nFolder : {input_dir}")
+    print(f"Output : {output_dir}")
+    print(f"Found  : {len(images)} images")
+
+    region    = args.region[:]
+    threshold = 180
+    radius    = 3
+    ok = skipped = failed = 0
+
+    for i, img_path in enumerate(images, 1):
+        out_path = output_dir / img_path.name
+        if skip_existing and out_path.exists():
+            print(f"  [{i}/{len(images)}] Already done: {img_path.name}")
+            skipped += 1
+            continue
+
+        img = cv2.imread(str(img_path))
+        if img is None:
+            print(f"  [{i}/{len(images)}] Cannot open: {img_path.name}")
+            failed += 1
+            continue
+
+        region, threshold, radius, action = show_editor(
+            img, img_path.name, region, threshold, radius, i, len(images)
+        )
+
+        if action == "quit":
+            print("\nQuitting.")
+            break
+        elif action == "skip":
+            print(f"  [{i}/{len(images)}] Skipped: {img_path.name}")
+            skipped += 1
+            continue
+
+        result = process_image(img, region, threshold, radius)
+        save_image(result, out_path, img_path)
+        print(f"  [{i}/{len(images)}] Done: {img_path.name}")
+        ok += 1
+
+    print(f"\nDone: {ok} processed, {skipped} skipped, {failed} errors")
+    print(f"Output: {output_dir.resolve()}")
+
+
+if __name__ == "__main__":
+    main()</pre>
+    </div>
+  </section>
+
+  <!-- RUN -->
+  <section class="section">
+    <div class="section-label">03 / Запуск</div>
+    <h2>Как запустить</h2>
+    <p>После скачивания просто открой Терминал на macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с фото (не отдельный файл).</p>
+    <div class="cmd">
+      <span class="cmd-prompt">$</span>
+      <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
+      <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">copy</button>
+    </div>
+    <p style="margin-top:10px; font-size:13px;">
+      Обработанные фото сохраняются в папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
+      Уже обработанные файлы пропускаются автоматически.
+    </p>
+  </section>
+
+  <!-- CONTROLS -->
+  <section class="section">
+    <div class="section-label">04 / Редактор</div>
+    <h2>Управление</h2>
+    <p>Перед каждым фото открывается окно. Слева — оригинал с выделением зоны, справа — результат в реальном времени.</p>
+
+    <div class="controls" style="margin-top:16px;">
+      <div class="control-row">
+        <div class="control-key">Drag: углы</div>
+        <div class="control-desc">Изменить размер зоны удаления</div>
+      </div>
+      <div class="control-row">
+        <div class="control-key">Drag: середина</div>
+        <div class="control-desc">Переместить зону целиком</div>
+      </div>
+      <div class="control-row">
+        <div class="control-key">Threshold</div>
+        <div class="control-desc">Порог яркости — выше = только самые белые пиксели</div>
+      </div>
+      <div class="control-row">
+        <div class="control-key">Radius</div>
+        <div class="control-desc">Радиус inpainting (рекомендуется 2–5)</div>
+      </div>
+      <div class="control-row">
+        <div class="control-key"><kbd>ENTER</kbd> / <kbd>SPACE</kbd></div>
+        <div class="control-desc">Обработать это фото и перейти к следующему</div>
+      </div>
+      <div class="control-row">
+        <div class="control-key"><kbd>S</kbd> / <kbd>N</kbd></div>
+        <div class="control-desc">Пропустить фото без обработки</div>
+      </div>
+      <div class="control-row">
+        <div class="control-key"><kbd>ESC</kbd></div>
+        <div class="control-desc">Выйти из программы</div>
+      </div>
+    </div>
+  </section>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-note">
+      remove_watermark.py · macOS · Python 3.9+ · Telegram:
+      <a href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">@mansurov_rafael</a>
+    </span>
+    <a class="btn btn-primary" href="#" onclick="downloadScript(event)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Скачать скрипт
+    </a>
+  </footer>
+
+</div>
+
+<script>
+  const SCRIPT = document.getElementById('codeBlock').textContent.trim();
+
+  function copyCmd(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(SCRIPT).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Скопировано';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Копировать';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function downloadScript(e) {
+    e.preventDefault();
+    const blob = new Blob([SCRIPT], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'remove_watermark.py';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
