@@ -1104,7 +1104,10 @@
 
   const codeBlock = document.getElementById('codeBlock');
 
-  // script is behind paywall — do not load
+  fetch(RAW_URL)
+    .then(r => r.text())
+    .then(text => { codeBlock.textContent = text; })
+    .catch(() => {});
 
   function copyCmd(btn, text) {
     navigator.clipboard.writeText(text).then(() => {
