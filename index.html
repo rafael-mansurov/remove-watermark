@@ -1015,7 +1015,7 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Копировать
                 </button>
-                <a class="btn btn-primary" id="dlScriptBtn" href="#" onclick="downloadScript(event)">
+                <a class="btn btn-primary" id="dlScriptBtn" href="javascript:void(0)" onclick="downloadScript(event)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Скачать .py
                 </a>
@@ -1104,10 +1104,7 @@
 
   const codeBlock = document.getElementById('codeBlock');
 
-  fetch(RAW_URL)
-    .then(r => r.text())
-    .then(text => { codeBlock.textContent = text; })
-    .catch(() => { codeBlock.textContent = 'Не удалось загрузить скрипт. Откройте напрямую: ' + RAW_URL; });
+  // script is behind paywall — do not load
 
   function copyCmd(btn, text) {
     navigator.clipboard.writeText(text).then(() => {
@@ -1117,24 +1114,15 @@
     });
   }
 
+  const PAYWALL_URL = 'https://web.tribute.tg/p/t4O';
+
   function copyCode() {
-    navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Скопировано';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Копировать';
-        btn.classList.remove('copied');
-      }, 2000);
-    });
+    window.open(PAYWALL_URL, '_blank', 'noopener,noreferrer');
   }
 
   function downloadScript(e) {
     e.preventDefault();
-    const a = document.createElement('a');
-    a.href = RAW_URL;
-    a.download = 'remove_watermark.py';
-    a.click();
+    window.open(PAYWALL_URL, '_blank', 'noopener,noreferrer');
   }
 
   /* ══════════════════════════════════════════════════════
