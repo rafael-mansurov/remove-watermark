@@ -16,3 +16,7 @@ env/
 
 # Project artifacts
 cleaned/
+
+# Local install instructions (not part of public site)
+install.html
+install.txt
