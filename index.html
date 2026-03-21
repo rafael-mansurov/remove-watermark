@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Удалить водяной знак онлайн — remove_watermark · браузер и Python</title>
+<title>Удалить водяной знак с фото онлайн</title>
 <meta name="description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta name="keywords" content="удалить водяной знак с фото, убрать белый текст с картинки, watermark remover онлайн, python скрипт, OpenCV, macOS, браузер">
 <meta name="author" content="Rafael Mansurov">
@@ -11,18 +11,18 @@
 <link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/">
-<meta property="og:title" content="Удалить водяной знак онлайн — remove_watermark">
+<meta property="og:title" content="Удалить водяной знак с фото онлайн">
 <meta property="og:description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="remove_watermark — удаление водяного знака с фото">
+<meta property="og:image:alt" content="Удаление водяного знака с фото">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Удалить водяной знак онлайн — remove_watermark">
+<meta name="twitter:title" content="Удалить водяной знак с фото онлайн">
 <meta name="twitter:description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
-<meta name="twitter:image:alt" content="remove_watermark — удаление водяного знака с фото">
+<meta name="twitter:image:alt" content="Удаление водяного знака с фото">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -578,6 +578,12 @@
     border-color: rgba(16,185,129,0.35);
   }
 
+  .upload-notice.info {
+    color: var(--text-mid);
+    background: rgba(34,211,238,0.06);
+    border-color: rgba(34,211,238,0.25);
+  }
+
   /* OpenCV status */
   .cv-status {
     display: inline-flex;
@@ -661,11 +667,15 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin-bottom: 14px;
-    align-items: start;
+    align-items: stretch;
   }
 
   .canvas-panel {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
     background: var(--surface);
     border: 1px solid var(--border2);
     border-radius: 8px;
@@ -692,7 +702,6 @@
     width: 100%;
     height: auto;
     pointer-events: none;
-    vertical-align: top;
   }
 
   .editor-viewport .selection-overlay {
@@ -984,6 +993,11 @@
     .action-row {
       flex-wrap: wrap;
     }
+    .region-icon-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+    }
   }
 </style>
 <!-- Yandex.Metrika counter -->
@@ -1022,7 +1036,7 @@
     <h2>Удалить в&nbsp;браузере</h2>
     <p>Выдели зону с&nbsp;водяным знаком, подстрой параметры и скачай результат</p>
 
-    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" multiple style="display:none">
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/bmp,image/gif,image/heic,image/heif" multiple style="display:none">
 
     <!-- Upload zone -->
     <div class="upload-zone cv-loading" id="uploadZone">
@@ -1032,10 +1046,10 @@
           <path d="M20 22 L20 8" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
           <path d="M13 15 L20 8 L27 15" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p class="upload-title">Перетащи фото сюда</p>
+        <p class="upload-title">Перетащи фото или вставь из буфера</p>
         <p class="upload-or">или</p>
         <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файлы</button>
-        <p class="upload-hint">JPG · PNG · WEBP · BMP. Можно несколько фото за раз</p>
+        <p class="upload-hint">JPG · PNG · WEBP · BMP · HEIC. Можно несколько фото за раз</p>
       </div>
       <p class="upload-notice" id="uploadNotice"></p>
       <div class="cv-status" id="cvStatus">
@@ -1082,17 +1096,17 @@
         </div>
         <div class="slider-group">
           <div class="slider-label">
-            СИЛА УДАЛЕНИЯ
+            МЯГКОСТЬ КРАЯ
             <span id="radVal">10</span>
           </div>
           <input type="range" id="radSlider" min="1" max="20" value="10">
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Радиус закрашивания. Чем больше, тем мягче результат</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем больше значение, тем плавнее переход по краю зоны</div>
         </div>
       </div>
 
       <div class="action-row">
         <button class="btn btn-ghost" id="skipBtn">Пропустить фото</button>
-        <button class="btn btn-ghost" id="resetBtn">Загрузить ещё фото</button>
+        <button class="btn btn-ghost" id="resetBtn">Начать заново</button>
         <button class="btn btn-primary" id="downloadBtn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Скачать
@@ -1104,7 +1118,7 @@
 
   <!-- SECTION 02: TERMINAL ALTERNATIVE -->
   <section class="section">
-    <div class="section-label">02 / Альтернатива</div>
+    <div class="section-label">Альтернатива</div>
     <h2>Запустить в&nbsp;терминале</h2>
     <p style="margin-bottom:20px;">Если нужна пакетная обработка или работа без&nbsp;браузера</p>
 
@@ -1114,19 +1128,19 @@
 
         <!-- 02a: Install -->
         <div class="details-section">
-          <div class="details-section-label">02a / Установка</div>
+          <div class="details-section-label">Установка</div>
           <h3>Зависимости</h3>
           <p>Открой Терминал, вставь команду и нажми ENTER.</p>
           <div class="cmd">
             <span class="cmd-prompt">$</span>
             <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
-            <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">copy</button>
+            <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">Копировать</button>
           </div>
         </div>
 
         <!-- 02b: Download + Code -->
         <div class="details-section">
-          <div class="details-section-label">02b / Скачать скрипт</div>
+          <div class="details-section-label">Скрипт</div>
           <h3>remove_watermark.py</h3>
           <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
 
@@ -1216,13 +1230,13 @@ def collect_images(input_dir: Path) -> list[Path]:
 
         <!-- 02c: Run -->
         <div class="details-section">
-          <div class="details-section-label">02c / Запуск</div>
+          <div class="details-section-label">Запуск</div>
           <h3>Как запустить</h3>
           <p>После скачивания просто открой Терминал на&nbsp;macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в&nbsp;папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с&nbsp;фото (не отдельный файл).</p>
           <div class="cmd">
             <span class="cmd-prompt">$</span>
             <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
-            <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">copy</button>
+            <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">Копировать</button>
           </div>
           <p style="margin-top:10px; font-size:13px;">
             Обработанные фото сохраняются в&nbsp;папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
@@ -1232,7 +1246,7 @@ def collect_images(input_dir: Path) -> list[Path]:
 
         <!-- 02d: Controls -->
         <div class="details-section">
-          <div class="details-section-label">02d / Редактор</div>
+          <div class="details-section-label">Редактор</div>
           <h3>Управление</h3>
           <p>Перед каждым фото открывается окно. Слева — оригинал с выделением зоны, справа — результат в реальном времени.</p>
 
@@ -1251,7 +1265,7 @@ def collect_images(input_dir: Path) -> list[Path]:
             </div>
             <div class="control-row">
               <div class="control-key">Radius</div>
-              <div class="control-desc">Радиус inpainting (рекомендуется 2–5)</div>
+              <div class="control-desc">Радиус inpainting (рекомендуется 10-15)</div>
             </div>
             <div class="control-row">
               <div class="control-key"><kbd>ENTER</kbd> / <kbd>SPACE</kbd></div>
@@ -1294,10 +1308,11 @@ def collect_images(input_dir: Path) -> list[Path]:
   }
 
   function copyCmd(btn, text) {
+    const prev = btn.textContent;
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'copied!';
+      btn.textContent = 'Скопировано';
       btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+      setTimeout(() => { btn.textContent = prev; btn.classList.remove('copied'); }, 1800);
     });
   }
 
@@ -1370,7 +1385,7 @@ def collect_images(input_dir: Path) -> list[Path]:
         const s = document.getElementById('cvStatus');
         if (s) {
           s.className = 'cv-status cv-status-failed';
-          s.innerHTML = '<p>Не удалось загрузить модель. Проверь сеть, VPN и блокировщики. Попробуй Chrome или Safari.</p><button type="button" class="btn btn-primary" id="cvRetryBtn">Повторить</button>';
+          s.innerHTML = '<p>Не удалось загрузить обработку фото. Проверь интернет; иногда мешают VPN или блокировка рекламы. Попробуй другой браузер.</p><button type="button" class="btn btn-primary" id="cvRetryBtn">Повторить</button>';
           const rb = document.getElementById('cvRetryBtn');
           if (rb) rb.addEventListener('click', () => location.reload());
         }
@@ -1524,7 +1539,9 @@ def collect_images(input_dir: Path) -> list[Path]:
 
   function showUploadNotice(message, type = 'error') {
     uploadNotice.textContent = message;
-    uploadNotice.className = type === 'success' ? 'upload-notice visible success' : 'upload-notice visible';
+    if (type === 'success') uploadNotice.className = 'upload-notice visible success';
+    else if (type === 'info') uploadNotice.className = 'upload-notice visible info';
+    else uploadNotice.className = 'upload-notice visible';
   }
   function clearUploadNotice() {
     uploadNotice.textContent = '';
@@ -1537,29 +1554,145 @@ def collect_images(input_dir: Path) -> list[Path]:
     if (t.startsWith('image/jpeg') || t.startsWith('image/png') || t.startsWith('image/webp') || t.startsWith('image/bmp') || t.startsWith('image/gif')) {
       return true;
     }
+    if (t === 'image/heic' || t === 'image/heif' || t.includes('heic') || t.includes('heif')) {
+      return true;
+    }
     const n = (file.name || '').toLowerCase();
-    return /\.(jpe?g|png|webp|bmp|gif)$/i.test(n);
+    return /\.(jpe?g|png|webp|bmp|gif|heic|heif)$/i.test(n);
+  }
+
+  function isHeicLike(file) {
+    const t = (file.type || '').toLowerCase();
+    if (t === 'image/heic' || t === 'image/heif' || t.includes('heic') || t.includes('heif')) return true;
+    const n = (file.name || '').toLowerCase();
+    return /\.(heic|heif)$/i.test(n);
+  }
+
+  const HEIC2ANY_SRC = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+  let heic2anyLoadPromise = null;
+  function ensureHeic2anyLoaded() {
+    if (typeof window.heic2any === 'function') return Promise.resolve();
+    if (heic2anyLoadPromise) return heic2anyLoadPromise;
+    heic2anyLoadPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = HEIC2ANY_SRC;
+      s.async = true;
+      s.onload = () => {
+        if (typeof window.heic2any === 'function') resolve();
+        else {
+          heic2anyLoadPromise = null;
+          reject(new Error('heic2any'));
+        }
+      };
+      s.onerror = () => {
+        heic2anyLoadPromise = null;
+        reject(new Error('heic2any network'));
+      };
+      document.head.appendChild(s);
+    });
+    return heic2anyLoadPromise;
+  }
+
+  /** HEIC → JPEG в браузере (остальные форматы без изменений). */
+  async function prepareImageFiles(fileList) {
+    const out = [];
+    const needsLib = fileList.some(isHeicLike);
+    if (needsLib) await ensureHeic2anyLoaded();
+    for (const file of fileList) {
+      if (isHeicLike(file)) {
+        try {
+          const converted = await window.heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.92
+          });
+          const blobs = Array.isArray(converted) ? converted : [converted];
+          const stem = (file.name || 'photo').replace(/\.(heic|heif)$/i, '') || 'photo';
+          blobs.forEach((blob, j) => {
+            const name = blobs.length > 1 ? stem + '-' + (j + 1) + '.jpg' : stem + '.jpg';
+            out.push(new File([blob], name, { type: 'image/jpeg' }));
+          });
+        } catch (err) {
+          console.error('heic2any', err);
+          showUploadNotice('Этот снимок в HEIC не открылся. Сохрани как JPEG в «Фото» или выбери другой файл.');
+        }
+      } else {
+        out.push(file);
+      }
+    }
+    return out;
+  }
+
+  /** Имена вроде image.png у скринов из буфера — подменяем, чтобы скачивание и счётчик были понятнее. */
+  function normalizePastedImageFile(file, nameIndex) {
+    if (!file || !isSupportedImage(file)) return null;
+    const rawName = (file.name || '').trim().toLowerCase();
+    const generic = !rawName || rawName === 'image.png' || rawName === 'image.jpeg' || rawName === 'image.jpg'
+      || rawName === 'image.webp' || rawName === 'image.gif' || rawName === 'bitmap.png'
+      || rawName === 'image.heic' || rawName === 'image.heif';
+    if (!generic) return file;
+    const mime = (file.type || 'image/png').toLowerCase();
+    let ext = '.png';
+    if (mime.includes('jpeg')) ext = '.jpg';
+    else if (mime === 'image/webp') ext = '.webp';
+    else if (mime === 'image/gif') ext = '.gif';
+    else if (mime === 'image/bmp' || mime === 'image/x-ms-bmp') ext = '.bmp';
+    else if (mime.includes('heic') || mime.includes('heif')) ext = '.heic';
+    const base = nameIndex === 0 ? 'pasted' : 'pasted-' + (nameIndex + 1);
+    return new File([file], base + ext, { type: file.type || mime });
+  }
+
+  function imageFilesFromClipboardData(data) {
+    if (!data || !data.items) return [];
+    const out = [];
+    for (let i = 0; i < data.items.length; i++) {
+      const item = data.items[i];
+      if (item.kind !== 'file') continue;
+      const f = item.getAsFile();
+      const norm = normalizePastedImageFile(f, out.length);
+      if (norm) out.push(norm);
+    }
+    return out;
   }
 
   if (uploadPickBtn && fileInput) {
     uploadPickBtn.addEventListener('click', () => { fileInput.click(); });
   }
 
-  fileInput.addEventListener('change', (e) => {
-    if (!e.target.files.length) return;
+  fileInput.addEventListener('change', async (e) => {
+    const input = e.target;
+    if (!input.files.length) return;
     if (!cvReady) {
-      e.target.value = '';
+      input.value = '';
       showUploadNotice('Подожди, пока загрузится модель.');
       return;
     }
     clearUploadNotice();
-    const selected = Array.from(e.target.files);
-    const supported = selected.filter(isSupportedImage);
-    if (!supported.length) {
-      showUploadNotice('Этот формат не поддерживается. Выбери JPG, PNG, WEBP, BMP или GIF.');
+    const selected = Array.from(input.files).filter(isSupportedImage);
+    if (!selected.length) {
+      input.value = '';
+      showUploadNotice('Такой файл здесь не поддерживается. Нужно обычное фото (JPEG, PNG и т.п.).');
       return;
     }
-    loadFiles(supported);
+    if (selected.some(isHeicLike)) {
+      showUploadNotice('Открываем снимок с iPhone (HEIC)… Первый раз чуть дольше, нужен интернет.', 'info');
+    }
+    try {
+      const prepared = await prepareImageFiles(selected);
+      if (!prepared.length) {
+        input.value = '';
+        showUploadNotice('Ни один файл не удалось открыть.');
+        return;
+      }
+      clearUploadNotice();
+      loadFiles(prepared);
+    } catch (err) {
+      console.error(err);
+      input.value = '';
+      showUploadNotice('Не удалось открыть HEIC. Проверь интернет или сохрани снимок как JPEG в «Фото».');
+    } finally {
+      input.value = '';
+    }
   });
   uploadZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -1567,7 +1700,7 @@ def collect_images(input_dir: Path) -> list[Path]:
     uploadZone.classList.add('dragover');
   });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-  uploadZone.addEventListener('drop', (e) => {
+  uploadZone.addEventListener('drop', async (e) => {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
     if (!cvReady) {
@@ -1576,8 +1709,63 @@ def collect_images(input_dir: Path) -> list[Path]:
     }
     clearUploadNotice();
     const f = Array.from(e.dataTransfer.files).filter(isSupportedImage);
-    if (f.length) loadFiles(f);
-    else showUploadNotice('Не нашел подходящих файлов в выбранном наборе. Нужны JPG, PNG, WEBP, BMP или GIF.');
+    if (!f.length) {
+      showUploadNotice('Не нашел подходящих файлов в выбранном наборе. Нужны JPG, PNG, WEBP, BMP, GIF или HEIC.');
+      return;
+    }
+    if (f.some(isHeicLike)) {
+      showUploadNotice('Открываем снимок с iPhone (HEIC)… Первый раз чуть дольше, нужен интернет.', 'info');
+    }
+    try {
+      const prepared = await prepareImageFiles(f);
+      if (!prepared.length) {
+        showUploadNotice('Ни один файл не удалось открыть.');
+        return;
+      }
+      clearUploadNotice();
+      loadFiles(prepared);
+    } catch (err) {
+      console.error(err);
+      showUploadNotice('Не удалось открыть HEIC. Проверь интернет или сохрани снимок как JPEG в «Фото».');
+    }
+  });
+
+  document.addEventListener('paste', async (e) => {
+    const t = e.target;
+    const inField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+    if (inField) return;
+
+    const fromClip = imageFilesFromClipboardData(e.clipboardData);
+    if (fromClip.length) {
+      e.preventDefault();
+      if (!cvReady) {
+        showUploadNotice('Подожди, пока загрузится модель.');
+        return;
+      }
+      clearUploadNotice();
+      if (fromClip.some(isHeicLike)) {
+        showUploadNotice('Открываем снимок с iPhone (HEIC)… Первый раз чуть дольше, нужен интернет.', 'info');
+      }
+      try {
+        const prepared = await prepareImageFiles(fromClip);
+        if (!prepared.length) {
+          showUploadNotice('Ни один файл не удалось открыть.');
+          return;
+        }
+        clearUploadNotice();
+        loadFiles(prepared);
+      } catch (err) {
+        console.error(err);
+        showUploadNotice('Не удалось открыть HEIC. Проверь интернет или сохрани снимок как JPEG в «Фото».');
+      }
+      return;
+    }
+
+    const editorOpen = editorWrap.style.display === 'block';
+    if (editorOpen && copiedRegion) {
+      e.preventDefault();
+      pasteRegion();
+    }
   });
 
   function loadFiles(arr) {
@@ -1594,7 +1782,9 @@ def collect_images(input_dir: Path) -> list[Path]:
     updateSkipButtonVisibility();
     fileCounter.textContent = `${i + 1} / ${files.length}`;
     fileNameEl.textContent = files[i].name;
-    regions = [{ ...DEFAULT_REGION }];
+    regions = regions.length > 0 && i > 0
+      ? regions.map(r => ({ ...r }))
+      : [{ ...DEFAULT_REGION }];
     selectedIdx = 0;
     syncRegionToolButtons();
     const url = URL.createObjectURL(files[i]);
@@ -1612,7 +1802,7 @@ def collect_images(input_dir: Path) -> list[Path]:
     };
     imgEl.onerror = () => {
       URL.revokeObjectURL(url);
-      showUploadNotice('Не удалось открыть изображение. Попробуй другой файл (лучше JPG/PNG/WEBP).');
+      showUploadNotice('Не удалось открыть файл. Попробуй другое фото.');
     };
     imgEl.src = url;
   }
@@ -1788,6 +1978,15 @@ def collect_images(input_dir: Path) -> list[Path]:
     }
   }
 
+  /** Радиус inpaint для полного кадра: тот же «визуальный» размер, что на уменьшенном превью. */
+  function fullResInpaintRadius(radPreview) {
+    const r = parseInt(radPreview, 10) || 1;
+    if (!cvBGR || !cvPrevBGR || !cvPrevBGR.cols || !cvPrevBGR.rows) return Math.max(1, r);
+    const prevLong = Math.max(cvPrevBGR.cols, cvPrevBGR.rows);
+    const fullLong = Math.max(cvBGR.cols, cvBGR.rows);
+    return Math.max(1, Math.round(r * (fullLong / prevLong)));
+  }
+
   function runProcess() {
     if (!cvReady || !cvPrevBGR || !cvPrevSrc) return;
     const thr = parseInt(thrSlider.value);
@@ -1878,13 +2077,14 @@ def collect_images(input_dir: Path) -> list[Path]:
       try {
         const thr = parseInt(thrSlider.value);
         const rad = parseInt(radSlider.value);
+        const radFull = fullResInpaintRadius(rad);
         const H = cvBGR.rows, W = cvBGR.cols;
 
         const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
         fillMaskFromRegions(mask, cvSrc, thr);
 
         const result = new cv.Mat();
-        cv.inpaint(cvBGR, mask, result, rad, cv.INPAINT_TELEA);
+        cv.inpaint(cvBGR, mask, result, radFull, cv.INPAINT_TELEA);
         const rgba = new cv.Mat();
         cv.cvtColor(result, rgba, cv.COLOR_BGR2RGBA);
 
@@ -1900,7 +2100,7 @@ def collect_images(input_dir: Path) -> list[Path]:
 
         canvasToBlobSameFormat(dlCanvas, dlOpt, (blob, ext, flags) => {
           if (!blob || flags.fail) {
-            showUploadNotice('Не удалось сохранить файл. Попробуй другой формат или браузер.');
+            showUploadNotice('Не удалось сохранить. Попробуй другое фото или другой браузер.');
             finishBtn();
             mask.delete(); result.delete(); rgba.delete();
             return;
@@ -1921,8 +2121,8 @@ def collect_images(input_dir: Path) -> list[Path]:
             uploadZone.style.display = 'flex';
             fileInput.value = '';
             let msg = `Готово! Обработано файлов: ${files.length}. Можно загрузить новую партию.`;
-            if (flags.fallbackPng) msg += ' Один из файлов сохранён как PNG (браузер не смог выбранный тип).';
-            if (flags.gifAsPng) msg += ' GIF сохранён как PNG (на canvas только один кадр).';
+            if (flags.fallbackPng) msg += ' Один файл сохранён как PNG — так надёжнее выходит из браузера.';
+            if (flags.gifAsPng) msg += ' Анимированный GIF сохранён как обычная картинка (PNG): движение не переносится.';
             showUploadNotice(msg, 'success');
           }
           finishBtn();
@@ -1944,6 +2144,7 @@ def collect_images(input_dir: Path) -> list[Path]:
       editorWrap.style.display = 'none';
       uploadZone.style.display = 'flex';
       fileInput.value = '';
+      showUploadNotice('Готово: пачка закончилась (последнее фото пропущено). Можно загрузить новые файлы.', 'success');
     }
   });
   document.getElementById('resetBtn').addEventListener('click', () => {
@@ -1970,12 +2171,6 @@ def collect_images(input_dir: Path) -> list[Path]:
       if (inField) return;
       e.preventDefault();
       copySelectedRegion();
-      return;
-    }
-    if (mod && (e.key === 'v' || e.key === 'V')) {
-      if (inField) return;
-      e.preventDefault();
-      pasteRegion();
       return;
     }
 
