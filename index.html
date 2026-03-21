@@ -397,6 +397,12 @@
     color: var(--green);
   }
 
+  .btn-ghost:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
   .btn-primary {
     background: var(--blue);
     border-color: var(--blue);
@@ -509,6 +515,21 @@
     background: var(--blue-glow);
   }
 
+  .upload-zone.cv-loading .upload-pick {
+    display: none;
+  }
+
+  .upload-zone.cv-failed .upload-pick {
+    display: none;
+  }
+
+  .upload-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
   .upload-icon {
     flex-shrink: 0;
   }
@@ -573,12 +594,6 @@
     transition: color 0.3s, border-color 0.3s;
   }
 
-  .cv-status.ready {
-    color: var(--green);
-    border-color: rgba(16,185,129,0.35);
-    background: rgba(16,185,129,0.06);
-  }
-
   .cv-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
@@ -587,9 +602,27 @@
     animation: pulse 2s ease infinite;
   }
 
-  .cv-status.ready .cv-dot {
-    animation: none;
-    opacity: 1;
+  .cv-status.is-hidden {
+    display: none !important;
+  }
+
+  .cv-status.cv-status-failed {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    border-radius: 12px;
+    padding: 18px 20px;
+    max-width: 340px;
+    color: #fecaca;
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.09);
+    text-align: center;
+    line-height: 1.5;
+    font-size: 12px;
+  }
+
+  .cv-status-failed p {
+    margin: 0;
   }
 
   /* Editor wrap */
@@ -645,6 +678,32 @@
     height: auto;
   }
 
+  /* Стек: растровое превью + SVG поверх — рамка и ручки векторные, не «ломаются» по пикселям превью */
+  .editor-viewport {
+    display: grid;
+    width: 100%;
+    grid-template: 1fr / 1fr;
+  }
+
+  .editor-viewport > * {
+    grid-area: 1 / 1;
+    width: 100%;
+  }
+
+  .editor-viewport #leftCanvas {
+    height: auto;
+    pointer-events: none;
+  }
+
+  .selection-overlay {
+    height: 100%;
+    min-height: 100%;
+    align-self: stretch;
+    pointer-events: auto;
+    overflow: visible;
+    cursor: default;
+  }
+
   .canvas-label {
     position: absolute;
     top: 8px;
@@ -658,8 +717,65 @@
     z-index: 2;
   }
 
-  #leftCanvas {
-    cursor: default;
+  .canvas-toolbar {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    right: 8px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .canvas-toolbar .canvas-label {
+    position: static;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .region-icon-btn {
+    pointer-events: auto;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.42);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .region-icon-btn:hover:not(:disabled) {
+    background: rgba(0, 130, 220, 0.35);
+    border-color: rgba(0, 200, 255, 0.55);
+    color: #fff;
+  }
+
+  .region-icon-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .region-icon-group {
+    pointer-events: auto;
+    display: flex;
+    gap: 4px;
   }
 
   .processing-overlay {
@@ -906,19 +1022,21 @@
     <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" multiple style="display:none">
 
     <!-- Upload zone -->
-    <div class="upload-zone" id="uploadZone">
-      <svg class="upload-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="6" y="26" width="28" height="4" rx="2" fill="none" stroke="var(--blue)" stroke-width="2"/>
-        <path d="M20 22 L20 8" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
-        <path d="M13 15 L20 8 L27 15" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <p class="upload-title">Перетащи фото сюда</p>
-      <p class="upload-or">или</p>
-      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Выбрать файлы</button>
-      <p class="upload-hint">JPG · PNG · WEBP · BMP. Можно несколько фото за раз</p>
+    <div class="upload-zone cv-loading" id="uploadZone">
+      <div class="upload-pick">
+        <svg class="upload-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="26" width="28" height="4" rx="2" fill="none" stroke="var(--blue)" stroke-width="2"/>
+          <path d="M20 22 L20 8" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 15 L20 8 L27 15" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="upload-title">Перетащи фото сюда</p>
+        <p class="upload-or">или</p>
+        <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файлы</button>
+        <p class="upload-hint">JPG · PNG · WEBP · BMP. Можно несколько фото за раз</p>
+      </div>
       <p class="upload-notice" id="uploadNotice"></p>
       <div class="cv-status" id="cvStatus">
-        <span class="cv-dot"></span> Загрузка OpenCV…
+        <span class="cv-dot"></span> Загрузка модели…
       </div>
     </div>
 
@@ -931,8 +1049,17 @@
 
       <div class="canvas-split">
         <div class="canvas-panel">
-          <div class="canvas-label">ОРИГИНАЛ (тяни за углы)</div>
-          <canvas id="leftCanvas"></canvas>
+          <div class="canvas-toolbar">
+            <div class="canvas-label">Оригинал (тяни за углы)</div>
+            <div class="region-icon-group">
+              <button type="button" class="region-icon-btn" id="addRegionBtn" title="Добавить зону" aria-label="Добавить зону">+</button>
+              <button type="button" class="region-icon-btn" id="removeRegionBtn" title="Удалить выбранную зону" aria-label="Удалить зону">−</button>
+            </div>
+          </div>
+          <div class="editor-viewport" id="leftEditorViewport">
+            <canvas id="leftCanvas"></canvas>
+            <svg id="leftSelectionSvg" class="selection-overlay" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"></svg>
+          </div>
         </div>
         <div class="canvas-panel">
           <div class="canvas-label">РЕЗУЛЬТАТ</div>
@@ -1021,7 +1148,61 @@
                 </a>
               </div>
             </div>
-            <pre id="codeBlock" style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;"><span style="color:var(--text-dim);font-style:italic;">Загрузка скрипта…</span></pre>
+            <script type="text/plain" id="pyCodePreview" hidden aria-hidden="true">
+#!/usr/bin/env python3
+"""
+remove_watermark.py — removes doctor watermark from dental photos.
+Shows interactive editor before each photo.
+
+Keys in editor window:
+  ENTER / SPACE — process this photo
+  + or =        — add another zone (copy size, offset)
+  - or _        — remove selected zone (at least one remains)
+  S             — skip this photo
+  ESC           — quit all processing
+  Click a zone to select it (handles on the active zone only)
+"""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+
+SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
+
+# Max display width for the combined preview (fits 13" MacBook Air)
+MAX_DISPLAY_W = 1100
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", "-i", default=None)
+    parser.add_argument(
+        "--region", action="append", nargs=4, type=float,
+        metavar=("X1", "Y1", "X2", "Y2"),
+        dest="regions",
+        help="Normalized rectangle 0..1; pass multiple times for several zones",
+    )
+    parser.add_argument("--no-skip", action="store_true",
+                        help="Overwrite already processed files")
+    return parser.parse_args()
+
+
+def collect_images(input_dir: Path) -> list[Path]:
+    return sorted([
+        p for p in input_dir.iterdir()
+        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTS
+    ])
+
+
+# … дальше: интерактивный редактор, main(), обход папки …
+# Полный файл — после оплаты.
+            </script>
+            <pre id="codeBlock" style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;"></pre>
             <!-- PAYWALL OVERLAY -->
             <div style="position:absolute;inset:0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1098,16 +1279,13 @@
 
 <script>
   /* ══════════════════════════════════════════════════════
-     EXISTING JS — RAW_URL fetch, copyCmd, copyCode, downloadScript
+     Paywalled preview: укороченный текст в #pyCodePreview, без fetch полного .py
   ══════════════════════════════════════════════════════ */
-  const RAW_URL = 'https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/remove_watermark.py';
-
   const codeBlock = document.getElementById('codeBlock');
-
-  fetch(RAW_URL)
-    .then(r => r.text())
-    .then(text => { codeBlock.textContent = text; })
-    .catch(() => {});
+  const pyCodePreview = document.getElementById('pyCodePreview');
+  if (codeBlock && pyCodePreview) {
+    codeBlock.textContent = pyCodePreview.textContent.trim();
+  }
 
   function copyCmd(btn, text) {
     navigator.clipboard.writeText(text).then(() => {
@@ -1134,7 +1312,6 @@
 
   // ── OpenCV loading ──────────────────────────────────────────
   let cvReady = false;
-  let pendingSetup = false;
   let cvReadyMarked = false;
   let cvInitPollTimer = null;
   function markOpenCvReady() {
@@ -1145,11 +1322,16 @@
       cvInitPollTimer = null;
     }
     cvReady = true;
+    const uz = document.getElementById('uploadZone');
+    if (uz) {
+      uz.classList.remove('cv-loading', 'cv-failed');
+    }
     const s = document.getElementById('cvStatus');
-    s.innerHTML = '<span class="cv-dot"></span> OpenCV готов';
-    s.className = 'cv-status ready';
+    if (s) {
+      s.className = 'cv-status is-hidden';
+      s.innerHTML = '';
+    }
     if (imgEl) {
-      pendingSetup = false;
       setupMats();
       drawLeft();
       renderInitialPreview();
@@ -1174,9 +1356,18 @@
       if (attempts >= 80) {
         clearInterval(cvInitPollTimer);
         cvInitPollTimer = null;
+        const uz = document.getElementById('uploadZone');
+        if (uz) {
+          uz.classList.remove('cv-loading');
+          uz.classList.add('cv-failed');
+        }
         const s = document.getElementById('cvStatus');
-        s.innerHTML = '<span class="cv-dot"></span> OpenCV не загрузился. Обновите страницу.';
-        showUploadNotice('OpenCV не загрузился. Обнови страницу. Если не помогло — попробуй Chrome или Safari и отключи блокировщики для сайта.');
+        if (s) {
+          s.className = 'cv-status cv-status-failed';
+          s.innerHTML = '<p>Не удалось загрузить модель. Проверь сеть, VPN и блокировщики. Попробуй Chrome или Safari.</p><button type="button" class="btn btn-primary" id="cvRetryBtn">Повторить</button>';
+          const rb = document.getElementById('cvRetryBtn');
+          if (rb) rb.addEventListener('click', () => location.reload());
+        }
       }
     }, 100);
   }
@@ -1187,17 +1378,24 @@
   let imgEl = null;
   let cvSrc = null;      // RGBA full res
   let cvBGR = null;      // BGR full res (for download)
-  let cvPrevSrc = null;  // RGBA preview (scaled ≤900px)
+  let cvPrevSrc = null;  // RGBA preview (scaled, see previewMaxSide)
   let cvPrevBGR = null;  // BGR preview (for live inpaint)
   let resultMat = null;  // BGR result (preview resolution)
-  const DEFAULT_REGION = { x1: 0.45, y1: 0.88, x2: 1.0, y2: 1.0 };
-  let region = { ...DEFAULT_REGION };
+  const DEFAULT_REGION = { x1: 0.3, y1: 0.4, x2: 0.7, y2: 0.6 };
+  let regions = [{ ...DEFAULT_REGION }];
+  let selectedIdx = 0;
+  /** Копия области для Ctrl/Cmd+V (нормализованный прямоугольник 0–1). */
+  let copiedRegion = null;
   let drag = null;
   const HANDLE_R = 5;
   let dw = 0, dh = 0, dispScale = 1; // display canvas size & scale from img pixels to canvas pixels
-  let prevScale = 1;                  // scale from full-res to preview-res
   let debounceTimer = null;
-  const PREVIEW_MAX = 500;
+  /** Longest side of OpenCV preview mats; higher = sharper live preview (more RAM/CPU on phone). */
+  function previewMaxSide() {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 520;
+    const narrow = vw < 640;
+    return narrow ? 720 : 640;
+  }
   function renderInitialPreview() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(runProcess, 10);
@@ -1206,16 +1404,21 @@
     clearTimeout(debounceTimer);
     [cvSrc, cvBGR, cvPrevSrc, cvPrevBGR, resultMat].forEach(m => m && m.delete());
     cvSrc = null; cvBGR = null; cvPrevSrc = null; cvPrevBGR = null; resultMat = null;
-    region = { ...DEFAULT_REGION };
+    regions = [{ ...DEFAULT_REGION }];
+    selectedIdx = 0;
+    copiedRegion = null;
     drag = null;
-    pendingSetup = false;
+    syncRegionToolButtons();
   }
 
   // ── DOM refs ─────────────────────────────────────────────────
   const uploadZone   = document.getElementById('uploadZone');
+  const uploadPickBtn = document.getElementById('uploadPickBtn');
   const fileInput    = document.getElementById('fileInput');
   const editorWrap   = document.getElementById('editorWrap');
   const leftCanvas   = document.getElementById('leftCanvas');
+  const leftEditorViewport = document.getElementById('leftEditorViewport');
+  const leftSelectionSvg = document.getElementById('leftSelectionSvg');
   const rightCanvas  = document.getElementById('rightCanvas');
   const processingEl = document.getElementById('processing');
   const thrSlider    = document.getElementById('thrSlider');
@@ -1225,6 +1428,86 @@
   const fileCounter  = document.getElementById('fileCounter');
   const fileNameEl   = document.getElementById('fileName');
   const uploadNotice = document.getElementById('uploadNotice');
+  const addRegionBtn = document.getElementById('addRegionBtn');
+  const removeRegionBtn = document.getElementById('removeRegionBtn');
+
+  function syncRegionToolButtons() {
+    if (removeRegionBtn) removeRegionBtn.disabled = regions.length <= 1;
+  }
+
+  function normalizeRegionInPlace(reg) {
+    const x1 = Math.min(reg.x1, reg.x2), y1 = Math.min(reg.y1, reg.y2);
+    const x2 = Math.max(reg.x1, reg.x2), y2 = Math.max(reg.y1, reg.y2);
+    reg.x1 = x1; reg.y1 = y1; reg.x2 = x2; reg.y2 = y2;
+  }
+
+  /** Дубликат `tpl` по размеру, сдвинутый относительно `ref` как кнопка «+». */
+  function placeCloneNextTo(ref, tpl) {
+    const t = { ...tpl };
+    normalizeRegionInPlace(t);
+    let w = t.x2 - t.x1;
+    let h = t.y2 - t.y1;
+    if (w <= 0 || h <= 0) return null;
+    w = Math.max(0.08, w);
+    h = Math.max(0.06, h);
+    const r = { ...ref };
+    normalizeRegionInPlace(r);
+    let nx1 = r.x2 + 0.02;
+    let ny1 = r.y1;
+    if (nx1 + w > 1) {
+      nx1 = r.x1 - w - 0.02;
+      if (nx1 < 0) nx1 = Math.max(0, 1 - w - 0.02);
+    }
+    ny1 = Math.max(0, Math.min(1 - h, ny1));
+    nx1 = Math.max(0, Math.min(1 - w, nx1));
+    return { x1: nx1, y1: ny1, x2: nx1 + w, y2: ny1 + h };
+  }
+
+  function addRegion() {
+    const ref = regions[selectedIdx] || DEFAULT_REGION;
+    const placed = placeCloneNextTo(ref, ref);
+    if (!placed) return;
+    regions.push(placed);
+    normalizeRegionInPlace(regions[regions.length - 1]);
+    selectedIdx = regions.length - 1;
+    syncRegionToolButtons();
+    drawLeft();
+    scheduleProcess();
+  }
+
+  function copySelectedRegion() {
+    if (!imgEl || regions.length === 0) return;
+    const r = regions[selectedIdx];
+    if (!r) return;
+    copiedRegion = { x1: r.x1, y1: r.y1, x2: r.x2, y2: r.y2 };
+    normalizeRegionInPlace(copiedRegion);
+  }
+
+  function pasteRegion() {
+    if (!imgEl || !copiedRegion) return;
+    const ref = regions[selectedIdx] || copiedRegion;
+    const placed = placeCloneNextTo(ref, copiedRegion);
+    if (!placed) return;
+    regions.push(placed);
+    normalizeRegionInPlace(regions[regions.length - 1]);
+    selectedIdx = regions.length - 1;
+    syncRegionToolButtons();
+    drawLeft();
+    scheduleProcess();
+  }
+
+  function removeSelectedRegion() {
+    if (regions.length <= 1) return;
+    regions.splice(selectedIdx, 1);
+    selectedIdx = Math.min(selectedIdx, regions.length - 1);
+    syncRegionToolButtons();
+    drawLeft();
+    scheduleProcess();
+  }
+
+  addRegionBtn.addEventListener('click', addRegion);
+  removeRegionBtn.addEventListener('click', removeSelectedRegion);
+  syncRegionToolButtons();
 
   function showUploadNotice(message, type = 'error') {
     uploadNotice.textContent = message;
@@ -1245,8 +1528,17 @@
     return /\.(jpe?g|png|webp|bmp|gif)$/i.test(n);
   }
 
+  if (uploadPickBtn && fileInput) {
+    uploadPickBtn.addEventListener('click', () => { fileInput.click(); });
+  }
+
   fileInput.addEventListener('change', (e) => {
     if (!e.target.files.length) return;
+    if (!cvReady) {
+      e.target.value = '';
+      showUploadNotice('Подожди, пока загрузится модель.');
+      return;
+    }
     clearUploadNotice();
     const selected = Array.from(e.target.files);
     const supported = selected.filter(isSupportedImage);
@@ -1256,11 +1548,19 @@
     }
     loadFiles(supported);
   });
-  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (!cvReady) return;
+    uploadZone.classList.add('dragover');
+  });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
   uploadZone.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
+    if (!cvReady) {
+      showUploadNotice('Подожди, пока загрузится модель.');
+      return;
+    }
     clearUploadNotice();
     const f = Array.from(e.dataTransfer.files).filter(isSupportedImage);
     if (f.length) loadFiles(f);
@@ -1280,6 +1580,9 @@
   function loadFile(i) {
     fileCounter.textContent = `${i + 1} / ${files.length}`;
     fileNameEl.textContent = files[i].name;
+    regions = [{ ...DEFAULT_REGION }];
+    selectedIdx = 0;
+    syncRegionToolButtons();
     const url = URL.createObjectURL(files[i]);
     imgEl = new Image();
     imgEl.onload = () => {
@@ -1291,8 +1594,6 @@
         setupMats();
         drawLeft();
         renderInitialPreview();
-      } else {
-        pendingSetup = true;
       }
     };
     imgEl.onerror = () => {
@@ -1310,8 +1611,7 @@
     cvBGR = new cv.Mat();
     cv.cvtColor(cvSrc, cvBGR, cv.COLOR_RGBA2BGR);
 
-    const s = Math.min(1, PREVIEW_MAX / Math.max(imgEl.width, imgEl.height));
-    prevScale = s;
+    const s = Math.min(1, previewMaxSide() / Math.max(imgEl.width, imgEl.height));
     const pw = Math.round(imgEl.width * s);
     const ph = Math.round(imgEl.height * s);
     const dsize = new cv.Size(pw, ph);
@@ -1326,56 +1626,100 @@
 
   // ── Canvas setup ─────────────────────────────────────────────
   function setupCanvas() {
-    const container = leftCanvas.parentElement;
+    const container = leftEditorViewport ? leftEditorViewport.parentElement : leftCanvas.parentElement;
     const maxW = container.clientWidth || 360;
     const ratio = imgEl.height / imgEl.width;
     dw = Math.min(maxW, imgEl.width);
     dh = Math.round(dw * ratio);
-    if (dh > 400) { dh = 400; dw = Math.round(dh / ratio); }
+    const maxDh = typeof window !== 'undefined'
+      ? Math.min(520, Math.floor(window.innerHeight * 0.42))
+      : 480;
+    if (dh > maxDh) { dh = maxDh; dw = Math.round(dh / ratio); }
     dispScale = dw / imgEl.width;
     leftCanvas.width  = dw; leftCanvas.height = dh;
     rightCanvas.width = dw; rightCanvas.height = dh;
   }
 
-  // ── Draw left (original + selection + mask highlight) ────────
+  /** Векторная рамка и ручки в долях кадра 0–1; обводка не масштабируется с превью (остаётся чёткой на Retina). */
+  function renderSelectionSvg() {
+    if (!leftSelectionSvg) return;
+    const svg = leftSelectionSvg;
+    if (!imgEl || dw < 1 || dh < 1) {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      return;
+    }
+    const NS = 'http://www.w3.org/2000/svg';
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    const hx = HANDLE_R / dw;
+    const hy = HANDLE_R / dh;
+
+    regions.forEach((reg, ri) => {
+      const x1 = reg.x1, y1 = reg.y1, x2 = reg.x2, y2 = reg.y2;
+      const rw = x2 - x1, rh = y2 - y1;
+      if (rw <= 0 || rh <= 0) return;
+
+      const active = ri === selectedIdx;
+      const stroke = document.createElementNS(NS, 'rect');
+      stroke.setAttribute('x', String(x1));
+      stroke.setAttribute('y', String(y1));
+      stroke.setAttribute('width', String(rw));
+      stroke.setAttribute('height', String(rh));
+      stroke.setAttribute('fill', 'none');
+      stroke.setAttribute('stroke', active ? 'rgba(0,200,255,0.95)' : 'rgba(0,200,255,0.4)');
+      stroke.setAttribute('stroke-width', active ? '2' : '1');
+      stroke.setAttribute('vector-effect', 'non-scaling-stroke');
+      svg.appendChild(stroke);
+
+      if (active) {
+        const corners = [[x1, y1], [x2, y1], [x1, y2], [x2, y2]];
+        corners.forEach(([cx, cy]) => {
+          const hr = document.createElementNS(NS, 'rect');
+          hr.setAttribute('x', String(cx - hx));
+          hr.setAttribute('y', String(cy - hy));
+          hr.setAttribute('width', String(hx * 2));
+          hr.setAttribute('height', String(hy * 2));
+          hr.setAttribute('fill', '#ffffff');
+          hr.setAttribute('stroke', '#0082dc');
+          hr.setAttribute('stroke-width', '1');
+          hr.setAttribute('vector-effect', 'non-scaling-stroke');
+          svg.appendChild(hr);
+        });
+      }
+    });
+  }
+
+  // ── Draw left (original + dim + mask highlight; рамка — в SVG) ─
   function drawLeft() {
+    if (!imgEl) {
+      renderSelectionSvg();
+      return;
+    }
     const ctx = leftCanvas.getContext('2d');
     ctx.drawImage(imgEl, 0, 0, dw, dh);
 
     const W = imgEl.width, H = imgEl.height;
-    const sx1 = Math.round(region.x1 * W * dispScale);
-    const sy1 = Math.round(region.y1 * H * dispScale);
-    const sx2 = Math.round(region.x2 * W * dispScale);
-    const sy2 = Math.round(region.y2 * H * dispScale);
-    const sw = sx2 - sx1, sh = sy2 - sy1;
-    if (sw > 0 && sh > 0) {
-      // dim overlay
+    regions.forEach((reg) => {
+      const sx1 = Math.round(reg.x1 * W * dispScale);
+      const sy1 = Math.round(reg.y1 * H * dispScale);
+      const sx2 = Math.round(reg.x2 * W * dispScale);
+      const sy2 = Math.round(reg.y2 * H * dispScale);
+      const sw = sx2 - sx1, sh = sy2 - sy1;
+      if (sw <= 0 || sh <= 0) return;
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.fillRect(sx1, sy1, sw, sh);
-      // mask highlight via opencv
-      drawMaskHighlight(ctx, sx1, sy1, sw, sh);
-      // box
-      ctx.strokeStyle = 'rgba(0,200,255,0.9)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sx1, sy1, sw, sh);
-      // handles
-      for (const [cx, cy] of [[sx1,sy1],[sx2,sy1],[sx1,sy2],[sx2,sy2]]) {
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(cx - HANDLE_R, cy - HANDLE_R, HANDLE_R*2, HANDLE_R*2);
-        ctx.strokeStyle = '#0082dc';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - HANDLE_R, cy - HANDLE_R, HANDLE_R*2, HANDLE_R*2);
-      }
-    }
+      drawMaskHighlight(ctx, sx1, sy1, sw, sh, reg);
+    });
+    renderSelectionSvg();
   }
 
-  function drawMaskHighlight(ctx, sx1, sy1, sw, sh) {
+  function drawMaskHighlight(ctx, sx1, sy1, sw, sh, reg) {
     if (!cvPrevSrc) return;
     const thr = parseInt(thrSlider.value);
-    const px1 = Math.round(region.x1 * cvPrevSrc.cols);
-    const py1 = Math.round(region.y1 * cvPrevSrc.rows);
-    const px2 = Math.round(region.x2 * cvPrevSrc.cols);
-    const py2 = Math.round(region.y2 * cvPrevSrc.rows);
+    const px1 = Math.round(reg.x1 * cvPrevSrc.cols);
+    const py1 = Math.round(reg.y1 * cvPrevSrc.rows);
+    const px2 = Math.round(reg.x2 * cvPrevSrc.cols);
+    const py2 = Math.round(reg.y2 * cvPrevSrc.rows);
     if (px2 <= px1 || py2 <= py1) return;
     try {
       const rect = new cv.Rect(px1, py1, px2-px1, py2-py1);
@@ -1404,32 +1748,44 @@
     debounceTimer = setTimeout(runProcess, 350);
   }
 
-  function runProcess() {
-    if (!cvReady || !cvPrevBGR) return;
-    const thr = parseInt(thrSlider.value);
-    const rad = parseInt(radSlider.value);
-    const H = cvPrevBGR.rows, W = cvPrevBGR.cols;
-    const x1 = Math.max(0, Math.round(region.x1 * W));
-    const y1 = Math.max(0, Math.round(region.y1 * H));
-    const x2 = Math.min(W, Math.round(region.x2 * W));
-    const y2 = Math.min(H, Math.round(region.y2 * H));
-    if (x2 <= x1 || y2 <= y1) return;
-
-    processingEl.classList.add('visible');
-    // Use requestAnimationFrame to allow browser to paint the overlay first
-    requestAnimationFrame(() => {
-      try {
-        const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
-        const rect = new cv.Rect(x1, y1, x2-x1, y2-y1);
-        const roi  = cvPrevSrc.roi(rect);
+  /** Fills mask (H×W CV_8UC1) with thresholded bright pixels from srcRGBA for every region. */
+  function fillMaskFromRegions(mask, srcRGBA, thr) {
+    const H = mask.rows, W = mask.cols;
+    const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5, 5));
+    try {
+      for (const reg of regions) {
+        const x1 = Math.max(0, Math.round(reg.x1 * W));
+        const y1 = Math.max(0, Math.round(reg.y1 * H));
+        const x2 = Math.min(W, Math.round(reg.x2 * W));
+        const y2 = Math.min(H, Math.round(reg.y2 * H));
+        if (x2 <= x1 || y2 <= y1) continue;
+        const rect = new cv.Rect(x1, y1, x2 - x1, y2 - y1);
+        const roi = srcRGBA.roi(rect);
         const gray = new cv.Mat();
         cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
         const bright = new cv.Mat();
         cv.threshold(gray, bright, thr, 255, cv.THRESH_BINARY);
-        const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5));
-        cv.dilate(bright, bright, kernel, new cv.Point(-1,-1), 2);
+        cv.dilate(bright, bright, kernel, new cv.Point(-1, -1), 2);
         const maskRoi = mask.roi(rect);
         bright.copyTo(maskRoi);
+        roi.delete(); gray.delete(); bright.delete(); maskRoi.delete();
+      }
+    } finally {
+      kernel.delete();
+    }
+  }
+
+  function runProcess() {
+    if (!cvReady || !cvPrevBGR || !cvPrevSrc) return;
+    const thr = parseInt(thrSlider.value);
+    const rad = parseInt(radSlider.value);
+    const H = cvPrevBGR.rows, W = cvPrevBGR.cols;
+
+    processingEl.classList.add('visible');
+    requestAnimationFrame(() => {
+      try {
+        const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
+        fillMaskFromRegions(mask, cvPrevSrc, thr);
 
         if (resultMat) resultMat.delete();
         resultMat = new cv.Mat();
@@ -1439,12 +1795,67 @@
         cv.cvtColor(resultMat, rgba, cv.COLOR_BGR2RGBA);
         cv.imshow(rightCanvas, rgba);
 
-        roi.delete(); gray.delete(); bright.delete(); kernel.delete(); maskRoi.delete(); mask.delete(); rgba.delete();
+        mask.delete(); rgba.delete();
       } catch(e) {
         console.error('inpaint error', e);
       }
       processingEl.classList.remove('visible');
     });
+  }
+
+  const DOWNLOAD_BTN_HTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Скачать и далее';
+
+  /** MIME + расширение как у загрузки; JPEG/WebP — качество 1 (макс. в браузере). GIF → PNG (один кадр на canvas). */
+  function inferDownloadOptions(file) {
+    const name = file.name || 'image';
+    const lower = name.toLowerCase();
+    const type = (file.type || '').toLowerCase();
+    const mm = lower.match(/\.([a-z0-9+]+)$/i);
+    const extFromName = mm ? '.' + mm[1].toLowerCase() : '';
+    const base = name.includes('.') ? name.replace(/\.[^.]+$/, '') : name;
+
+    if (extFromName === '.jpeg' || extFromName === '.jpg' || (!extFromName && type === 'image/jpeg'))
+      return { mime: 'image/jpeg', ext: extFromName === '.jpeg' ? '.jpeg' : '.jpg', base, gifAsPng: false };
+    if (extFromName === '.png' || (!extFromName && type === 'image/png'))
+      return { mime: 'image/png', ext: '.png', base, gifAsPng: false };
+    if (extFromName === '.webp' || (!extFromName && type === 'image/webp'))
+      return { mime: 'image/webp', ext: '.webp', base, gifAsPng: false };
+    if (extFromName === '.bmp' || type === 'image/bmp' || type === 'image/x-ms-bmp')
+      return { mime: 'image/bmp', ext: '.bmp', base, gifAsPng: false };
+    if (extFromName === '.gif' || type === 'image/gif')
+      return { mime: 'image/png', ext: '.png', base, gifAsPng: true };
+
+    return { mime: 'image/png', ext: extFromName || '.png', base, gifAsPng: false };
+  }
+
+  function canvasToBlobSameFormat(canvas, opt, callback) {
+    const okMeta = { fallbackPng: false, gifAsPng: !!opt.gifAsPng };
+    const onBlob = (blob, usedExt) => {
+      if (blob && blob.size > 0) {
+        callback(blob, usedExt, okMeta);
+        return;
+      }
+      if (opt.mime !== 'image/png') {
+        canvas.toBlob((b2) => {
+          if (b2 && b2.size > 0) callback(b2, '.png', { fallbackPng: true, gifAsPng: false });
+          else callback(null, null, { fail: true });
+        }, 'image/png');
+      } else {
+        callback(null, null, { fail: true });
+      }
+    };
+
+    if (opt.mime === 'image/png') {
+      canvas.toBlob((blob) => onBlob(blob, opt.ext), 'image/png');
+    } else if (opt.mime === 'image/jpeg') {
+      canvas.toBlob((blob) => onBlob(blob, opt.ext), 'image/jpeg', 1);
+    } else if (opt.mime === 'image/webp') {
+      canvas.toBlob((blob) => onBlob(blob, opt.ext), 'image/webp', 1);
+    } else if (opt.mime === 'image/bmp') {
+      canvas.toBlob((blob) => onBlob(blob, opt.ext), 'image/bmp');
+    } else {
+      canvas.toBlob((blob) => onBlob(blob, '.png'), 'image/png');
+    }
   }
 
   // ── Download (full resolution) ────────────────────────────────
@@ -1458,22 +1869,9 @@
         const thr = parseInt(thrSlider.value);
         const rad = parseInt(radSlider.value);
         const H = cvBGR.rows, W = cvBGR.cols;
-        const x1 = Math.max(0, Math.round(region.x1 * W));
-        const y1 = Math.max(0, Math.round(region.y1 * H));
-        const x2 = Math.min(W, Math.round(region.x2 * W));
-        const y2 = Math.min(H, Math.round(region.y2 * H));
 
         const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
-        const rect = new cv.Rect(x1, y1, x2-x1, y2-y1);
-        const roi  = cvSrc.roi(rect);
-        const gray = new cv.Mat();
-        cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
-        const bright = new cv.Mat();
-        cv.threshold(gray, bright, thr, 255, cv.THRESH_BINARY);
-        const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5));
-        cv.dilate(bright, bright, kernel, new cv.Point(-1,-1), 2);
-        const maskRoi = mask.roi(rect);
-        bright.copyTo(maskRoi);
+        fillMaskFromRegions(mask, cvSrc, thr);
 
         const result = new cv.Mat();
         cv.inpaint(cvBGR, mask, result, rad, cv.INPAINT_TELEA);
@@ -1483,14 +1881,30 @@
         const dlCanvas = document.createElement('canvas');
         dlCanvas.width = W; dlCanvas.height = H;
         cv.imshow(dlCanvas, rgba);
-        dlCanvas.toBlob((blob) => {
+
+        const file = files[fileIdx];
+        const dlOpt = inferDownloadOptions(file);
+        const outBase = dlOpt.base;
+
+        const finishBtn = () => {
+          btn.innerHTML = DOWNLOAD_BTN_HTML;
+          btn.disabled = false;
+        };
+
+        canvasToBlobSameFormat(dlCanvas, dlOpt, (blob, ext, flags) => {
+          if (!blob || flags.fail) {
+            showUploadNotice('Не удалось сохранить файл. Попробуй другой формат или браузер.');
+            finishBtn();
+            mask.delete(); result.delete(); rgba.delete();
+            return;
+          }
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'cleaned_' + files[fileIdx].name.replace(/\.[^.]+$/, '') + '.jpg';
+          a.download = 'cleaned_' + outBase + ext;
           a.click();
           URL.revokeObjectURL(url);
-          // advance to next file
+
           fileIdx++;
           if (fileIdx < files.length) {
             loadFile(fileIdx);
@@ -1499,16 +1913,19 @@
             editorWrap.style.display = 'none';
             uploadZone.style.display = 'flex';
             fileInput.value = '';
-            showUploadNotice(`Готово! Обработано файлов: ${files.length}. Можно загрузить новую партию.`, 'success');
+            let msg = `Готово! Обработано файлов: ${files.length}. Можно загрузить новую партию.`;
+            if (flags.fallbackPng) msg += ' Один из файлов сохранён как PNG (браузер не смог выбранный тип).';
+            if (flags.gifAsPng) msg += ' GIF сохранён как PNG (на canvas только один кадр).';
+            showUploadNotice(msg, 'success');
           }
-        }, 'image/jpeg', 0.97);
-
-        roi.delete(); gray.delete(); bright.delete(); kernel.delete(); maskRoi.delete(); mask.delete(); result.delete(); rgba.delete();
+          finishBtn();
+          mask.delete(); result.delete(); rgba.delete();
+        });
       } catch(e) {
         console.error('download error', e);
+        btn.innerHTML = DOWNLOAD_BTN_HTML;
+        btn.disabled = false;
       }
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Скачать и далее';
-      btn.disabled = false;
     });
   });
 
@@ -1538,117 +1955,153 @@
   // ── Keyboard shortcuts ────────────────────────────────────────
   document.addEventListener('keydown', (e) => {
     if (editorWrap.style.display === 'none' || editorWrap.style.display === '') return;
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('downloadBtn').click(); }
+    const t = e.target;
+    const inField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && (e.key === 'c' || e.key === 'C')) {
+      if (inField) return;
+      e.preventDefault();
+      copySelectedRegion();
+      return;
+    }
+    if (mod && (e.key === 'v' || e.key === 'V')) {
+      if (inField) return;
+      e.preventDefault();
+      pasteRegion();
+      return;
+    }
+
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('downloadBtn').click(); }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (inField) return;
+      e.preventDefault();
+      removeSelectedRegion();
+    }
   });
 
   // ── Mouse drag ────────────────────────────────────────────────
-  function getCorner(mx, my) {
+  /** Top-most region first (last in list). */
+  function hitTest(mx, my) {
     const W = imgEl.width, H = imgEl.height;
-    const pts = [
-      [region.x1*W*dispScale, region.y1*H*dispScale],
-      [region.x2*W*dispScale, region.y1*H*dispScale],
-      [region.x1*W*dispScale, region.y2*H*dispScale],
-      [region.x2*W*dispScale, region.y2*H*dispScale],
-    ];
-    for (let i=0; i<pts.length; i++) {
-      if (Math.abs(mx-pts[i][0])<=HANDLE_R+4 && Math.abs(my-pts[i][1])<=HANDLE_R+4) return i;
+    for (let ri = regions.length - 1; ri >= 0; ri--) {
+      const reg = regions[ri];
+      const pts = [
+        [reg.x1 * W * dispScale, reg.y1 * H * dispScale],
+        [reg.x2 * W * dispScale, reg.y1 * H * dispScale],
+        [reg.x1 * W * dispScale, reg.y2 * H * dispScale],
+        [reg.x2 * W * dispScale, reg.y2 * H * dispScale],
+      ];
+      for (let i = 0; i < 4; i++) {
+        if (Math.abs(mx - pts[i][0]) <= HANDLE_R + 4 && Math.abs(my - pts[i][1]) <= HANDLE_R + 4)
+          return { kind: 'corner', idx: ri, corner: i };
+      }
+    }
+    for (let ri = regions.length - 1; ri >= 0; ri--) {
+      const reg = regions[ri];
+      const sx1 = reg.x1 * W * dispScale, sy1 = reg.y1 * H * dispScale;
+      const sx2 = reg.x2 * W * dispScale, sy2 = reg.y2 * H * dispScale;
+      if (mx > sx1 && mx < sx2 && my > sy1 && my < sy2) return { kind: 'inside', idx: ri };
     }
     return null;
   }
-  function insideRect(mx, my) {
-    const W = imgEl.width, H = imgEl.height;
-    const sx1=region.x1*W*dispScale, sy1=region.y1*H*dispScale;
-    const sx2=region.x2*W*dispScale, sy2=region.y2*H*dispScale;
-    return mx>sx1 && mx<sx2 && my>sy1 && my<sy2;
-  }
+  /** Координаты в системе превью 0…dw / 0…dh (как раньше на canvas), hitTest без изменений. */
   function canvasPos(e) {
-    const r = leftCanvas.getBoundingClientRect();
-    const scaleX = leftCanvas.width / r.width;
-    const scaleY = leftCanvas.height / r.height;
+    const el = leftEditorViewport || leftCanvas;
+    const r = el.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
-    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+    const nx = (src.clientX - r.left) / Math.max(1e-6, r.width);
+    const ny = (src.clientY - r.top) / Math.max(1e-6, r.height);
+    return { x: nx * dw, y: ny * dh };
+  }
+
+  function setLeftInteractCursor(c) {
+    const t = leftSelectionSvg || leftCanvas;
+    t.style.cursor = c;
   }
 
   function updateCanvasCursor(e) {
     if (!imgEl) {
-      leftCanvas.style.cursor = 'default';
+      setLeftInteractCursor('default');
       return;
     }
     if (drag) {
       if (drag.type === 'move') {
-        leftCanvas.style.cursor = 'grabbing';
+        setLeftInteractCursor('grabbing');
         return;
       }
       const corner = drag.corner;
-      leftCanvas.style.cursor = (corner === 0 || corner === 3) ? 'nwse-resize' : 'nesw-resize';
+      setLeftInteractCursor((corner === 0 || corner === 3) ? 'nwse-resize' : 'nesw-resize');
       return;
     }
     const { x, y } = canvasPos(e);
-    const corner = getCorner(x, y);
-    if (corner !== null) {
-      leftCanvas.style.cursor = (corner === 0 || corner === 3) ? 'nwse-resize' : 'nesw-resize';
+    const hit = hitTest(x, y);
+    if (hit && hit.kind === 'corner') {
+      const c = hit.corner;
+      setLeftInteractCursor((c === 0 || c === 3) ? 'nwse-resize' : 'nesw-resize');
       return;
     }
-    if (insideRect(x, y)) {
-      leftCanvas.style.cursor = 'grab';
+    if (hit && hit.kind === 'inside') {
+      setLeftInteractCursor('grab');
       return;
     }
-    leftCanvas.style.cursor = 'default';
+    setLeftInteractCursor('default');
   }
 
-  leftCanvas.addEventListener('mousedown', startDrag);
-  leftCanvas.addEventListener('mousemove', (e) => { updateCanvasCursor(e); moveDrag(e); });
-  leftCanvas.addEventListener('mouseup', endDrag);
-  leftCanvas.addEventListener('mouseleave', () => { leftCanvas.style.cursor = 'default'; });
-  leftCanvas.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
-  leftCanvas.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
-  leftCanvas.addEventListener('touchend', onCanvasTouchEnd, { passive: false });
+  const leftInteractEl = leftSelectionSvg || leftCanvas;
+  leftInteractEl.addEventListener('mousedown', startDrag);
+  leftInteractEl.addEventListener('mousemove', (e) => { updateCanvasCursor(e); moveDrag(e); });
+  leftInteractEl.addEventListener('mouseup', endDrag);
+  leftInteractEl.addEventListener('mouseleave', () => { setLeftInteractCursor('default'); });
+  leftInteractEl.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
+  leftInteractEl.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
+  leftInteractEl.addEventListener('touchend', onCanvasTouchEnd, { passive: false });
 
   function startDrag(e) {
     if (!imgEl) return;
     const {x, y} = canvasPos(e);
-    const c = getCorner(x, y);
-    if (c !== null) {
-      drag = { type:'corner', corner:c };
-      return true;
-    } else if (insideRect(x, y)) {
-      drag = { type:'move', start:{x,y}, orig:{...region} };
-      return true;
+    const hit = hitTest(x, y);
+    if (!hit) return false;
+    selectedIdx = hit.idx;
+    const reg = regions[selectedIdx];
+    if (hit.kind === 'corner') {
+      drag = { type: 'corner', corner: hit.corner, regionIdx: hit.idx };
+    } else {
+      drag = { type: 'move', start: { x, y }, orig: { ...reg }, regionIdx: hit.idx };
     }
-    return false;
+    drawLeft();
+    return true;
   }
   function moveDrag(e) {
     if (!drag || !imgEl) return;
+    const reg = regions[drag.regionIdx];
     const {x, y} = canvasPos(e);
     const W = imgEl.width, H = imgEl.height;
     const ix = Math.max(0, Math.min(1, x / (W * dispScale)));
     const iy = Math.max(0, Math.min(1, y / (H * dispScale)));
     if (drag.type === 'corner') {
       const c = drag.corner;
-      if (c===0) { region.x1=ix; region.y1=iy; }
-      else if (c===1) { region.x2=ix; region.y1=iy; }
-      else if (c===2) { region.x1=ix; region.y2=iy; }
-      else { region.x2=ix; region.y2=iy; }
+      if (c === 0) { reg.x1 = ix; reg.y1 = iy; }
+      else if (c === 1) { reg.x2 = ix; reg.y1 = iy; }
+      else if (c === 2) { reg.x1 = ix; reg.y2 = iy; }
+      else { reg.x2 = ix; reg.y2 = iy; }
     } else {
       const dx = (x - drag.start.x) / (W * dispScale);
       const dy = (y - drag.start.y) / (H * dispScale);
       const nw = drag.orig.x2 - drag.orig.x1;
       const nh = drag.orig.y2 - drag.orig.y1;
-      region.x1 = Math.max(0, Math.min(1-nw, drag.orig.x1+dx));
-      region.y1 = Math.max(0, Math.min(1-nh, drag.orig.y1+dy));
-      region.x2 = region.x1 + nw;
-      region.y2 = region.y1 + nh;
+      reg.x1 = Math.max(0, Math.min(1 - nw, drag.orig.x1 + dx));
+      reg.y1 = Math.max(0, Math.min(1 - nh, drag.orig.y1 + dy));
+      reg.x2 = reg.x1 + nw;
+      reg.y2 = reg.y1 + nh;
     }
-    // normalise
-    const tmp = { x1:Math.min(region.x1,region.x2), y1:Math.min(region.y1,region.y2),
-                  x2:Math.max(region.x1,region.x2), y2:Math.max(region.y1,region.y2) };
-    region = tmp;
+    normalizeRegionInPlace(reg);
     drawLeft();
     scheduleProcess();
   }
   function endDrag() {
     drag = null;
-    leftCanvas.style.cursor = 'default';
+    setLeftInteractCursor('default');
   }
 
   function onCanvasTouchStart(e) {
