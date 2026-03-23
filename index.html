@@ -119,8 +119,6 @@
     background: rgba(34,211,238,0.05);
   }
 
-  .badge-mobile { display: none; }
-
   .badge::before {
     content: '';
     width: 6px; height: 6px;
@@ -976,14 +974,11 @@
 
   @media (max-width: 560px) {
     .badge {
-      white-space: nowrap;
       font-size: 11px;
       letter-spacing: 0.06em;
       padding: 4px 8px;
       gap: 4px;
     }
-    .badge-desktop { display: none; }
-    .badge-mobile { display: inline; }
     .canvas-split {
       grid-template-columns: 1fr;
     }
@@ -1020,8 +1015,7 @@
   <!-- HEADER -->
   <header class="header">
     <div class="badge">
-      <span class="badge-desktop">Работает в&nbsp;браузере · Бесплатно · Без&nbsp;регистрации</span>
-      <span class="badge-mobile">Бесплатно · Без&nbsp;регистрации</span>
+      <span>Для корректной работы — включите VPN</span>
     </div>
     <h1>Убрать водяной знак с&nbsp;фото</h1>
     <p class="subtitle">
