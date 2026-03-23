@@ -25,7 +25,9 @@
 <meta name="twitter:image:alt" content="Удаление водяного знака с фото">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -60,7 +62,7 @@
     --text-mid: #94a3b8;
     --green: #10b981;
     --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
+    --sans: 'Manrope', sans-serif;
   }
 
   html { scroll-behavior: smooth; }
@@ -107,7 +109,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     color: var(--cyan);
     letter-spacing: 0.08em;
@@ -119,13 +121,12 @@
     background: rgba(34,211,238,0.05);
   }
 
-  .badge::before {
-    content: '';
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 8px var(--cyan);
-    animation: pulse 2s ease infinite;
+  .badge-icon {
+    width: 13px;
+    height: 13px;
+    color: var(--cyan);
+    stroke-width: 1.5;
+    flex-shrink: 0;
   }
 
   @keyframes pulse {
@@ -134,9 +135,9 @@
   }
 
   h1 {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: clamp(28px, 5vw, 42px);
-    font-weight: 500;
+    font-weight: 600;
     color: #fff;
     letter-spacing: -0.02em;
     line-height: 1.15;
@@ -165,7 +166,7 @@
   .section:nth-child(5) { animation-delay: 0.26s; }
 
   .section-label {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.12em;
@@ -188,7 +189,7 @@
     font-size: 19px;
     font-weight: 600;
     color: #fff;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     letter-spacing: -0.01em;
   }
 
@@ -209,7 +210,7 @@
   /* ── CMD BLOCK ── */
   .cmd {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 0;
     background: var(--surface);
     border: 1px solid var(--border2);
@@ -224,6 +225,7 @@
   .cmd-prompt {
     font-family: var(--mono);
     font-size: 12px;
+    line-height: 1;
     color: var(--blue);
     padding: 12px 14px;
     background: rgba(59,130,246,0.07);
@@ -231,6 +233,13 @@
     white-space: nowrap;
     user-select: none;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cmd-prompt i {
+    display: block;
   }
 
   .cmd-text {
@@ -250,7 +259,7 @@
     color: var(--text-dim);
     cursor: pointer;
     padding: 12px 14px;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     letter-spacing: 0.05em;
     transition: color 0.15s, background 0.15s;
@@ -278,10 +287,8 @@
     transition: border-color 0.15s;
   }
 
-  .control-row:hover { border-color: var(--border2); }
-
   .control-key {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 12px;
     color: var(--cyan);
     padding: 9px 14px;
@@ -294,7 +301,8 @@
     font-size: 13px;
     color: var(--text-mid);
     padding: 9px 14px;
-    background: rgba(15,19,24,0.5);
+    background: var(--surface2);
+    border-left: 1px solid var(--border2);
     display: flex;
     align-items: center;
   }
@@ -364,7 +372,7 @@
   }
 
   .btn {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     letter-spacing: 0.06em;
     cursor: pointer;
@@ -447,7 +455,7 @@
   }
 
   .footer-note {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     color: var(--text-dim);
   }
@@ -513,12 +521,9 @@
     background: var(--blue-glow);
   }
 
-  .upload-zone.cv-loading .upload-pick {
-    display: none;
-  }
-
-  .upload-zone.cv-failed .upload-pick {
-    display: none;
+  .upload-zone.cv-loading,
+  .upload-zone.cv-failed {
+    gap: 0;
   }
 
   .upload-pick {
@@ -526,6 +531,19 @@
     flex-direction: column;
     align-items: center;
     gap: 16px;
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 260px;
+    overflow: hidden;
+    transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease;
+  }
+
+  .upload-zone.cv-loading .upload-pick,
+  .upload-zone.cv-failed .upload-pick {
+    opacity: 0;
+    transform: translateY(8px);
+    max-height: 0;
+    pointer-events: none;
   }
 
   .upload-icon {
@@ -533,7 +551,7 @@
   }
 
   .upload-title {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 15px;
     color: var(--text);
     letter-spacing: -0.01em;
@@ -541,14 +559,14 @@
   }
 
   .upload-or {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 12px;
     color: var(--text-dim);
     margin: -8px 0;
   }
 
   .upload-hint {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     color: var(--text-dim);
     letter-spacing: 0.04em;
@@ -558,7 +576,7 @@
   .upload-notice {
     display: none;
     max-width: 560px;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     line-height: 1.5;
     color: #fca5a5;
@@ -585,17 +603,28 @@
   /* OpenCV status */
   .cv-status {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    gap: 7px;
-    font-family: var(--mono);
+    gap: 10px;
+    font-family: var(--sans);
     font-size: 11px;
     color: var(--text-dim);
-    padding: 5px 12px;
-    border: 1px solid var(--border2);
-    border-radius: 100px;
-    background: var(--surface2);
-    margin-top: 4px;
-    transition: color 0.3s, border-color 0.3s;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    transition: color 0.3s, border-color 0.3s, opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease;
+    min-width: 280px;
+    max-height: 120px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow: hidden;
+  }
+
+  .cv-status-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
   }
 
   .cv-dot {
@@ -606,8 +635,32 @@
     animation: pulse 2s ease infinite;
   }
 
+  .cv-progress-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148,163,184,0.2);
+    overflow: hidden;
+  }
+
+  .cv-progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
+    transition: width 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: width;
+  }
+
   .cv-status.is-hidden {
-    display: none !important;
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-color: transparent;
+    pointer-events: none;
   }
 
   .cv-status.cv-status-failed {
@@ -623,11 +676,14 @@
     text-align: center;
     line-height: 1.5;
     font-size: 12px;
+    max-height: none;
+    overflow: visible;
   }
 
   .cv-status-failed p {
     margin: 0;
   }
+
 
   /* Editor wrap */
   .editor-wrap {
@@ -642,14 +698,14 @@
   }
 
   .file-counter {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 12px;
     color: var(--text-dim);
     letter-spacing: 0.04em;
   }
 
   .file-name {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 12px;
     color: var(--cyan);
     max-width: 380px;
@@ -718,7 +774,7 @@
     position: absolute;
     top: 8px;
     left: 10px;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -795,7 +851,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(8,10,13,0.65);
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 12px;
     color: var(--text-dim);
     letter-spacing: 0.06em;
@@ -827,7 +883,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     color: var(--text-dim);
     letter-spacing: 0.06em;
@@ -876,7 +932,7 @@
   .action-hint {
     margin-top: 8px;
     text-align: right;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 11px;
     color: var(--text-dim);
   }
@@ -892,7 +948,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.12em;
@@ -911,15 +967,15 @@
     background: rgba(59,130,246,0.05);
   }
 
-  details summary::before {
-    content: '▶';
-    font-size: 8px;
+  .details-chevron {
+    width: 14px;
+    height: 14px;
     color: var(--blue);
-    transition: transform 0.2s;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
   }
 
-  details[open] summary::before {
+  details[open] .details-chevron {
     transform: rotate(90deg);
   }
 
@@ -932,10 +988,14 @@
 
   .details-body {
     padding: 24px 24px 28px;
-    border-top: 1px solid var(--border2);
+    border-top: 1px solid transparent;
     display: flex;
     flex-direction: column;
     gap: 36px;
+  }
+
+  details[open] .details-body {
+    border-top-color: var(--border2);
   }
 
   .details-section {
@@ -945,7 +1005,7 @@
   }
 
   .details-section-label {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 9px;
     font-weight: 500;
     letter-spacing: 0.14em;
@@ -1015,6 +1075,7 @@
   <!-- HEADER -->
   <header class="header">
     <div class="badge">
+      <i data-lucide="shield-check" class="badge-icon" aria-hidden="true"></i>
       <span>Для корректной работы — включите VPN</span>
     </div>
     <h1>Убрать водяной знак с&nbsp;фото</h1>
@@ -1035,11 +1096,7 @@
     <!-- Upload zone -->
     <div class="upload-zone cv-loading" id="uploadZone">
       <div class="upload-pick">
-        <svg class="upload-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="26" width="28" height="4" rx="2" fill="none" stroke="var(--blue)" stroke-width="2"/>
-          <path d="M20 22 L20 8" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M13 15 L20 8 L27 15" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <i data-lucide="upload" class="upload-icon" style="width:40px;height:40px;color:var(--blue);stroke-width:2"></i>
         <p class="upload-title">Перетащи фото или вставь из буфера</p>
         <p class="upload-or">или</p>
         <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файлы</button>
@@ -1047,10 +1104,15 @@
       </div>
       <p class="upload-notice" id="uploadNotice"></p>
       <div class="cv-status" id="cvStatus">
-        <span class="cv-dot"></span> Загрузка модели…
+        <div class="cv-status-head">
+          <span class="cv-dot"></span>
+          <span id="cvStatusText">Загрузка модели…</span>
+        </div>
+        <div class="cv-progress-track" aria-hidden="true">
+          <div class="cv-progress-fill" id="cvProgressFill"></div>
+        </div>
       </div>
     </div>
-
     <!-- Editor wrap -->
     <div class="editor-wrap" id="editorWrap">
       <div class="editor-header">
@@ -1086,7 +1148,7 @@
             <span id="thrVal">180</span>
           </div>
           <input type="range" id="thrSlider" min="1" max="255" value="180">
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем выше, тем меньше захватывается. Начни с 180</div>
+          <div style="font-family:var(--sans);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем выше, тем меньше захватывается. Начни с 180</div>
         </div>
         <div class="slider-group">
           <div class="slider-label">
@@ -1094,7 +1156,7 @@
             <span id="radVal">10</span>
           </div>
           <input type="range" id="radSlider" min="1" max="20" value="10">
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем больше значение, тем плавнее переход по краю зоны</div>
+          <div style="font-family:var(--sans);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем больше значение, тем плавнее переход по краю зоны</div>
         </div>
       </div>
 
@@ -1117,16 +1179,15 @@
     <p style="margin-bottom:20px;">Если нужна пакетная обработка или работа без&nbsp;браузера</p>
 
     <details>
-      <summary>Показать инструкции</summary>
+      <summary><i data-lucide="chevron-right" class="details-chevron" aria-hidden="true"></i>Показать инструкции</summary>
       <div class="details-body">
 
         <!-- 02a: Install -->
         <div class="details-section">
-          <div class="details-section-label">Установка</div>
-          <h3>Зависимости</h3>
+          <h3>Установи зависимости</h3>
           <p>Открой Терминал, вставь команду и нажми ENTER.</p>
           <div class="cmd">
-            <span class="cmd-prompt">$</span>
+            <span class="cmd-prompt"><i data-lucide="terminal" style="width:13px;height:13px;stroke-width:2" aria-hidden="true"></i></span>
             <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
             <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">Копировать</button>
           </div>
@@ -1134,7 +1195,6 @@
 
         <!-- 02b: Download + Code -->
         <div class="details-section">
-          <div class="details-section-label">Скрипт</div>
           <h3>remove_watermark.py</h3>
           <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
 
@@ -1215,7 +1275,7 @@ def collect_images(input_dir: Path) -> list[Path]:
             </script>
             <pre id="codeBlock" style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;"></pre>
             <!-- PAYWALL OVERLAY -->
-            <div style="position:absolute;inset:0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
+            <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <a href="https://web.tribute.tg/p/t4O" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за 100 ₽</a>
             </div>
@@ -1224,11 +1284,10 @@ def collect_images(input_dir: Path) -> list[Path]:
 
         <!-- 02c: Run -->
         <div class="details-section">
-          <div class="details-section-label">Запуск</div>
           <h3>Как запустить</h3>
           <p>После скачивания просто открой Терминал на&nbsp;macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в&nbsp;папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с&nbsp;фото (не отдельный файл).</p>
           <div class="cmd">
-            <span class="cmd-prompt">$</span>
+            <span class="cmd-prompt"><i data-lucide="terminal" style="width:13px;height:13px;stroke-width:2" aria-hidden="true"></i></span>
             <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
             <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">Копировать</button>
           </div>
@@ -1240,7 +1299,6 @@ def collect_images(input_dir: Path) -> list[Path]:
 
         <!-- 02d: Controls -->
         <div class="details-section">
-          <div class="details-section-label">Редактор</div>
           <h3>Управление</h3>
           <p>Перед каждым фото открывается окно. Слева — оригинал с выделением зоны, справа — результат в реальном времени.</p>
 
@@ -1278,14 +1336,13 @@ def collect_images(input_dir: Path) -> list[Path]:
 
   <!-- FOOTER -->
   <footer class="footer">
-    <span class="footer-note">remove watermark</span>
+    <a class="btn btn-ghost" href="https://web.tribute.tg/d/HpN" target="_blank" rel="noopener noreferrer">
+      <i data-lucide="coffee" style="width:13px;height:13px;stroke-width:2" aria-hidden="true"></i>
+      Поддержать
+    </a>
     <a class="btn btn-primary" href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">
       <svg width="15" height="13" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.69184 2.00737C8.25888 2.60345 5.39488 3.83705 1.09992 5.70833C0.402477 5.98569 0.0371331 6.25697 0.00387711 6.52225C-0.0523389 6.97065 0.509141 7.14721 1.27376 7.38761C1.27894 7.38924 1.28414 7.39088 1.28934 7.39251C1.38851 7.42371 1.49102 7.45596 1.596 7.49009C2.34824 7.73465 3.36008 8.02073 3.88616 8.03209C4.36336 8.04241 4.89592 7.84569 5.48392 7.44193C9.4968 4.73305 11.5683 3.36393 11.6983 3.33441C11.7901 3.31353 11.9172 3.28737 12.0034 3.36393C12.0895 3.44049 12.081 3.58553 12.0719 3.62441C12.0163 3.86153 9.81232 5.91057 8.67168 6.97097C8.6685 6.97392 8.66534 6.97687 8.66218 6.9798C8.31167 7.3057 8.06345 7.53649 8.01232 7.58961C7.89688 7.70953 7.77912 7.82305 7.666 7.93209C6.9672 8.60577 6.44312 9.11097 7.69504 9.93601C8.29501 10.3314 8.77548 10.6586 9.25451 10.9847L9.2584 10.9874C9.78288 11.3446 10.3061 11.7009 10.983 12.1446C11.1554 12.2576 11.3201 12.375 11.4805 12.4894C12.091 12.9246 12.6394 13.3155 13.3169 13.2532C13.7106 13.217 14.1172 12.8468 14.3237 11.7427C14.8118 9.13353 15.7712 3.48009 15.9929 1.15049C16.0123 0.946331 15.9878 0.685131 15.9682 0.570491C15.9486 0.455851 15.9076 0.292411 15.7586 0.171531C15.5821 0.0282511 15.3095 -0.00190902 15.1877 9.09819e-05C14.6335 0.010011 13.7834 0.305611 9.69184 2.00737Z" fill="currentColor"/></svg>
       Написать автору
-    </a>
-    <a class="btn btn-ghost" href="https://web.tribute.tg/d/HpN" target="_blank" rel="noopener noreferrer">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h18v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-      Поддержать
     </a>
   </footer>
 
@@ -1321,6 +1378,75 @@ def collect_images(input_dir: Path) -> list[Path]:
     window.open(PAYWALL_URL, '_blank', 'noopener,noreferrer');
   }
 
+  function initAnimatedDetails() {
+    const detailsBlocks = Array.from(document.querySelectorAll('details'));
+    detailsBlocks.forEach((detailsEl) => {
+      const summary = detailsEl.querySelector('summary');
+      const body = detailsEl.querySelector('.details-body');
+      if (!summary || !body) return;
+      let animating = false;
+      const duration = 280;
+
+      summary.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (animating) return;
+        animating = true;
+
+        if (!detailsEl.open) {
+          detailsEl.open = true;
+          const fullHeight = body.scrollHeight;
+          body.style.overflow = 'hidden';
+          body.style.maxHeight = '0px';
+          body.style.opacity = '0';
+          body.style.transform = 'translateY(-8px)';
+
+          requestAnimationFrame(() => {
+            body.style.transition = 'max-height ' + duration + 'ms ease, opacity ' + duration + 'ms ease, transform ' + duration + 'ms ease';
+            body.style.maxHeight = fullHeight + 'px';
+            body.style.opacity = '1';
+            body.style.transform = 'translateY(0)';
+          });
+
+          setTimeout(() => {
+            body.style.transition = '';
+            body.style.maxHeight = '';
+            body.style.overflow = '';
+            body.style.opacity = '';
+            body.style.transform = '';
+            animating = false;
+          }, duration + 40);
+          return;
+        }
+
+        const fullHeight = body.scrollHeight;
+        body.style.overflow = 'hidden';
+        body.style.maxHeight = fullHeight + 'px';
+        body.style.opacity = '1';
+        body.style.transform = 'translateY(0)';
+
+        requestAnimationFrame(() => {
+          body.style.transition = 'max-height ' + duration + 'ms ease, opacity ' + duration + 'ms ease, transform ' + duration + 'ms ease';
+          body.style.maxHeight = '0px';
+          body.style.opacity = '0';
+          body.style.transform = 'translateY(-8px)';
+        });
+
+        setTimeout(() => {
+          body.style.transition = '';
+          body.style.maxHeight = '';
+          body.style.overflow = '';
+          body.style.opacity = '';
+          body.style.transform = '';
+          requestAnimationFrame(() => {
+            detailsEl.open = false;
+          });
+          animating = false;
+        }, duration + 40);
+      });
+    });
+  }
+  initAnimatedDetails();
+
   /* ══════════════════════════════════════════════════════
      BROWSER TOOL — OpenCV watermark removal
   ══════════════════════════════════════════════════════ */
@@ -1329,6 +1455,41 @@ def collect_images(input_dir: Path) -> list[Path]:
   let cvReady = false;
   let cvReadyMarked = false;
   let cvInitPollTimer = null;
+  const CV_MIN_LOADING_MS = 1500;
+  const cvLoadStartedAt = Date.now();
+  let cvMinAnimationDone = false;
+  let cvRuntimeReady = false;
+  let cvProgressTimer = null;
+  function setOpenCvProgress(percent, label) {
+    const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+    const progress = document.getElementById('cvProgressFill');
+    if (progress) progress.style.width = clamped + '%';
+    const text = document.getElementById('cvStatusText');
+    if (text && label) text.textContent = label;
+  }
+  function tryFinalizeOpenCvReady() {
+    if (!cvRuntimeReady || !cvMinAnimationDone) return;
+    markOpenCvReady();
+  }
+  function startOpenCvProgressAnimation() {
+    if (cvProgressTimer) return;
+    setOpenCvProgress(2, 'Загрузка модели…');
+    cvProgressTimer = setInterval(() => {
+      const elapsed = Date.now() - cvLoadStartedAt;
+      const t = Math.min(1, elapsed / CV_MIN_LOADING_MS);
+      // Мягкое ускорение в начале и замедление к финалу.
+      const eased = 1 - Math.pow(1 - t, 3);
+      const progress = 2 + eased * 94; // до 96% без резких скачков
+      setOpenCvProgress(progress, t > 0.72 ? 'Почти готово…' : 'Загрузка модели…');
+      if (t >= 1) {
+        clearInterval(cvProgressTimer);
+        cvProgressTimer = null;
+        cvMinAnimationDone = true;
+        tryFinalizeOpenCvReady();
+      }
+    }, 70);
+  }
+  startOpenCvProgressAnimation();
   function markOpenCvReady() {
     if (cvReadyMarked) return;
     cvReadyMarked = true;
@@ -1336,15 +1497,23 @@ def collect_images(input_dir: Path) -> list[Path]:
       clearInterval(cvInitPollTimer);
       cvInitPollTimer = null;
     }
-    cvReady = true;
-    const uz = document.getElementById('uploadZone');
-    if (uz) {
-      uz.classList.remove('cv-loading', 'cv-failed');
+    if (cvProgressTimer) {
+      clearInterval(cvProgressTimer);
+      cvProgressTimer = null;
     }
+    cvReady = true;
+    setOpenCvProgress(100, 'Модель готова');
     const s = document.getElementById('cvStatus');
     if (s) {
-      s.className = 'cv-status is-hidden';
-      s.innerHTML = '';
+      s.classList.remove('cv-status-failed');
+      s.classList.add('is-hidden');
+    }
+    const uz = document.getElementById('uploadZone');
+    if (uz) {
+      // Даём прогресс-блоку плавно скрыться, затем открываем окно загрузки.
+      setTimeout(() => {
+        uz.classList.remove('cv-loading', 'cv-failed');
+      }, 240);
     }
     if (imgEl) {
       setupMats();
@@ -1356,16 +1525,21 @@ def collect_images(input_dir: Path) -> list[Path]:
     if (typeof cv === 'undefined') return;
     // Runtime can be ready slightly after script load.
     if (typeof cv.Mat === 'function' && typeof cv.imread === 'function') {
-      markOpenCvReady();
+      cvRuntimeReady = true;
+      tryFinalizeOpenCvReady();
       return;
     }
-    cv.onRuntimeInitialized = markOpenCvReady;
+    cv.onRuntimeInitialized = () => {
+      cvRuntimeReady = true;
+      tryFinalizeOpenCvReady();
+    };
     // Fallback for browsers where onRuntimeInitialized is missed.
     let attempts = 0;
     cvInitPollTimer = setInterval(() => {
       attempts += 1;
       if (typeof cv !== 'undefined' && typeof cv.Mat === 'function' && typeof cv.imread === 'function') {
-        markOpenCvReady();
+        cvRuntimeReady = true;
+        tryFinalizeOpenCvReady();
         return;
       }
       if (attempts >= 80) {
@@ -1586,6 +1760,20 @@ def collect_images(input_dir: Path) -> list[Path]:
     });
     return heic2anyLoadPromise;
   }
+
+  // Warm up HEIC converter in idle time so the first HEIC opens faster.
+  function warmupHeic2anyInBackground() {
+    const runWarmup = () => {
+      if (typeof window.heic2any === 'function') return;
+      ensureHeic2anyLoaded().catch(() => {});
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(runWarmup, { timeout: 1800 });
+      return;
+    }
+    setTimeout(runWarmup, 1200);
+  }
+  window.addEventListener('load', warmupHeic2anyInBackground, { once: true });
 
   /** HEIC → JPEG в браузере (остальные форматы без изменений). */
   async function prepareImageFiles(fileList) {
@@ -2317,6 +2505,24 @@ def collect_images(input_dir: Path) -> list[Path]:
     endDrag();
   }
 </script>
+<script>
+  let lucideIconsInited = false;
+  function scheduleLucideIcons() {
+    if (lucideIconsInited) return;
+    if (!window.lucide || typeof window.lucide.createIcons !== 'function') return;
+    const run = () => {
+      if (lucideIconsInited) return;
+      window.lucide.createIcons();
+      lucideIconsInited = true;
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(run, { timeout: 1200 });
+      return;
+    }
+    setTimeout(run, 80);
+  }
+</script>
+<script src="https://unpkg.com/lucide@latest" defer onload="scheduleLucideIcons()"></script>
 <script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady()"></script>
 </body>
 </html>
