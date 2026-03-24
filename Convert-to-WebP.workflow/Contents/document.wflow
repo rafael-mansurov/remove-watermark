@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AMApplicationBuild</key>
+	<string>528</string>
+	<key>AMApplicationVersion</key>
+	<string>2.10</string>
+	<key>AMDocumentVersion</key>
+	<string>2</string>
+	<key>actions</key>
+	<array>
+		<dict>
+			<key>action</key>
+			<dict>
+				<key>AMAccepts</key>
+				<dict>
+					<key>Container</key>
+					<string>List</string>
+					<key>Optional</key>
+					<true/>
+					<key>Types</key>
+					<array>
+						<string>com.apple.cocoa.string</string>
+					</array>
+				</dict>
+				<key>AMActionVersion</key>
+				<string>2.0.3</string>
+				<key>AMApplication</key>
+				<array>
+					<string>Automator</string>
+				</array>
+				<key>AMParameterProperties</key>
+				<dict>
+					<key>COMMAND_STRING</key>
+					<dict/>
+					<key>CheckedForUserDefaultShell</key>
+					<dict/>
+					<key>inputMethod</key>
+					<dict/>
+					<key>shell</key>
+					<dict/>
+					<key>source</key>
+					<dict/>
+				</dict>
+				<key>AMProvides</key>
+				<dict>
+					<key>Container</key>
+					<string>List</string>
+					<key>Types</key>
+					<array>
+						<string>com.apple.cocoa.string</string>
+					</array>
+				</dict>
+				<key>ActionBundlePath</key>
+				<string>/System/Library/Automator/Run Shell Script.action</string>
+				<key>ActionName</key>
+				<string>Запустить скрипт оболочки</string>
+				<key>ActionParameters</key>
+				<dict>
+					<key>COMMAND_STRING</key>
+					<string># ==== Convert to WebP: пресеты с оценкой, предпросмотр, подтверждение, порог ====
+CWEBP="/opt/homebrew/bin/cwebp"; [[ -x "$CWEBP" ]] || CWEBP="$(command -v cwebp)" || {
+  osascript -e 'display notification "Не найден cwebp (brew install webp)" with title "Convert to WebP"'
+  exit 1
+}
+
+# Сбор входа (PNG/JPG), поддержка папок
+targets=()
+for p in "$@"; do
+  if [[ -d "$p" ]]; then
+    while IFS= read -r -d '' f; do targets+=("$f"); done &lt; &lt;(find "$p" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) -print0)
+  else
+    ext="${${p##*.}:l}"; [[ "$ext" == "png" || "$ext" == "jpg" || "$ext" == "jpeg" ]] &amp;&amp; targets+=("$p")
+  fi
+done
+(( ${#targets} )) || { osascript -e 'display notification "Выбери PNG/JPG (или папку)" with title "Convert to WebP"'; exit 0; }
+
+# Утилиты
+fmt_size(){ awk -v b="$1" 'BEGIN{if(b&lt;1024)printf "%d B",b; else if(b&lt;1048576)printf "%.1f KB",b/1024; else printf "%.1f MB",b/1048576}'; }
+filesize(){ stat -f%z "$1" 2&gt;/dev/null || stat -c%s "$1"; }
+
+first="${targets[1]}"
+orig_b=$(filesize "$first")
+ext_first="${${first##*.}:l}"
+
+# Считаем примерные размеры для 10..100 один раз
+TMPDIR="$(mktemp -d)"
+presets=(10 20 30 40 50 60 70 80 90 100)
+labels=()
+for q in "${presets[@]}"; do
+  tmp="$TMPDIR/est_$q.webp"
+  if [[ "$ext_first" == "png" &amp;&amp; "$q" == "100" ]]; then
+    "$CWEBP" -quiet -lossless "$first" -o "$tmp" &gt;/dev/null 2&gt;&amp;1
+  else
+    "$CWEBP" -quiet "$first" -q "$q" -o "$tmp" &gt;/dev/null 2&gt;&amp;1
+  fi
+  new_b=$(filesize "$tmp" 2&gt;/dev/null || echo 0)
+  pct=$(awk -v o="$orig_b" -v n="$new_b" 'BEGIN{if(o&gt;0)printf "%.0f",(1-n/o)*100; else print 0}')
+  labels+=( "$q — ~$(fmt_size "$new_b") (↓$pct%)" )
+done
+MENU_TEXT=$(printf '%s\n' "${labels[@]}")
+
+# ===== ЦИКЛ ВЫБОРА: список -&gt; предпросмотр -&gt; подтвердить =====
+QUALITY=""
+while true; do
+  QUALITY_LABEL=$(osascript &lt;&lt;APPLESCRIPT
+set L to paragraphs of "$MENU_TEXT"
+set theChoice to choose from list L with prompt "Выбери качество WebP" default items {item 8 of L} without multiple selections allowed
+if theChoice is false then return "CANCEL"
+return item 1 of theChoice
+APPLESCRIPT
+)
+  [[ "$QUALITY_LABEL" == "CANCEL" ]] &amp;&amp; { rm -rf "$TMPDIR"; exit 0; }
+  QUALITY="${QUALITY_LABEL%% *}"
+
+  # Предпросмотр на выбранном качестве
+  prev="$TMPDIR/preview.webp"
+  if [[ "$ext_first" == "png" &amp;&amp; "$QUALITY" == "100" ]]; then
+    "$CWEBP" -quiet -lossless "$first" -o "$prev" &gt;/dev/null 2&gt;&amp;1
+  else
+    "$CWEBP" -quiet "$first" -q "$QUALITY" -o "$prev" &gt;/dev/null 2&gt;&amp;1
+  fi
+  qlmanage -p "$prev" &gt;/dev/null 2&gt;&amp;1
+
+  # Подтверждение
+  btn=$(osascript -e 'button returned of (display dialog "Оставляем качество '"$QUALITY"' ?" buttons {"Изменить","Сохранить"} default button "Сохранить")')
+  [[ "$btn" == "Сохранить" ]] &amp;&amp; break
+done
+rm -rf "$TMPDIR"
+
+# ===== Конвертация всех, пропуская если webp &gt;= исходника =====
+outdir=~/Desktop/WebP; mkdir -p "$outdir"
+skipped=(); done_count=0; saved_bytes=0
+
+for f in "${targets[@]}"; do
+  filename="${f:t}"; name="${filename%.*}"
+  ext="${${f##*.}:l}"
+  tmpout="$(mktemp -u).webp"
+  if [[ "$ext" == "png" &amp;&amp; "$QUALITY" == "100" ]]; then
+    "$CWEBP" -quiet -lossless "$f" -o "$tmpout" &gt;/dev/null 2&gt;&amp;1
+  else
+    "$CWEBP" -quiet "$f" -q "$QUALITY" -o "$tmpout" &gt;/dev/null 2&gt;&amp;1
+  fi
+  src_b=$(filesize "$f"); out_b=$(filesize "$tmpout")
+  if [[ "$out_b" -ge "$src_b" || "$out_b" -eq 0 ]]; then
+    skipped+=("$filename"); rm -f "$tmpout"
+  else
+    mv -f "$tmpout" "$outdir/$name.webp"
+    ((done_count++)); ((saved_bytes+= (src_b - out_b) ))
+  fi
+done
+
+msg="Готово. Конвертировано: $done_count"
+(( saved_bytes&gt;0 )) &amp;&amp; msg="$msg, экономия: $(fmt_size "$saved_bytes")"
+osascript -e 'display notification "'"$msg"'" with title "Convert to WebP"'
+(( done_count&gt;0 )) &amp;&amp; open "$outdir"
+
+if (( ${#skipped[@]} )); then
+  list=""; for s in "${skipped[@]}"; do list="$list• $s\n"; done
+  osascript -e 'display dialog "Пропущены (webp вышел больше исходника):\n'"$list"' " buttons {"Ок"} default button "Ок" with icon caution'
+fi
+# =================================================================
+</string>
+					<key>CheckedForUserDefaultShell</key>
+					<true/>
+					<key>inputMethod</key>
+					<integer>1</integer>
+					<key>shell</key>
+					<string>/bin/zsh</string>
+					<key>source</key>
+					<string></string>
+				</dict>
+				<key>BundleIdentifier</key>
+				<string>com.apple.RunShellScript</string>
+				<key>CFBundleVersion</key>
+				<string>2.0.3</string>
+				<key>CanShowSelectedItemsWhenRun</key>
+				<false/>
+				<key>CanShowWhenRun</key>
+				<true/>
+				<key>Category</key>
+				<array>
+					<string>AMCategoryUtilities</string>
+				</array>
+				<key>Class Name</key>
+				<string>RunShellScriptAction</string>
+				<key>InputUUID</key>
+				<string>6B115B80-DDBF-410E-85B9-3BCE07E6C88C</string>
+				<key>Keywords</key>
+				<array>
+					<string>Оболочка</string>
+					<string>Скрипт</string>
+					<string>Команда</string>
+					<string>Запустить</string>
+					<string>Unix</string>
+				</array>
+				<key>OutputUUID</key>
+				<string>69F2921B-9F6C-40FB-8233-3B1ED1DD92E3</string>
+				<key>UUID</key>
+				<string>C905D81F-C777-4240-9D98-12974AE050CF</string>
+				<key>UnlocalizedApplications</key>
+				<array>
+					<string>Automator</string>
+				</array>
+				<key>arguments</key>
+				<dict>
+					<key>0</key>
+					<dict>
+						<key>default value</key>
+						<integer>0</integer>
+						<key>name</key>
+						<string>inputMethod</string>
+						<key>required</key>
+						<string>0</string>
+						<key>type</key>
+						<string>0</string>
+						<key>uuid</key>
+						<string>0</string>
+					</dict>
+					<key>1</key>
+					<dict>
+						<key>default value</key>
+						<false/>
+						<key>name</key>
+						<string>CheckedForUserDefaultShell</string>
+						<key>required</key>
+						<string>0</string>
+						<key>type</key>
+						<string>0</string>
+						<key>uuid</key>
+						<string>1</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>default value</key>
+						<string></string>
+						<key>name</key>
+						<string>source</string>
+						<key>required</key>
+						<string>0</string>
+						<key>type</key>
+						<string>0</string>
+						<key>uuid</key>
+						<string>2</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>default value</key>
+						<string></string>
+						<key>name</key>
+						<string>COMMAND_STRING</string>
+						<key>required</key>
+						<string>0</string>
+						<key>type</key>
+						<string>0</string>
+						<key>uuid</key>
+						<string>3</string>
+					</dict>
+					<key>4</key>
+					<dict>
+						<key>default value</key>
+						<string>/bin/sh</string>
+						<key>name</key>
+						<string>shell</string>
+						<key>required</key>
+						<string>0</string>
+						<key>type</key>
+						<string>0</string>
+						<key>uuid</key>
+						<string>4</string>
+					</dict>
+				</dict>
+				<key>isViewVisible</key>
+				<integer>1</integer>
+				<key>location</key>
+				<string>346.000000:305.000000</string>
+				<key>nibPath</key>
+				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/Base.lproj/main.nib</string>
+			</dict>
+			<key>isViewVisible</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>connectors</key>
+	<dict/>
+	<key>workflowMetaData</key>
+	<dict>
+		<key>applicationBundleID</key>
+		<string>com.apple.finder</string>
+		<key>applicationBundleIDsByPath</key>
+		<dict>
+			<key>/System/Library/CoreServices/Finder.app</key>
+			<string>com.apple.finder</string>
+		</dict>
+		<key>applicationPath</key>
+		<string>/System/Library/CoreServices/Finder.app</string>
+		<key>applicationPaths</key>
+		<array>
+			<string>/System/Library/CoreServices/Finder.app</string>
+		</array>
+		<key>backgroundColorName</key>
+		<string>blackColor</string>
+		<key>inputTypeIdentifier</key>
+		<string>com.apple.Automator.fileSystemObject.image</string>
+		<key>outputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>presentationMode</key>
+		<integer>15</integer>
+		<key>processesInput</key>
+		<false/>
+		<key>serviceApplicationBundleID</key>
+		<string>com.apple.finder</string>
+		<key>serviceApplicationPath</key>
+		<string>/System/Library/CoreServices/Finder.app</string>
+		<key>serviceInputTypeIdentifier</key>
+		<string>com.apple.Automator.fileSystemObject.image</string>
+		<key>serviceOutputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>serviceProcessesInput</key>
+		<false/>
+		<key>systemImageName</key>
+		<string>NSActionTemplate</string>
+		<key>useAutomaticInputType</key>
+		<false/>
+		<key>workflowTypeIdentifier</key>
+		<string>com.apple.Automator.servicesMenu</string>
+	</dict>
+</dict>
+</plist>

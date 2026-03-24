@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сжать фото в WebP онлайн</title>
+<meta name="description" content="Сжимай фото в WebP прямо в браузере: загрузи изображение, подбери качество и скачай. Обработка локально, без регистрации">
+<meta name="keywords" content="сжать фото WebP, конвертировать в WebP, сжатие изображений онлайн, macOS Quick Action">
+<meta name="author" content="Rafael Mansurov">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <div class="badge">В браузере</div>
+    <h1>Сжать фото в&nbsp;<span>WebP</span></h1>
+    <p class="subtitle">
+      Загрузи фото — слева оригинал, справа результат. Подстрой качество и скачай. Всё локально, без облака
+    </p>
+  </header>
+
+  <section class="section">
+    <div class="section-label">Онлайн-версия</div>
+    <h2>Конвертер WebP</h2>
+    <p>Обработка локально — файлы не покидают твой компьютер</p>
+
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" multiple style="display:none">
+
+    <div class="workspace" id="workspace">
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-pick">
+        <i data-lucide="upload" class="upload-icon" style="width:40px;height:40px;color:var(--blue);stroke-width:2"></i>
+        <p class="upload-title">Перетащи фото или вставь из буфера</p>
+        <p class="upload-or">или</p>
+        <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файл</button>
+        <p class="upload-hint">JPG · PNG · WEBP · BMP · GIF. Можно несколько фото за раз</p>
+      </div>
+      <div class="batch-progress cv-status" id="batchProgressBlock">
+        <div class="cv-status-head">
+          <span class="cv-dot"></span>
+          <span id="batchProgressTitle">Сжимаю фото…</span>
+        </div>
+        <div class="batch-progress-text" id="batchProgressText">1 / 5</div>
+        <div class="cv-progress-track">
+          <div class="cv-progress-fill" id="batchProgressFill" style="width:0%"></div>
+        </div>
+      </div>
+      <p class="upload-notice" id="uploadNotice"></p>
+    </div>
+
+    <div class="editor-wrap" id="editorWrap">
+      <div class="editor-header">
+        <span class="file-counter" id="fileCounter">1 / 1</span>
+        <span class="file-name" id="fileName"></span>
+      </div>
+
+      <div class="editor-preview-area">
+        <div class="canvas-split" id="canvasSplit">
+          <div class="canvas-panel">
+            <div class="canvas-label">Оригинал</div>
+            <canvas id="leftCanvas"></canvas>
+            <div class="size-info" id="origSize"></div>
+          </div>
+          <div class="canvas-panel">
+            <div class="canvas-label">Результат WebP</div>
+            <canvas id="rightCanvas"></canvas>
+            <div class="size-info" id="resultSize"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-group">
+          <div class="slider-label">
+            Качество
+            <span id="qualityVal">80</span>
+          </div>
+          <input type="range" id="qualitySlider" min="1" max="100" value="80">
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.4;">1 — меньше размер, 100 — почти без потерь</div>
+        </div>
+        <div class="slider-group" id="applyToAllWrap" style="display:none">
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid);cursor:pointer;">
+            <input type="checkbox" id="applyToAllCheck">
+            <span>Одинаковое качество для всех</span>
+          </label>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.4;">Выбери качество на первом фото — все остальные сожмутся так же</div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-ghost" id="skipBtn" style="display:none">Пропустить фото</button>
+        <button class="btn btn-ghost" id="resetBtn">Загрузить другое</button>
+        <button class="btn btn-primary" id="downloadBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать WebP
+        </button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">Альтернатива</div>
+    <h2>Из контекстного меню macOS и Windows</h2>
+    <p style="margin-bottom:20px;">Конвертируй в WebP прямо из Finder по правому клику — без интернета, без запуска браузера и всегда под рукой.</p>
+
+    <details>
+      <summary><svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>Как встроить в контекстное меню Mac</summary>
+      <div class="details-body">
+
+        <div class="details-section">
+          <h3>1. Установи cwebp</h3>
+          <p>Открой Терминал и выполни:</p>
+          <div class="cmd">
+            <span class="cmd-prompt">$</span>
+            <span class="cmd-text">brew install webp</span>
+            <button class="cmd-copy" onclick="copyCmd(this, 'brew install webp')">Копировать</button>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h3>2. Получи workflow</h3>
+          <p>Нажми «Скачать .workflow» или «Купить» — получишь файл. Дважды кликни по нему → «Установить». Готово, workflow появится в контекстном меню.</p>
+
+          <div class="code-block" style="position:relative;">
+            <div class="code-toolbar">
+              <div class="code-toolbar-left">
+                <div class="dots">
+                  <div class="dot dot-r"></div>
+                  <div class="dot dot-y"></div>
+                  <div class="dot dot-g"></div>
+                </div>
+                <span class="code-filename">Convert to WebP.workflow</span>
+              </div>
+              <div class="code-toolbar-right">
+                <button class="btn btn-ghost" onclick="window.open('https://web.tribute.tg/p/tfK','_blank')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Копировать
+                </button>
+                <a class="btn btn-primary" href="https://web.tribute.tg/p/tfK" target="_blank" rel="noopener noreferrer">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Скачать .workflow
+                </a>
+              </div>
+            </div>
+            <pre id="workflowCodePreview" style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;"># ==== Convert to WebP: пресеты с оценкой, предпросмотр ====
+CWEBP="/opt/homebrew/bin/cwebp"
+targets=()
+for p in "$@"; do
+  if [[ -d "$p" ]]; then
+    find "$p" -type f \( -iname '*.png' -o -iname '*.jpg' \) -print0 | ...
+  else
+    [[ "$ext" == "png" || "$ext" == "jpg" ]] && targets+=("$p")
+  fi
+done
+presets=(10 20 30 40 50 60 70 80 90 100)
+# … диалог выбора качества, предпросмотр, конвертация …
+# Полный workflow — после оплаты.</pre>
+            <!-- PAYWALL OVERLAY -->
+            <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <a href="https://web.tribute.tg/p/tfK" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за 100 ₽</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h3>3. Как пользоваться</h3>
+          <p>Выдели фото (JPG, PNG) в Finder → правый клик → «Быстрые действия» → «Convert to WebP». Выбери качество, подтверди — готовые файлы появятся в <code style="color:var(--cyan);">~/Desktop/WebP</code>.</p>
+        </div>
+
+        <div class="details-section">
+          <h3>4. Пункт не появляется?</h3>
+          <p><strong>Системные настройки</strong> → Конфиденциальность и безопасность → Укороченные команды — выдай доступ Automator, если система спрашивает.</p>
+          <p><strong>Finder</strong> → Правка → Услуги — там должны быть установленные Quick Actions.</p>
+        </div>
+
+      </div>
+    </details>
+
+    <details style="margin-top:12px;">
+      <summary><svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>Как встроить в контекстное меню Windows</summary>
+      <div class="details-body">
+
+        <div class="details-section">
+          <h3>1. Установи одной командой</h3>
+          <p>Открой PowerShell и выполни:</p>
+          <div class="code-block" style="position:relative;">
+            <div class="code-toolbar">
+              <div class="code-toolbar-left">
+                <div class="dots">
+                  <div class="dot dot-r"></div>
+                  <div class="dot dot-y"></div>
+                  <div class="dot dot-g"></div>
+                </div>
+                <span class="code-filename">windows/install.ps1</span>
+              </div>
+              <div class="code-toolbar-right">
+                <button class="btn btn-ghost" onclick="window.open('https://web.tribute.tg/p/tfO','_blank')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Копировать
+                </button>
+                <button class="btn btn-primary" onclick="window.open('https://web.tribute.tg/p/tfO','_blank')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Скачать
+                </button>
+              </div>
+            </div>
+            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows'
+irm "$base/install.ps1" | iex
+
+# Установит:
+# - пункт "Convert to WebP" в контекстное меню
+# - скрипт с выбором качества (1-100)</pre>
+            <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <a href="https://web.tribute.tg/p/tfO" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за 100 ₽</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h3>2. Как пользоваться</h3>
+          <p>Выдели одно или несколько изображений → правый клик → <strong>Convert to WebP</strong>. Скрипт спросит качество (1-100), а готовые файлы положит в <code style="color:var(--cyan);">Desktop\WebP</code>.</p>
+        </div>
+
+        <div class="details-section">
+          <h3>3. Как удалить</h3>
+          <p>Выполни в PowerShell:</p>
+          <div class="cmd">
+            <span class="cmd-prompt">$</span>
+            <span class="cmd-text">powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\WebP-ContextMenu\uninstall.ps1"</span>
+            <button class="cmd-copy" onclick="copyCmd(this, 'powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$env:LOCALAPPDATA\\WebP-ContextMenu\\uninstall.ps1&quot;')">Копировать</button>
+          </div>
+        </div>
+
+      </div>
+    </details>
+  </section>
+
+  <footer class="footer" id="sharedFooter" data-primary-href="index.html" data-primary-label="Убрать водяной знак"></footer>
+
+</div>
+
+<script src="footer.js"></script>
+<script>
+  const uploadZone = document.getElementById('uploadZone');
+  const uploadPickBtn = document.getElementById('uploadPickBtn');
+  const fileInput = document.getElementById('fileInput');
+  const editorWrap = document.getElementById('editorWrap');
+  const leftCanvas = document.getElementById('leftCanvas');
+  const rightCanvas = document.getElementById('rightCanvas');
+  const fileNameEl = document.getElementById('fileName');
+  const fileCounter = document.getElementById('fileCounter');
+  const skipBtn = document.getElementById('skipBtn');
+  const uploadNotice = document.getElementById('uploadNotice');
+  const origSizeEl = document.getElementById('origSize');
+  const resultSizeEl = document.getElementById('resultSize');
+  const qualitySlider = document.getElementById('qualitySlider');
+  const qualityVal = document.getElementById('qualityVal');
+  const applyToAllWrap = document.getElementById('applyToAllWrap');
+  const applyToAllCheck = document.getElementById('applyToAllCheck');
+
+  let files = [];
+  let fileIdx = 0;
+  let imgEl = null;
+  let debounceTimer = null;
+
+  function updateSkipVisibility() {
+    if (skipBtn) skipBtn.style.display = files.length > 1 ? '' : 'none';
+    if (applyToAllWrap) applyToAllWrap.style.display = files.length > 1 ? '' : 'none';
+  }
+
+  function showNotice(msg, type = 'error') {
+    uploadNotice.textContent = msg;
+    uploadNotice.className = 'upload-notice visible' + (type === 'success' ? ' success' : '');
+  }
+
+  function clearNotice() {
+    uploadNotice.textContent = '';
+    uploadNotice.className = 'upload-notice';
+  }
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function isSupportedImage(file) {
+    const t = (file.type || '').toLowerCase();
+    const ok = /^image\/(jpeg|png|webp|bmp|gif)$/i.test(t);
+    if (ok) return true;
+    return /\.(jpe?g|png|webp|bmp|gif)$/i.test(file.name || '');
+  }
+
+  function imageFromClipboard(data) {
+    if (!data || !data.items) return null;
+    for (let i = 0; i < data.items.length; i++) {
+      const item = data.items[i];
+      if (item.kind === 'file') {
+        const f = item.getAsFile();
+        if (f && isSupportedImage(f)) return f;
+      }
+    }
+    return null;
+  }
+
+  uploadPickBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', (e) => {
+    if (!e.target.files.length) return;
+    const selected = Array.from(e.target.files).filter(isSupportedImage);
+    if (!selected.length) {
+      showNotice('Неподдерживаемый формат. Нужны JPG, PNG, WEBP, BMP или GIF.');
+      e.target.value = '';
+      return;
+    }
+    loadFiles(selected);
+    e.target.value = '';
+  });
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+  });
+
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const selected = Array.from(e.dataTransfer.files).filter(isSupportedImage);
+    if (!selected.length) {
+      showNotice('Неподдерживаемый формат. Нужны JPG, PNG, WEBP, BMP или GIF.');
+      return;
+    }
+    loadFiles(selected);
+  });
+
+  document.addEventListener('paste', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    const f = imageFromClipboard(e.clipboardData);
+    if (f) {
+      e.preventDefault();
+      loadFiles([f]);
+    }
+  });
+
+  function showEditor() {
+    if (uploadZone) uploadZone.style.display = 'none';
+    if (editorWrap) editorWrap.style.display = 'block';
+  }
+
+  function showUpload() {
+    if (editorWrap) editorWrap.style.display = 'none';
+    if (uploadZone) uploadZone.style.display = 'flex';
+  }
+
+  function loadFiles(arr) {
+    clearNotice();
+    files = arr;
+    fileIdx = 0;
+    showEditor();
+    loadFileAt(fileIdx);
+  }
+
+  function loadFileAt(i) {
+    updateSkipVisibility();
+    fileCounter.textContent = (i + 1) + ' / ' + files.length;
+    const file = files[i];
+    fileNameEl.textContent = file.name;
+
+    const url = URL.createObjectURL(file);
+    imgEl = new Image();
+    imgEl.onload = () => {
+      URL.revokeObjectURL(url);
+      setupCanvas();
+      drawLeft();
+      renderWebP();
+      updateSizeInfo();
+    };
+    imgEl.onerror = () => {
+      URL.revokeObjectURL(url);
+      showNotice('Не удалось открыть файл.');
+    };
+    imgEl.src = url;
+  }
+
+  function goNextOrFinish() {
+    fileIdx++;
+    if (fileIdx < files.length) {
+      loadFileAt(fileIdx);
+    } else {
+      imgEl = null;
+      fileInput.value = '';
+      showUpload();
+      showNotice('Готово! Обработано файлов: ' + files.length + '. Можно загрузить новую партию.', 'success');
+    }
+  }
+
+  function setupCanvas() {
+    leftCanvas.width = imgEl.width;
+    leftCanvas.height = imgEl.height;
+    rightCanvas.width = imgEl.width;
+    rightCanvas.height = imgEl.height;
+  }
+
+  function drawLeft() {
+    if (!imgEl) return;
+    const ctx = leftCanvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0, leftCanvas.width, leftCanvas.height);
+  }
+
+  function renderWebP() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (!imgEl) return;
+      const q = parseInt(qualitySlider.value) / 100;
+
+      const ctx = rightCanvas.getContext('2d');
+      ctx.drawImage(imgEl, 0, 0, rightCanvas.width, rightCanvas.height);
+
+      rightCanvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          const c = rightCanvas.getContext('2d');
+          c.clearRect(0, 0, rightCanvas.width, rightCanvas.height);
+          c.drawImage(img, 0, 0);
+          URL.revokeObjectURL(url);
+          updateSizeInfo(blob.size);
+        };
+        img.src = url;
+      }, 'image/webp', q);
+    }, 80);
+  }
+
+  function updateSizeInfo(webpBytes) {
+    if (!files[fileIdx]) return;
+    const origB = files[fileIdx].size;
+    origSizeEl.textContent = fmtSize(origB);
+    if (webpBytes !== undefined) {
+      resultSizeEl.innerHTML = fmtSize(webpBytes);
+      const pct = origB > 0 ? Math.round((1 - webpBytes / origB) * 100) : 0;
+      if (pct > 0) {
+        resultSizeEl.innerHTML += ' <span class="saved">↓' + pct + '%</span>';
+      }
+    } else {
+      resultSizeEl.textContent = '—';
+    }
+  }
+
+  qualitySlider.addEventListener('input', () => {
+    qualityVal.textContent = qualitySlider.value;
+    renderWebP();
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', async () => {
+    if (!files.length) return;
+    const q = parseInt(qualitySlider.value) / 100;
+    const doAll = applyToAllCheck && applyToAllCheck.checked && files.length > 1;
+
+    if (doAll) {
+      const btn = document.getElementById('downloadBtn');
+      const progText = document.getElementById('batchProgressText');
+      const progFill = document.getElementById('batchProgressFill');
+      btn.disabled = true;
+      if (uploadZone) uploadZone.classList.add('batch-loading');
+      clearNotice();
+      showUpload();
+      let batchOk = true;
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const pct = Math.round(((i + 1) / files.length) * 100);
+          if (progText) progText.textContent = (i + 1) + ' / ' + files.length;
+          if (progFill) progFill.style.width = pct + '%';
+          const file = files[i];
+          const img = await new Promise((resolve, reject) => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = reject;
+            im.src = URL.createObjectURL(file);
+          });
+          const tmp = document.createElement('canvas');
+          tmp.width = img.width;
+          tmp.height = img.height;
+          tmp.getContext('2d').drawImage(img, 0, 0);
+          URL.revokeObjectURL(img.src);
+          const blob = await new Promise(r => tmp.toBlob(b => r(b), 'image/webp', q));
+          if (blob) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (file.name || 'image').replace(/\.[^.]+$/, '') + '.webp';
+            a.click();
+            URL.revokeObjectURL(a.href);
+          }
+          await new Promise(r => setTimeout(r, 100));
+        }
+        if (progText) progText.textContent = 'Готово, дожидаюсь загрузки…';
+        await new Promise(r => setTimeout(r, Math.max(2000, files.length * 400)));
+      } catch (e) {
+        batchOk = false;
+        showNotice('Не удалось обработать часть файлов. Попробуй снова.');
+      } finally {
+        if (uploadZone) uploadZone.classList.remove('batch-loading');
+        if (progFill) progFill.style.width = '0%';
+        btn.disabled = false;
+      }
+      imgEl = null;
+      fileInput.value = '';
+      if (batchOk) showNotice('Готово! Сжато ' + files.length + ' фото.', 'success');
+      return;
+    }
+
+    if (!imgEl || !files[fileIdx]) return;
+    const file = files[fileIdx];
+    const tmp = document.createElement('canvas');
+    tmp.width = imgEl.width;
+    tmp.height = imgEl.height;
+    tmp.getContext('2d').drawImage(imgEl, 0, 0);
+    tmp.toBlob((blob) => {
+      if (!blob) {
+        showNotice('Не удалось создать WebP. Попробуй другой браузер');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (file.name || 'image').replace(/\.[^.]+$/, '') + '.webp';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      goNextOrFinish();
+    }, 'image/webp', q);
+  });
+
+  skipBtn.addEventListener('click', () => {
+    goNextOrFinish();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('Загруженные фото исчезнут из редактора. Загрузить другие?')) return;
+    files = [];
+    fileIdx = 0;
+    imgEl = null;
+    fileInput.value = '';
+    showUpload();
+    clearNotice();
+  });
+
+  function copyCmd(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const prev = btn.textContent;
+      btn.textContent = 'Скопировано';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = prev; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+</script>
+<script src="https://unpkg.com/lucide@latest" defer onload="window.lucide&&window.lucide.createIcons()"></script>
+</body>
+</html>

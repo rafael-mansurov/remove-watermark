@@ -1,62 +1,72 @@
 # remove_watermark
 
-Проект для удаления белого текста и водяных знаков с фото:
-- через веб-интерфейс прямо в браузере (`index.html`);
-- через локальный Python-скрипт (`remove_watermark.py`) для пакетной обработки.
+Проект для работы с фото в браузере и офлайн-утилитами:
 
-## Сайт проекта
+- **Удаление белого текста и водяных знаков** — веб (`index.html`) и Python CLI (`remove_watermark.py`).
+- **Конвертация в WebP** — веб (`compress-webp.html`) и скрипты для macOS / Windows (контекстное меню).
 
-[remove-watermark.io](https://rafael-mansurov.github.io/remove-watermark/)
+## Сайт
+
+[rafael-mansurov.github.io/remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
+
+- Главная (водяные знаки): [`index.html`](index.html)
+- Сжатие в WebP: [`compress-webp.html`](compress-webp.html)
 
 ## Важно
 
-Используйте инструмент только для изображений, которые принадлежат вам или для которых у вас есть явное разрешение на редактирование. Соблюдайте авторские права и условия использования контента.
+Используйте инструмент только для изображений, которые принадлежат вам или для которых у вас есть явное разрешение на редактирование. Соблюдайте авторские права.
 
 ## Что в репозитории
 
-- `index.html` — одностраничный интерфейс с обработкой в браузере (локально на клиенте).
-- `remove_watermark.py` — CLI-скрипт с интерактивной настройкой зоны перед каждым фото.
-- `requirements.txt` — Python-зависимости.
+| Файл / папка | Назначение |
+|--------------|------------|
+| `index.html` | Удаление водяных знаков в браузере (OpenCV.js, локально на клиенте). |
+| `compress-webp.html` | Конвертация в WebP в браузере (canvas, локально). |
+| `styles.css` | Общие стили для страниц. |
+| `footer.js` | Общий футер для обеих HTML-страниц. |
+| `favicon.svg`, `og.webp` | Иконка и превью для соцсетей. |
+| `robots.txt`, `sitemap.xml` | Для публикации на GitHub Pages. |
+| `remove_watermark.py` | CLI: пакетная обработка с интерактивной зоной. |
+| `requirements.txt` | Зависимости Python. |
+| `Convert-to-WebP.workflow/` | Quick Action для macOS (Finder) — платный артефакт; в репозитории может быть превью/оболочка. |
+| `windows/` | PowerShell: установка пункта «Convert to WebP» в контекстное меню Windows (`install.ps1`, `ConvertToWebP.ps1`, `uninstall.ps1`). |
 
-## Возможности
+## Веб: водяные знаки (`index.html`)
 
-- Удаление белых водяных знаков с предварительным просмотром результата.
-- Настройка `Threshold` (яркость маски) и `Radius` (радиус inpainting).
-- Ручная настройка области удаления (перемещение и изменение размера).
-- Пакетная обработка папки изображений в Python-режиме.
-- Автосохранение результатов в `cleaned/` и пропуск уже обработанных файлов (по умолчанию).
+- Настройка порога и радиуса inpainting, зоны на canvas.
+- Пакет нескольких файлов, HEIC через heic2any (CDN).
+- Модель OpenCV подгружается с CDN.
 
-## Быстрый старт (веб-версия)
+## Веб: WebP (`compress-webp.html`)
 
-### Вариант 1: открыть файл напрямую
+- Загрузка, предпросмотр, ползунок качества, пакетное сжатие с общим качеством.
+- Инструкции для macOS (workflow) и Windows (одна команда `irm … install.ps1 | iex`).
 
-Откройте `index.html` в браузере.
+## Windows: контекстное меню
 
-### Вариант 2: локальный HTTP-сервер (рекомендуется для разработки)
+После деплоя на GitHub (ветка `main`):
+
+```powershell
+irm "https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows/install.ps1" | iex
+```
+
+Скрипт кладёт файлы в `%LOCALAPPDATA%\WebP-ContextMenu`, добавляет пункт меню, при необходимости предлагает поставить `cwebp` через `winget`. Удаление: `uninstall.ps1` в той же папке (см. вывод `install.ps1`).
+
+## Быстрый старт (локально)
 
 ```bash
 python3 -m http.server 8080
 ```
 
-После запуска откройте:
-[http://localhost:8080](http://localhost:8080)
+Открой [http://localhost:8080](http://localhost:8080).
 
-## Быстрый старт (Python-скрипт)
+## Python CLI (водяные знаки)
 
 ### Требования
 
-- macOS
+- macOS (выбор папки через `osascript`)
 - Python 3.9+
-- Пакеты из `requirements.txt`
-
-### Установка
-
-```bash
-brew install python
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+- `pip install -r requirements.txt`
 
 ### Запуск
 
@@ -64,56 +74,32 @@ pip install -r requirements.txt
 python3 remove_watermark.py
 ```
 
-После запуска откроется системный выбор папки (Finder).  
-Выберите папку с фото, и скрипт начнет обработку.
+Результаты по умолчанию: `<папка>/cleaned/`.
 
-Результаты сохраняются в:
-
-```text
-<выбранная_папка>/cleaned/
-```
-
-## Параметры CLI
+### Параметры
 
 ```bash
 python3 remove_watermark.py --help
 ```
 
-Доступные аргументы:
+- `-i, --input` — папка с изображениями  
+- `--region X1 Y1 X2 Y2` — стартовая зона (доли кадра)  
+- `--no-skip` — не пропускать уже обработанные  
 
-- `-i, --input <path>` — путь к папке с изображениями.
-- `--region X1 Y1 X2 Y2` — стартовая зона в долях от размера изображения (по умолчанию по центру кадра: `0.3 0.4 0.7 0.6`).
-- `--no-skip` — перезаписывать уже обработанные файлы.
+### Управление в редакторе
 
-Пример:
+- Углы зоны — размер, перетаскивание внутри — сдвиг.  
+- `ENTER` / `SPACE` — обработать, `S` / `N` — пропустить, `ESC` — выход.
 
-```bash
-python3 remove_watermark.py -i ~/Pictures/cases --region 0.40 0.86 1.0 1.0
-```
-
-## Поддерживаемые форматы
+## Поддерживаемые форматы (Python)
 
 `jpg`, `jpeg`, `png`, `bmp`, `tiff`, `tif`, `webp`
 
-## Управление в интерактивном редакторе (Python)
+## Как это работает (водяные знаки)
 
-- Перетаскивание углов — изменение размера зоны.
-- Перетаскивание внутри зоны — перемещение прямоугольника.
-- `ENTER` или `SPACE` — обработать текущее фото.
-- `S` или `N` — пропустить фото.
-- `ESC` — завершить обработку.
-
-## Как это работает
-
-1. В выбранной зоне выделяются яркие пиксели (белый текст/водяной знак) через порог.
-2. Маска расширяется (`dilate`), чтобы лучше захватить символы.
-3. Применяется `cv2.inpaint(..., cv2.INPAINT_TELEA)` для восстановления фона.
-
-## Ограничения
-
-- Инструмент лучше всего работает для светлых/белых водяных знаков.
-- Для сложных текстур может потребоваться ручной подбор `Threshold` и `Radius`.
-- Интерактивный выбор папки в Python-скрипте использует `osascript` (ориентировано на macOS).
+1. В зоне по порогу выделяются светлые пиксели.  
+2. Маска расширяется (`dilate`).  
+3. `cv2.inpaint(..., INPAINT_TELEA)` восстанавливает фон.
 
 ## Локальная разработка
 
@@ -121,12 +107,9 @@ python3 remove_watermark.py -i ~/Pictures/cases --region 0.40 0.86 1.0 1.0
 git clone https://github.com/rafael-mansurov/remove-watermark.git
 cd remove-watermark
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python3 remove_watermark.py
 ```
-
-Артефакты обработки (`cleaned/`) и служебные Python-файлы исключены из git через `.gitignore`.
 
 ## Автор
 
@@ -135,5 +118,4 @@ Telegram: [@mansurov_rafael](https://t.me/mansurov_rafael)
 
 ## License
 
-MIT — см. файл `LICENSE`.
-
+MIT — см. [`LICENSE`](LICENSE).
