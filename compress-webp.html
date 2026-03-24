@@ -7,11 +7,44 @@
 <meta name="description" content="Сжимай фото в WebP прямо в браузере: загрузи изображение, подбери качество и скачай. Обработка локально, без регистрации">
 <meta name="keywords" content="сжать фото WebP, конвертировать в WebP, сжатие изображений онлайн, macOS Quick Action">
 <meta name="author" content="Rafael Mansurov">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/compress-webp.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/compress-webp.html">
+<meta property="og:title" content="Сжать фото в WebP онлайн">
+<meta property="og:description" content="Сжимай фото в WebP прямо в браузере: загрузи изображение, подбери качество и скачай. Обработка локально, без регистрации">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Сжатие фото в WebP онлайн">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Сжать фото в WebP онлайн">
+<meta name="twitter:description" content="Сжимай фото в WebP прямо в браузере: загрузи изображение, подбери качество и скачай. Обработка локально, без регистрации">
+<meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta name="twitter:image:alt" content="Сжатие фото в WebP онлайн">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Сжатие фото в WebP",
+  "alternateName": "Конвертер изображений в WebP онлайн",
+  "operatingSystem": "Any",
+  "applicationCategory": "MultimediaApplication",
+  "description": "Сжимает изображения в WebP прямо в браузере. Обработка локальная, файлы никуда не отправляются.",
+  "url": "https://rafael-mansurov.github.io/remove-watermark/compress-webp.html",
+  "author": {
+    "@type": "Person",
+    "name": "Рафаэль Мансуров"
+  }
+}
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -20,7 +53,7 @@
     <div class="badge">В браузере</div>
     <h1>Сжать фото в&nbsp;<span>WebP</span></h1>
     <p class="subtitle">
-      Загрузи фото — слева оригинал, справа результат. Подстрой качество и скачай. Всё локально, без облака
+      Загрузи фото — слева оригинал, справа результат. Подстрой качество и скачай
     </p>
   </header>
 
@@ -29,16 +62,16 @@
     <h2>Конвертер WebP</h2>
     <p>Обработка локально — файлы не покидают твой компьютер</p>
 
-    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" multiple style="display:none">
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/bmp,image/gif,image/heic,image/heif" multiple class="is-hidden">
 
     <div class="workspace" id="workspace">
     <div class="upload-zone" id="uploadZone">
       <div class="upload-pick">
-        <i data-lucide="upload" class="upload-icon" style="width:40px;height:40px;color:var(--blue);stroke-width:2"></i>
+        <i data-lucide="upload" class="upload-icon icon-upload-accent"></i>
         <p class="upload-title">Перетащи фото или вставь из буфера</p>
         <p class="upload-or">или</p>
         <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файл</button>
-        <p class="upload-hint">JPG · PNG · WEBP · BMP · GIF. Можно несколько фото за раз</p>
+        <p class="upload-hint">JPG · PNG · WEBP · BMP · GIF · HEIC. Можно несколько фото за раз</p>
       </div>
       <div class="batch-progress cv-status" id="batchProgressBlock">
         <div class="cv-status-head">
@@ -81,19 +114,19 @@
             <span id="qualityVal">80</span>
           </div>
           <input type="range" id="qualitySlider" min="1" max="100" value="80">
-          <div style="font-size:11px;color:var(--text-dim);line-height:1.4;">1 — меньше размер, 100 — почти без потерь</div>
+          <div class="slider-help-text">1 — меньше размер, 100 — почти без потерь</div>
         </div>
-        <div class="slider-group" id="applyToAllWrap" style="display:none">
-          <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid);cursor:pointer;">
+        <div class="slider-group is-hidden" id="applyToAllWrap">
+          <label class="apply-all-label">
             <input type="checkbox" id="applyToAllCheck">
             <span>Одинаковое качество для всех</span>
           </label>
-          <div style="font-size:11px;color:var(--text-dim);line-height:1.4;">Выбери качество на первом фото — все остальные сожмутся так же</div>
+          <div class="slider-help-text">Выбери качество на первом фото — все остальные сожмутся так же</div>
         </div>
       </div>
 
       <div class="action-row">
-        <button class="btn btn-ghost" id="skipBtn" style="display:none">Пропустить фото</button>
+        <button class="btn btn-ghost is-hidden" id="skipBtn">Пропустить фото</button>
         <button class="btn btn-ghost" id="resetBtn">Загрузить другое</button>
         <button class="btn btn-primary" id="downloadBtn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -125,7 +158,9 @@
 
         <div class="details-section">
           <h3>2. Получи workflow</h3>
-          <p>Нажми «Скачать .workflow» или «Купить» — получишь файл. Дважды кликни по нему → «Установить». Готово, workflow появится в контекстном меню.</p>
+          <p>Нажми «Скачать .workflow» или «Купить» и получи файл.</p>
+          <p>Дважды кликни по нему и нажми «Установить».</p>
+          <p>Готово: workflow появится в контекстном меню.</p>
 
           <div class="code-block" style="position:relative;">
             <div class="code-toolbar">
@@ -273,8 +308,8 @@ irm "$base/install.ps1" | iex
   let debounceTimer = null;
 
   function updateSkipVisibility() {
-    if (skipBtn) skipBtn.style.display = files.length > 1 ? '' : 'none';
-    if (applyToAllWrap) applyToAllWrap.style.display = files.length > 1 ? '' : 'none';
+    if (skipBtn) skipBtn.classList.toggle('is-hidden', files.length <= 1);
+    if (applyToAllWrap) applyToAllWrap.classList.toggle('is-hidden', files.length <= 1);
   }
 
   function showNotice(msg, type = 'error') {
@@ -295,9 +330,63 @@ irm "$base/install.ps1" | iex
 
   function isSupportedImage(file) {
     const t = (file.type || '').toLowerCase();
-    const ok = /^image\/(jpeg|png|webp|bmp|gif)$/i.test(t);
+    const ok = /^image\/(jpeg|png|webp|bmp|gif|heic|heif)$/i.test(t) || t.includes('heic') || t.includes('heif');
     if (ok) return true;
-    return /\.(jpe?g|png|webp|bmp|gif)$/i.test(file.name || '');
+    return /\.(jpe?g|png|webp|bmp|gif|heic|heif)$/i.test(file.name || '');
+  }
+
+  function isHeicLike(file) {
+    const t = (file.type || '').toLowerCase();
+    if (t === 'image/heic' || t === 'image/heif' || t.includes('heic') || t.includes('heif')) return true;
+    return /\.(heic|heif)$/i.test(file.name || '');
+  }
+
+  const HEIC2ANY_SRC = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+  let heic2anyLoadPromise = null;
+  function ensureHeic2anyLoaded() {
+    if (typeof window.heic2any === 'function') return Promise.resolve();
+    if (heic2anyLoadPromise) return heic2anyLoadPromise;
+    heic2anyLoadPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = HEIC2ANY_SRC;
+      s.async = true;
+      s.onload = () => {
+        if (typeof window.heic2any === 'function') resolve();
+        else {
+          heic2anyLoadPromise = null;
+          reject(new Error('heic2any'));
+        }
+      };
+      s.onerror = () => {
+        heic2anyLoadPromise = null;
+        reject(new Error('heic2any network'));
+      };
+      document.head.appendChild(s);
+    });
+    return heic2anyLoadPromise;
+  }
+
+  async function prepareImageFiles(fileList) {
+    const out = [];
+    if (fileList.some(isHeicLike)) await ensureHeic2anyLoaded();
+    for (const file of fileList) {
+      if (!isHeicLike(file)) {
+        out.push(file);
+        continue;
+      }
+      const converted = await window.heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.92
+      });
+      const blobs = Array.isArray(converted) ? converted : [converted];
+      const stem = (file.name || 'photo').replace(/\.(heic|heif)$/i, '') || 'photo';
+      blobs.forEach((blob, j) => {
+        const name = blobs.length > 1 ? stem + '-' + (j + 1) + '.jpg' : stem + '.jpg';
+        out.push(new File([blob], name, { type: 'image/jpeg' }));
+      });
+    }
+    return out;
   }
 
   function imageFromClipboard(data) {
@@ -314,15 +403,25 @@ irm "$base/install.ps1" | iex
 
   uploadPickBtn.addEventListener('click', () => fileInput.click());
 
-  fileInput.addEventListener('change', (e) => {
+  fileInput.addEventListener('change', async (e) => {
     if (!e.target.files.length) return;
     const selected = Array.from(e.target.files).filter(isSupportedImage);
     if (!selected.length) {
-      showNotice('Неподдерживаемый формат. Нужны JPG, PNG, WEBP, BMP или GIF.');
+      showNotice('Неподдерживаемый формат. Нужны JPG, PNG, WEBP, BMP, GIF или HEIC.');
       e.target.value = '';
       return;
     }
-    loadFiles(selected);
+    try {
+      const prepared = await prepareImageFiles(selected);
+      if (!prepared.length) {
+        showNotice('Не удалось открыть выбранные файлы.');
+        return;
+      }
+      loadFiles(prepared);
+    } catch (err) {
+      console.error(err);
+      showNotice('Не удалось открыть HEIC. Проверь интернет или сохрани фото как JPEG.');
+    }
     e.target.value = '';
   });
 
@@ -333,24 +432,41 @@ irm "$base/install.ps1" | iex
 
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
 
-  uploadZone.addEventListener('drop', (e) => {
+  uploadZone.addEventListener('drop', async (e) => {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
     const selected = Array.from(e.dataTransfer.files).filter(isSupportedImage);
     if (!selected.length) {
-      showNotice('Неподдерживаемый формат. Нужны JPG, PNG, WEBP, BMP или GIF.');
+      showNotice('Неподдерживаемый формат. Нужны JPG, PNG, WEBP, BMP, GIF или HEIC.');
       return;
     }
-    loadFiles(selected);
+    try {
+      const prepared = await prepareImageFiles(selected);
+      if (!prepared.length) {
+        showNotice('Не удалось открыть выбранные файлы.');
+        return;
+      }
+      loadFiles(prepared);
+    } catch (err) {
+      console.error(err);
+      showNotice('Не удалось открыть HEIC. Проверь интернет или сохрани фото как JPEG.');
+    }
   });
 
-  document.addEventListener('paste', (e) => {
+  document.addEventListener('paste', async (e) => {
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     const f = imageFromClipboard(e.clipboardData);
     if (f) {
       e.preventDefault();
-      loadFiles([f]);
+      try {
+        const prepared = await prepareImageFiles([f]);
+        if (!prepared.length) return;
+        loadFiles(prepared);
+      } catch (err) {
+        console.error(err);
+        showNotice('Не удалось открыть HEIC. Проверь интернет или сохрани фото как JPEG.');
+      }
     }
   });
 
@@ -430,16 +546,7 @@ irm "$base/install.ps1" | iex
 
       rightCanvas.toBlob((blob) => {
         if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const img = new Image();
-        img.onload = () => {
-          const c = rightCanvas.getContext('2d');
-          c.clearRect(0, 0, rightCanvas.width, rightCanvas.height);
-          c.drawImage(img, 0, 0);
-          URL.revokeObjectURL(url);
-          updateSizeInfo(blob.size);
-        };
-        img.src = url;
+        updateSizeInfo(blob.size);
       }, 'image/webp', q);
     }, 80);
   }
@@ -486,15 +593,21 @@ irm "$base/install.ps1" | iex
           const file = files[i];
           const img = await new Promise((resolve, reject) => {
             const im = new Image();
-            im.onload = () => resolve(im);
-            im.onerror = reject;
-            im.src = URL.createObjectURL(file);
+            const objectUrl = URL.createObjectURL(file);
+            im.onload = () => {
+              URL.revokeObjectURL(objectUrl);
+              resolve(im);
+            };
+            im.onerror = () => {
+              URL.revokeObjectURL(objectUrl);
+              reject(new Error('image_load_failed'));
+            };
+            im.src = objectUrl;
           });
           const tmp = document.createElement('canvas');
           tmp.width = img.width;
           tmp.height = img.height;
           tmp.getContext('2d').drawImage(img, 0, 0);
-          URL.revokeObjectURL(img.src);
           const blob = await new Promise(r => tmp.toBlob(b => r(b), 'image/webp', q));
           if (blob) {
             const a = document.createElement('a');
@@ -503,10 +616,7 @@ irm "$base/install.ps1" | iex
             a.click();
             URL.revokeObjectURL(a.href);
           }
-          await new Promise(r => setTimeout(r, 100));
         }
-        if (progText) progText.textContent = 'Готово, дожидаюсь загрузки…';
-        await new Promise(r => setTimeout(r, Math.max(2000, files.length * 400)));
       } catch (e) {
         batchOk = false;
         showNotice('Не удалось обработать часть файлов. Попробуй снова.');

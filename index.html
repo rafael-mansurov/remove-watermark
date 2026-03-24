@@ -15,6 +15,7 @@
 <meta property="og:description" content="Удаляй водяные знаки с фото прямо в браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без регистрации">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta property="og:image:type" content="image/webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Удаление водяного знака с фото">
@@ -33,7 +34,7 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "remove_watermark",
+  "name": "Удалитель водяных знаков",
   "alternateName": "Удаление водяного знака с фото онлайн",
   "operatingSystem": "Any",
   "applicationCategory": "MultimediaApplication",
@@ -66,7 +67,7 @@
   <header class="header">
     <div class="badge">
       <i data-lucide="shield-check" class="badge-icon" aria-hidden="true"></i>
-      <span>Для корректной работы — включите VPN</span>
+      <span>Для работы включи VPN</span>
     </div>
     <h1>Убрать водяной знак с&nbsp;фото</h1>
     <p class="subtitle">
@@ -81,12 +82,12 @@
     <h2>Удалить в&nbsp;браузере</h2>
     <p>Выдели зону с&nbsp;водяным знаком, подстрой параметры и скачай результат</p>
 
-    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/bmp,image/gif,image/heic,image/heif" multiple style="display:none">
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/bmp,image/gif,image/heic,image/heif" multiple class="is-hidden">
 
     <!-- Upload zone -->
     <div class="upload-zone cv-loading" id="uploadZone">
       <div class="upload-pick">
-        <i data-lucide="upload" class="upload-icon" style="width:40px;height:40px;color:var(--blue);stroke-width:2"></i>
+        <i data-lucide="upload" class="upload-icon icon-upload-accent"></i>
         <p class="upload-title">Перетащи фото или вставь из буфера</p>
         <p class="upload-or">или</p>
         <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файлы</button>
@@ -138,7 +139,7 @@
             <span id="thrVal">180</span>
           </div>
           <input type="range" id="thrSlider" min="1" max="255" value="180">
-          <div style="font-family:var(--sans);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем выше, тем меньше захватывается. Начни с 180</div>
+          <div class="slider-help-text">Чем выше, тем меньше захватывается. Начни с 180</div>
         </div>
         <div class="slider-group">
           <div class="slider-label">
@@ -146,7 +147,7 @@
             <span id="radVal">10</span>
           </div>
           <input type="range" id="radSlider" min="1" max="20" value="10">
-          <div style="font-family:var(--sans);font-size:11px;color:var(--text-dim);line-height:1.4;">Чем больше значение, тем плавнее переход по краю зоны</div>
+          <div class="slider-help-text">Чем больше значение, тем плавнее переход по краю зоны</div>
         </div>
       </div>
 
@@ -166,7 +167,7 @@
   <section class="section">
     <div class="section-label">Альтернатива</div>
     <h2>Запустить в&nbsp;терминале</h2>
-    <p style="margin-bottom:20px;">Если нужна пакетная обработка или работа без&nbsp;браузера</p>
+    <p class="mb-20">Если нужна пакетная обработка или работа без&nbsp;браузера</p>
 
     <details>
       <summary><i data-lucide="chevron-right" class="details-chevron" aria-hidden="true"></i>Показать инструкции</summary>
@@ -177,7 +178,7 @@
           <h3>Установи зависимости</h3>
           <p>Открой Терминал, вставь команду и нажми ENTER.</p>
           <div class="cmd">
-            <span class="cmd-prompt"><i data-lucide="terminal" style="width:13px;height:13px;stroke-width:2" aria-hidden="true"></i></span>
+            <span class="cmd-prompt"><i data-lucide="terminal" class="icon-terminal-sm" aria-hidden="true"></i></span>
             <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
             <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">Копировать</button>
           </div>
@@ -188,7 +189,7 @@
           <h3>remove_watermark.py</h3>
           <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
 
-          <div class="code-block" style="position:relative;">
+          <div class="code-block relative">
             <div class="code-toolbar">
               <div class="code-toolbar-left">
                 <div class="dots">
@@ -263,11 +264,11 @@ def collect_images(input_dir: Path) -> list[Path]:
 # … дальше: интерактивный редактор, main(), обход папки …
 # Полный файл — после оплаты.
             </script>
-            <pre id="codeBlock" style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;"></pre>
+            <pre id="codeBlock" class="preview-readonly"></pre>
             <!-- PAYWALL OVERLAY -->
-            <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
+            <div class="paywall-overlay">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <a href="https://web.tribute.tg/p/t4O" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за 100 ₽</a>
+              <a href="https://web.tribute.tg/p/t4O" target="_blank" rel="noopener noreferrer" class="btn btn-primary paywall-cta">Купить за 100 ₽</a>
             </div>
           </div>
         </div>
@@ -275,14 +276,16 @@ def collect_images(input_dir: Path) -> list[Path]:
         <!-- 02c: Run -->
         <div class="details-section">
           <h3>Как запустить</h3>
-          <p>После скачивания просто открой Терминал на&nbsp;macOS, вставь команду ниже и нажми ENTER — она сама перейдёт в&nbsp;папку «Загрузки» и запустит скрипт. В появившемся окне выбери папку с&nbsp;фото (не отдельный файл).</p>
+          <p>Открой Терминал и вставь команду ниже.</p>
+          <p>Нажми ENTER — скрипт запустится сам.</p>
+          <p>В появившемся окне выбери папку с&nbsp;фото, не отдельный файл.</p>
           <div class="cmd">
-            <span class="cmd-prompt"><i data-lucide="terminal" style="width:13px;height:13px;stroke-width:2" aria-hidden="true"></i></span>
+            <span class="cmd-prompt"><i data-lucide="terminal" class="icon-terminal-sm" aria-hidden="true"></i></span>
             <span class="cmd-text">cd ~/Downloads && python3 remove_watermark.py</span>
             <button class="cmd-copy" onclick="copyCmd(this, 'cd ~/Downloads && python3 remove_watermark.py')">Копировать</button>
           </div>
-          <p style="margin-top:10px; font-size:13px;">
-            Обработанные фото сохраняются в&nbsp;папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
+          <p class="run-note">
+            Скрипт сохраняет обработанные фото в&nbsp;папку <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">cleaned/</code> внутри выбранной папки.
             Уже обработанные файлы пропускаются автоматически.
           </p>
         </div>
@@ -292,7 +295,7 @@ def collect_images(input_dir: Path) -> list[Path]:
           <h3>Управление</h3>
           <p>Перед каждым фото открывается окно. Слева — оригинал с выделением зоны, справа — результат в реальном времени.</p>
 
-          <div class="controls" style="margin-top:16px;">
+          <div class="controls controls-spaced">
             <div class="control-row">
               <div class="control-key">Drag: углы</div>
               <div class="control-desc">Изменить размер зоны удаления</div>
@@ -1409,8 +1412,7 @@ def collect_images(input_dir: Path) -> list[Path]:
     e.preventDefault();
     endDrag();
   }
-</script>
-<script>
+
   let lucideIconsInited = false;
   function scheduleLucideIcons() {
     if (lucideIconsInited) return;
@@ -1426,8 +1428,73 @@ def collect_images(input_dir: Path) -> list[Path]:
     }
     setTimeout(run, 80);
   }
+
+  function showOpenCvLoadError() {
+    const uz = document.getElementById('uploadZone');
+    if (uz) {
+      uz.classList.remove('cv-loading');
+      uz.classList.add('cv-failed');
+    }
+    const s = document.getElementById('cvStatus');
+    if (s) {
+      s.className = 'cv-status cv-status-failed';
+      s.innerHTML = '<p>Не удалось загрузить обработку фото. Проверь интернет; иногда мешают VPN или блокировка рекламы. Попробуй другой браузер.</p><button type="button" class="btn btn-primary" id="cvRetryBtn">Повторить</button>';
+      const rb = document.getElementById('cvRetryBtn');
+      if (rb) rb.addEventListener('click', () => loadOpenCvScript(true));
+    }
+  }
+
+  const OPENCV_CDN_URLS = [
+    'https://docs.opencv.org/4.10.0/opencv.js',
+    'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.4/opencv.js'
+  ];
+  let opencvLoaderInFlight = false;
+  function loadOpenCvScript(forceReload = false) {
+    if (!forceReload && (opencvLoaderInFlight || cvReady)) return;
+    opencvLoaderInFlight = true;
+    let idx = 0;
+    const tryLoad = () => {
+      if (idx >= OPENCV_CDN_URLS.length) {
+        opencvLoaderInFlight = false;
+        showOpenCvLoadError();
+        return;
+      }
+      const src = OPENCV_CDN_URLS[idx++];
+      const old = document.getElementById('opencvLoaderScript');
+      if (old) old.remove();
+      const s = document.createElement('script');
+      s.id = 'opencvLoaderScript';
+      s.async = true;
+      s.src = src;
+      s.onload = () => {
+        opencvLoaderInFlight = false;
+        onOpenCvReady();
+      };
+      s.onerror = tryLoad;
+      document.body.appendChild(s);
+    };
+    tryLoad();
+  }
+
+  function loadLucideScript() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      scheduleLucideIcons();
+      return;
+    }
+    const existing = document.getElementById('lucideLoaderScript');
+    if (existing) return;
+    const s = document.createElement('script');
+    s.id = 'lucideLoaderScript';
+    s.src = 'https://unpkg.com/lucide@latest';
+    s.defer = true;
+    s.onload = () => scheduleLucideIcons();
+    document.body.appendChild(s);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadLucideScript();
+    loadOpenCvScript();
+  });
 </script>
-<script src="https://unpkg.com/lucide@latest" defer onload="scheduleLucideIcons()"></script>
-<script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady()"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
 
 ## Сайт
 
-[rafael-mansurov.github.io/remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
+[remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
 
 - Главная (водяные знаки): [`index.html`](index.html)
 - Сжатие в WebP: [`compress-webp.html`](compress-webp.html)
@@ -28,7 +28,7 @@
 | `robots.txt`, `sitemap.xml` | Для публикации на GitHub Pages. |
 | `remove_watermark.py` | CLI: пакетная обработка с интерактивной зоной. |
 | `requirements.txt` | Зависимости Python. |
-| `Convert-to-WebP.workflow/` | Quick Action для macOS (Finder) — платный артефакт; в репозитории может быть превью/оболочка. |
+| `Convert-to-WebP.workflow/` | Quick Action для macOS (Finder): исходник bundle в репозитории. **Готовый ZIP для пользователей** выдаётся после оплаты (Tribute со страницы `compress-webp.html`), не через публичную ссылку на Releases. |
 | `windows/` | PowerShell: установка пункта «Convert to WebP» в контекстное меню Windows (`install.ps1`, `ConvertToWebP.ps1`, `uninstall.ps1`). |
 
 ## Веб: водяные знаки (`index.html`)
@@ -41,6 +41,10 @@
 
 - Загрузка, предпросмотр, ползунок качества, пакетное сжатие с общим качеством.
 - Инструкции для macOS (workflow) и Windows (одна команда `irm … install.ps1 | iex`).
+
+## macOS: сборка ZIP для выдачи покупателям
+
+Чтобы собрать **один архив** с корнем `Convert-to-WebP.workflow/` (а не отдельные файлы из `Contents/`): GitHub Action **Package macOS Convert-to-WebP workflow** (файл `.github/workflows/package-mac-workflow.yml`) — запуск вручную или при пуше при изменении `Convert-to-WebP.workflow/`. Артефакт прикрепляется к релизу с тегом `mac-workflow-latest` — его можно скачать в интерфейсе GitHub и залить в Tribute; **публично эту ссылку на странице не размещаем**, пользователям — только после оплаты.
 
 ## Windows: контекстное меню
 
