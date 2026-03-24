@@ -179,14 +179,15 @@
           <p>Открой Терминал, вставь команду и нажми ENTER.</p>
           <div class="cmd">
             <span class="cmd-prompt"><i data-lucide="terminal" class="icon-terminal-sm" aria-hidden="true"></i></span>
-            <span class="cmd-text">brew install python && pip3 install opencv-python numpy</span>
-            <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy')">Копировать</button>
+            <span class="cmd-text">brew install python && pip3 install opencv-python numpy --break-system-packages</span>
+            <button class="cmd-copy" onclick="copyCmd(this, 'brew install python && pip3 install opencv-python numpy --break-system-packages')">Копировать</button>
           </div>
+          <p class="run-note">Если используешь виртуальное окружение, устанавливай зависимости внутри него — флаг <code style="font-family:var(--mono);color:var(--cyan);font-size:12px;">--break-system-packages</code> тогда не нужен.</p>
         </div>
 
         <!-- 02b: Download + Code -->
         <div class="details-section">
-          <h3>remove_watermark.py</h3>
+          <h3>Скачай скрипт</h3>
           <p>Нажми «Скачать .py» и файл сохранится в «Загрузки».</p>
 
           <div class="code-block relative">
@@ -277,7 +278,7 @@ def collect_images(input_dir: Path) -> list[Path]:
         <div class="details-section">
           <h3>Как запустить</h3>
           <p>Открой Терминал и вставь команду ниже.</p>
-          <p>Нажми ENTER — скрипт запустится сам.</p>
+          <p>Нажми ENTER — эта команда перейдёт в «Загрузки» и запустит скрипт.</p>
           <p>В появившемся окне выбери папку с&nbsp;фото, не отдельный файл.</p>
           <div class="cmd">
             <span class="cmd-prompt"><i data-lucide="terminal" class="icon-terminal-sm" aria-hidden="true"></i></span>
@@ -317,12 +318,78 @@ def collect_images(input_dir: Path) -> list[Path]:
               <div class="control-desc">Обработать это фото и перейти к следующему</div>
             </div>
             <div class="control-row">
+              <div class="control-key"><kbd>+</kbd> / <kbd>=</kbd></div>
+              <div class="control-desc">Добавить ещё одну зону удаления</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key"><kbd>-</kbd> / <kbd>_</kbd></div>
+              <div class="control-desc">Удалить выбранную зону (минимум одна остаётся)</div>
+            </div>
+            <div class="control-row">
+              <div class="control-key"><kbd>S</kbd></div>
+              <div class="control-desc">Пропустить текущее фото без обработки</div>
+            </div>
+            <div class="control-row">
               <div class="control-key"><kbd>ESC</kbd></div>
               <div class="control-desc">Выйти из программы</div>
             </div>
           </div>
         </div>
 
+      </div>
+    </details>
+  </section>
+
+  <section class="section faq-section">
+    <div class="section-label">Вопросы</div>
+    <h2>Частые вопросы</h2>
+
+    <details>
+      <summary>Фото обрабатываются на сервере или у меня на устройстве?</summary>
+      <div class="details-body">
+        <p>Всё происходит прямо в браузере — файлы никуда не уходят. OpenCV загружается один раз и работает локально. Интернет нужен только для загрузки самого инструмента. Попробуй: загрузи фото и отключи wi-fi — всё продолжит работать.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Зачем нужен VPN?</summary>
+      <div class="details-body">
+        <p>Инструмент использует библиотеку OpenCV с серверов opencv.org — они недоступны без VPN из некоторых регионов. Если загрузка зависла, включи VPN и обнови страницу. Браузерная обработка при этом остаётся полностью локальной.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Работает ли инструмент на телефоне?</summary>
+      <div class="details-body">
+        <p>Работает на iPhone и Android в Safari и Chrome. На экране меньше места — зону удаления удобнее двигать пальцем за середину, а не за углы. Большие фото (от 20 МП) обрабатываются чуть дольше из-за ограничений памяти телефона.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Почему знак убрался не полностью?</summary>
+      <div class="details-body">
+        <p>Инструмент убирает белые и светлые пиксели. Если знак цветной или полупрозрачный — опусти ползунок «Чувствительность к белому» ниже 180. Если знак на светлом фоне — результат будет хуже: алгоритм не отличит знак от фона. В таких случаях лучше подойдёт Python-скрипт с ручной настройкой зоны.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>В чём разница между браузерной версией и Python-скриптом?</summary>
+      <div class="details-body">
+        <p>Браузер — быстрый старт без установки, подходит для одного-двух фото. Python-скрипт — для пакетной обработки: загружаешь папку с сотнями фото и он проходит по каждому с одними настройками. Скрипт также работает без интернета и VPN. Купить скрипт можно за 100 ₽ — кнопка выше.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Какие форматы поддерживаются?</summary>
+      <div class="details-body">
+        <p>JPG, PNG, WEBP, BMP, GIF и HEIC (фото с iPhone). Скачанный файл сохраняется в том же формате, что и оригинал. GIF сохраняется как PNG — анимация не переносится. Загрузи первое фото и убедись сам — это займёт 10 секунд.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Не нашёл ответ на свой вопрос?</summary>
+      <div class="details-body">
+        <p>Напиши автору — <a href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">@mansurov_rafael</a> в Telegram. Отвечаю быстро.</p>
       </div>
     </details>
   </section>
