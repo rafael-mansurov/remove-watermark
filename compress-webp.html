@@ -248,6 +248,7 @@ irm "$base/install.ps1" | iex
 </div>
 
 <script src="footer.js"></script>
+<script src="instructions.js"></script>
 <script>
   const uploadZone = document.getElementById('uploadZone');
   const uploadPickBtn = document.getElementById('uploadPickBtn');
@@ -554,14 +555,6 @@ irm "$base/install.ps1" | iex
     clearNotice();
   });
 
-  function copyCmd(btn, text) {
-    navigator.clipboard.writeText(text).then(() => {
-      const prev = btn.textContent;
-      btn.textContent = 'Скопировано';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = prev; btn.classList.remove('copied'); }, 1800);
-    });
-  }
 </script>
 <script src="https://unpkg.com/lucide@latest" defer onload="window.lucide&&window.lucide.createIcons()"></script>
 </body>
