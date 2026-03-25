@@ -649,6 +649,65 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   cursor: pointer;
 }
 
+.merge-quality-toggle {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* Toggle switch for merge PDF quality */
+.merge-quality-toggle .switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.merge-quality-toggle .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.merge-quality-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border2);
+  transition: .4s;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  box-shadow: none !important;
+}
+
+.merge-quality-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  border-radius: 999px;
+  left: 2px;
+  top: 2px;
+  transform: translateY(0);
+  background-color: rgb(255, 255, 255);
+  transition: .4s;
+}
+
+.merge-quality-toggle .switch input:checked + .slider {
+  background-color: #21cc4c;
+}
+
+.merge-quality-toggle .switch input:focus + .slider {
+  box-shadow: none !important;
+}
+
+.merge-quality-toggle .switch input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
 .is-hidden {
   display: none !important;
 }
@@ -990,6 +1049,25 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   width: 100%;
   height: auto;
   max-width: 100%;
+}
+
+.merge-editor-panel {
+  max-height: none;
+  overflow: visible;
+}
+
+#leftPreviewCanvas,
+#rightPreviewCanvas {
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  height: auto;
+  margin: 0 auto;
+}
+
+#compressPreviewWrap .canvas-panel {
+  max-height: none;
+  overflow: hidden;
 }
 
 .editor-viewport {
@@ -1406,8 +1484,9 @@ details[open] .details-body {
   font-family: var(--mono);
   font-size: 12px;
   color: var(--text-dim);
-  width: 28px;
-  text-align: right;
+  min-width: 14px;
+  width: auto;
+  text-align: left;
   flex-shrink: 0;
 }
 
@@ -1422,6 +1501,10 @@ details[open] .details-body {
   min-width: 0;
 }
 
+.order-size {
+  color: var(--text-dim);
+}
+
 .order-actions {
   display: flex;
   align-items: center;
@@ -1429,11 +1512,27 @@ details[open] .details-body {
   flex-shrink: 0;
 }
 
+.order-actions-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border2);
+  margin: 0 2px;
+}
+
 .order-btn {
   padding: 6px 10px;
   line-height: 1;
   font-size: 11px;
   border-radius: 6px;
+}
+
+.order-btn-remove {
+  padding: 6px 8px;
+  color: var(--text-dim);
+}
+
+.order-btn-remove:hover {
+  color: var(--text);
 }
 
 @media (max-width: 560px) {
