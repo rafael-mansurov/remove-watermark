@@ -198,6 +198,33 @@
     });
   }
 
+  function ensureFaqLastQuestion() {
+    // В разных страницах есть одинаковый "последний вопрос" в FAQ.
+    // Подставляем его автоматически, чтобы не дублировать HTML.
+    const telegramHref = 'https://t.me/mansurov_rafael';
+    const telegramLinkSelector = `a[href="${telegramHref}"]`;
+
+    const detailsHtml = `
+      <details data-faq-last="1">
+        <summary>Не нашёл ответ на&nbsp;свой вопрос?</summary>
+        <div class="details-body">
+          <p>Пиши мне в&nbsp;Telegram — <a href="${telegramHref}" target="_blank" rel="noopener noreferrer">@mansurov_rafael</a>. Отвечаю быстро.</p>
+        </div>
+      </details>
+    `.trim();
+
+    const faqSections = Array.from(document.querySelectorAll('.faq-section'));
+    faqSections.forEach((section) => {
+      if (!section) return;
+      if (section.querySelector(telegramLinkSelector)) return; // уже вставлен
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = detailsHtml;
+      const newDetails = wrapper.firstElementChild;
+      if (!newDetails || newDetails.tagName !== 'DETAILS') return;
+      section.appendChild(newDetails);
+    });
+  }
+
   window.copyCmd = function copyCmd(btn, text) {
     const prev = btn.textContent;
     navigator.clipboard.writeText(text).then(() => {
@@ -213,6 +240,7 @@
   function initSharedInstructionsUi() {
     upgradeCommandPromptIcons();
     initAnimatedDetails();
+    ensureFaqLastQuestion();
     initFaqAccordion();
   }
 

@@ -95,6 +95,7 @@
       </div>
       <p class="upload-notice" id="uploadNotice"></p>
       <div class="cv-status" id="cvStatus">
+        <div data-webp-loader></div>
         <div class="cv-status-head">
           <span class="cv-dot"></span>
           <span id="cvStatusText">Загрузка модели…</span>
@@ -383,13 +384,6 @@ def collect_images(input_dir: Path) -> list[Path]:
         <p>JPG, PNG, WEBP, BMP, GIF и HEIC (фото с&nbsp;iPhone). Скачанный файл сохраняется в&nbsp;том же формате, что и оригинал. GIF сохраняется как PNG — анимация не&nbsp;переносится. <a href="#browser-tool">Загрузи первое&nbsp;фото</a> и убедись сам — это займёт 10&nbsp;секунд.</p>
       </div>
     </details>
-
-    <details>
-      <summary>Не нашёл ответ на&nbsp;свой вопрос?</summary>
-      <div class="details-body">
-        <p>Пиши мне в&nbsp;Telegram — <a href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">@mansurov_rafael</a>. Отвечаю быстро.</p>
-      </div>
-    </details>
   </section>
 
   <!-- FOOTER -->
@@ -397,6 +391,7 @@ def collect_images(input_dir: Path) -> list[Path]:
 
 </div>
 
+<script src="loader.js"></script>
 <script src="footer.js"></script>
 <script src="instructions.js"></script>
 <script>
@@ -501,14 +496,16 @@ def collect_images(input_dir: Path) -> list[Path]:
     const s = document.getElementById('cvStatus');
     if (s) {
       s.classList.remove('cv-status-failed');
-      s.classList.add('is-hidden');
-    }
-    const uz = document.getElementById('uploadZone');
-    if (uz) {
-      // Даём прогресс-блоку плавно скрыться, затем открываем окно загрузки.
       setTimeout(() => {
-        uz.classList.remove('cv-loading', 'cv-failed');
-      }, 240);
+        s.style.animation = 'none';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          s.classList.add('is-hidden');
+          setTimeout(() => {
+            const uz = document.getElementById('uploadZone');
+            if (uz) uz.classList.remove('cv-loading', 'cv-failed');
+          }, 420);
+        }));
+      }, 900);
     }
     if (imgEl) {
       setupMats();

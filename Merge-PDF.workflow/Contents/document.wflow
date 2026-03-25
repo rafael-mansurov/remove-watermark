@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AMApplicationBuild</key>
+	<string>528</string>
+	<key>AMApplicationVersion</key>
+	<string>2.10</string>
+	<key>AMDocumentVersion</key>
+	<string>2</string>
+	<key>actions</key>
+	<array>
+		<dict>
+			<key>action</key>
+			<dict>
+				<key>AMAccepts</key>
+				<dict>
+					<key>Container</key>
+					<string>List</string>
+					<key>Optional</key>
+					<true/>
+					<key>Types</key>
+					<array>
+						<string>com.apple.cocoa.string</string>
+					</array>
+				</dict>
+				<key>AMActionVersion</key>
+				<string>2.0.3</string>
+				<key>AMApplication</key>
+				<array>
+					<string>Automator</string>
+				</array>
+				<key>AMParameterProperties</key>
+				<dict>
+					<key>COMMAND_STRING</key>
+					<dict/>
+					<key>CheckedForUserDefaultShell</key>
+					<dict/>
+					<key>inputMethod</key>
+					<dict/>
+					<key>shell</key>
+					<dict/>
+					<key>source</key>
+					<dict/>
+				</dict>
+				<key>AMProvides</key>
+				<dict>
+					<key>Container</key>
+					<string>List</string>
+					<key>Types</key>
+					<array>
+						<string>com.apple.cocoa.string</string>
+					</array>
+				</dict>
+				<key>ActionBundlePath</key>
+				<string>/System/Library/Automator/Run Shell Script.action</string>
+				<key>ActionName</key>
+				<string>Запустить скрипт оболочки</string>
+				<key>ActionParameters</key>
+				<dict>
+					<key>COMMAND_STRING</key>
+					<string># ==== Merge PDFs: numeric sort + merge (qpdf) ====
+#
+# Требование: qpdf (brew install qpdf)
+#
+# Правило сортировки: берём первое число из имени файла.
+
+files=("$@")
+(( ${#files[@]} )) || exit 0
+
+QPDF=""
+if [[ -x "/opt/homebrew/bin/qpdf" ]]; then
+  QPDF="/opt/homebrew/bin/qpdf"
+else
+  QPDF="$(command -v qpdf 2&gt;/dev/null)"
+fi
+
+if [[ -z "$QPDF" ]]; then
+  osascript -e 'display notification "Не найден qpdf (brew install qpdf)" with title "Merge PDFs"'
+  exit 1
+fi
+
+idxs=("${(f)$(python3 -c "import sys,re,os; files=sys.argv[1:]; idxs=list(range(len(files))); 
+def key(i):
+  base=os.path.basename(files[i]);
+  m=re.search(r'([0-9]+)', base);
+  return (0, int(m.group(1)), i) if m else (1, 0, i);
+s=sorted(idxs, key=key);
+print('\n'.join(map(str, s)))" "${files[@]}")}")
+
+sorted=()
+for id in "${idxs[@]}"; do
+  sorted+=("${files[$((id+1))]}")
+done
+
+first="${sorted[1]}"
+fname="$(basename -- "$first")"
+base="${fname%.*}"
+
+outdir="$HOME/Desktop/Merged-PDF"
+mkdir -p "$outdir"
+out="$outdir/$base-merged.pdf"
+
+"$QPDF" --empty --pages "${sorted[@]}" -- "$out"
+
+osascript -e "display notification \"Готово: $out\" with title \"Merge PDFs\""
+open "$outdir"
+</string>
+				</dict>
+				<key>CheckedForUserDefaultShell</key>
+				<true/>
+				<key>isViewVisible</key>
+				<integer>1</integer>
+				<key>shell</key>
+				<string>/bin/zsh</string>
+			</dict>
+			<key>isViewVisible</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>connectors</key>
+	<dict/>
+	<key>workflowMetaData</key>
+	<dict>
+		<key>applicationBundleID</key>
+		<string>com.apple.finder</string>
+		<key>applicationPaths</key>
+		<array>
+			<string>/System/Library/CoreServices/Finder.app</string>
+		</array>
+		<key>backgroundColorName</key>
+		<string>blackColor</string>
+		<key>inputTypeIdentifier</key>
+		<string>com.apple.Automator.fileSystemObject.pdf</string>
+		<key>outputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>presentationMode</key>
+		<integer>15</integer>
+		<key>processesInput</key>
+		<false/>
+		<key>serviceApplicationBundleID</key>
+		<string>com.apple.finder</string>
+		<key>serviceApplicationPath</key>
+		<string>/System/Library/CoreServices/Finder.app</string>
+		<key>serviceInputTypeIdentifier</key>
+		<string>com.apple.Automator.fileSystemObject.pdf</string>
+		<key>serviceOutputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>serviceProcessesInput</key>
+		<false/>
+		<key>systemImageName</key>
+		<string>NSActionTemplate</string>
+		<key>useAutomaticInputType</key>
+		<false/>
+		<key>workflowTypeIdentifier</key>
+		<string>com.apple.Automator.servicesMenu</string>
+	</dict>
+</dict>
+</plist>
+

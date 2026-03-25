@@ -73,13 +73,14 @@
         <button type="button" class="btn btn-primary" id="uploadPickBtn">Выбрать файл</button>
         <p class="upload-hint">JPG · PNG · WEBP · BMP · GIF · HEIC. Можно несколько фото за&nbsp;раз</p>
       </div>
-      <div class="batch-progress cv-status" id="batchProgressBlock">
+      <div class="batch-progress" id="batchProgressBlock" style="display: none;">
+        <div data-webp-loader></div>
         <div class="cv-status-head">
           <span class="cv-dot"></span>
           <span id="batchProgressTitle">Сжимаю фото…</span>
         </div>
         <div class="batch-progress-text" id="batchProgressText">1 / 5</div>
-        <div class="cv-progress-track">
+<div class="cv-progress-track">
           <div class="cv-progress-fill" id="batchProgressFill" style="width:0%"></div>
         </div>
       </div>
@@ -140,7 +141,7 @@
   <section class="section">
     <div class="section-label">Альтернатива</div>
     <h2>Из контекстного меню macOS или Windows</h2>
-    <p style="margin-bottom:20px;">Конвертируй в&nbsp;WebP прямо из&nbsp;Finder / Проводника по&nbsp;правому клику — без&nbsp;интернета, без&nbsp;запуска браузера и всегда под&nbsp;рукой.</p>
+    <p style="margin-bottom:20px;">Конвертируй в&nbsp;WebP прямо из&nbsp;Finder / Проводника по&nbsp;правому клику — без&nbsp;интернета, без&nbsp;запуска браузера и всегда под&nbsp;рукой</p>
 
     <details>
       <summary><svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>Как встроить в&nbsp;контекстное меню Mac</summary>
@@ -158,7 +159,7 @@
 
         <div class="details-section">
           <h3>2. Получи workflow</h3>
-          <p>Нажми «Скачать .workflow» или «Купить» и получи файл. Дважды кликни по&nbsp;нему и нажми «Установить». Готово: workflow появится в&nbsp;контекстном меню.</p>
+          <p>Нажми «Скачать .workflow» и получи файл. Дважды кликни по&nbsp;нему и нажми «Установить». Готово: workflow появится в&nbsp;контекстном меню.</p>
 
           <div class="code-block" style="position:relative;">
             <div class="code-toolbar">
@@ -328,19 +329,13 @@ irm "$root/install.ps1" | iex
         <p>Workflow работает без&nbsp;браузера — правый клик в&nbsp;Finder и готово. Удобно когда нужно конвертировать одно-два фото на&nbsp;лету, не открывая вкладку. Браузерная версия лучше подходит для&nbsp;пакетной обработки и предпросмотра результата перед&nbsp;скачиванием.</p>
       </div>
     </details>
-
-    <details>
-      <summary>Не нашёл ответ на&nbsp;свой вопрос?</summary>
-      <div class="details-body">
-        <p>Пиши мне в&nbsp;Telegram — <a href="https://t.me/mansurov_rafael" target="_blank" rel="noopener noreferrer">@mansurov_rafael</a>. Отвечаю быстро.</p>
-      </div>
-    </details>
   </section>
 
   <footer class="footer" id="sharedFooter" data-primary-href="index.html" data-primary-label="Убрать водяной знак"></footer>
 
 </div>
 
+<script src="loader.js"></script>
 <script src="footer.js"></script>
 <script src="instructions.js"></script>
 <script>
@@ -354,6 +349,7 @@ irm "$root/install.ps1" | iex
   const fileCounter = document.getElementById('fileCounter');
   const skipBtn = document.getElementById('skipBtn');
   const uploadNotice = document.getElementById('uploadNotice');
+  const batchProgressBlock = document.getElementById('batchProgressBlock');
   const origSizeEl = document.getElementById('origSize');
   const resultSizeEl = document.getElementById('resultSize');
   const qualitySlider = document.getElementById('qualitySlider');
@@ -577,7 +573,7 @@ irm "$root/install.ps1" | iex
       imgEl = null;
       fileInput.value = '';
       showUpload();
-      showNotice('Готово! Обработано файлов: ' + files.length + '. Можно загрузить новую партию.', 'success');
+      showNotice('Готово! Обработано файлов: ' + files.length + '. Можно загрузить новую партию', 'success');
     }
   }
 
@@ -656,6 +652,7 @@ irm "$root/install.ps1" | iex
       const progFill = document.getElementById('batchProgressFill');
       btn.disabled = true;
       if (uploadZone) uploadZone.classList.add('batch-loading');
+      if (batchProgressBlock) batchProgressBlock.style.display = 'flex';
       clearNotice();
       showUpload();
       let batchOk = true;
@@ -696,12 +693,13 @@ irm "$root/install.ps1" | iex
         showNotice('Не удалось обработать часть файлов. Попробуй снова.');
       } finally {
         if (uploadZone) uploadZone.classList.remove('batch-loading');
+        if (batchProgressBlock) batchProgressBlock.style.display = 'none';
         if (progFill) progFill.style.width = '0%';
         btn.disabled = false;
       }
       imgEl = null;
       fileInput.value = '';
-      if (batchOk) showNotice('Готово! Сжато ' + files.length + ' фото.', 'success');
+      if (batchOk) showNotice('Готово! Сжато ' + files.length + ' фото', 'success');
       return;
     }
 
