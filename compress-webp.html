@@ -108,6 +108,7 @@
           <div class="canvas-panel">
             <div class="canvas-label">Результат WebP</div>
             <canvas id="rightCanvas"></canvas>
+            <div class="preview-skeleton-overlay skel-surface" id="webpRightSkeleton" aria-hidden="true"></div>
             <div class="size-info" id="resultSize"></div>
           </div>
         </div>
@@ -352,6 +353,8 @@ irm "$root/install.ps1" | iex
   const editorWrap = document.getElementById('editorWrap');
   const leftCanvas = document.getElementById('leftCanvas');
   const rightCanvas = document.getElementById('rightCanvas');
+  const webpRightSkeleton = document.getElementById('webpRightSkeleton');
+  const rightCanvasPanel = rightCanvas ? rightCanvas.closest('.canvas-panel') : null;
   const fileNameEl = document.getElementById('fileName');
   const fileCounter = document.getElementById('fileCounter');
   const skipBtn = document.getElementById('skipBtn');
@@ -368,6 +371,13 @@ irm "$root/install.ps1" | iex
   let fileIdx = 0;
   let imgEl = null;
   let debounceTimer = null;
+  let webpPreviewRunSeq = 0;
+
+  function setWebpPreviewLoading(on) {
+    if (rightCanvasPanel) rightCanvasPanel.classList.toggle('is-preview-loading', !!on);
+    if (webpRightSkeleton) webpRightSkeleton.classList.toggle('is-hidden', !on);
+    if (resultSizeEl) resultSizeEl.classList.toggle('is-size-loading', !!on);
+  }
 
   function updateSkipVisibility() {
     if (skipBtn) skipBtn.classList.toggle('is-hidden', files.length <= 1);
@@ -517,6 +527,7 @@ irm "$root/install.ps1" | iex
       URL.revokeObjectURL(url);
       setupCanvas();
       drawLeft();
+      setWebpPreviewLoading(true);
       renderWebP();
       updateSizeInfo();
     };
@@ -554,6 +565,9 @@ irm "$root/install.ps1" | iex
 
   function renderWebP() {
     clearTimeout(debounceTimer);
+    webpPreviewRunSeq += 1;
+    const runSeq = webpPreviewRunSeq;
+    setWebpPreviewLoading(true);
     debounceTimer = setTimeout(() => {
       if (!imgEl) return;
       const q = parseInt(qualitySlider.value, 10) / 100;
@@ -566,17 +580,26 @@ irm "$root/install.ps1" | iex
       tmp.getContext('2d').drawImage(imgEl, 0, 0, w, h);
 
       tmp.toBlob((blob) => {
-        if (!blob) return;
+        if (!blob) {
+          if (runSeq === webpPreviewRunSeq) setWebpPreviewLoading(false);
+          return;
+        }
         updateSizeInfo(blob.size);
         const url = URL.createObjectURL(blob);
         const preview = new Image();
         preview.onload = () => {
+          if (runSeq !== webpPreviewRunSeq) {
+            URL.revokeObjectURL(url);
+            return;
+          }
           const ctx = rightCanvas.getContext('2d');
           ctx.drawImage(preview, 0, 0, w, h);
           URL.revokeObjectURL(url);
+          setWebpPreviewLoading(false);
         };
         preview.onerror = () => {
           URL.revokeObjectURL(url);
+          if (runSeq === webpPreviewRunSeq) setWebpPreviewLoading(false);
         };
         preview.src = url;
       }, 'image/webp', q);

@@ -121,6 +121,7 @@
         <div class="canvas-panel">
           <div class="canvas-label">РЕЗУЛЬТАТ</div>
           <canvas id="rightCanvas"></canvas>
+          <div class="preview-skeleton-overlay skel-surface" id="rightPreviewSkeleton" aria-hidden="true"></div>
           <div class="processing-overlay" id="processing">Обработка…</div>
         </div>
       </div>
@@ -576,6 +577,7 @@ def collect_images(input_dir: Path) -> list[Path]:
   }
   function renderInitialPreview() {
     clearTimeout(debounceTimer);
+    setRightPreviewLoading(true);
     debounceTimer = setTimeout(runProcess, 10);
   }
   function resetEditorState() {
@@ -598,6 +600,8 @@ def collect_images(input_dir: Path) -> list[Path]:
   const leftEditorViewport = document.getElementById('leftEditorViewport');
   const leftSelectionSvg = document.getElementById('leftSelectionSvg');
   const rightCanvas  = document.getElementById('rightCanvas');
+  const rightPreviewSkeleton = document.getElementById('rightPreviewSkeleton');
+  const rightCanvasPanel = rightCanvas ? rightCanvas.closest('.canvas-panel') : null;
   const processingEl = document.getElementById('processing');
   const thrSlider    = document.getElementById('thrSlider');
   const radSlider    = document.getElementById('radSlider');
@@ -703,6 +707,12 @@ def collect_images(input_dir: Path) -> list[Path]:
   function clearUploadNotice() {
     uploadNotice.textContent = '';
     uploadNotice.className = 'upload-notice';
+  }
+
+  function setRightPreviewLoading(on) {
+    if (!rightCanvasPanel) return;
+    rightCanvasPanel.classList.toggle('is-preview-loading', !!on);
+    if (rightPreviewSkeleton) rightPreviewSkeleton.classList.toggle('is-hidden', !on);
   }
 
   // ── Upload ───────────────────────────────────────────────────
@@ -919,6 +929,7 @@ def collect_images(input_dir: Path) -> list[Path]:
       setupCanvas();
       // Show selection frame immediately even before OpenCV is ready.
       drawLeft();
+      setRightPreviewLoading(true);
       if (cvReady) {
         setupMats();
         drawLeft();
@@ -1073,6 +1084,7 @@ def collect_images(input_dir: Path) -> list[Path]:
   // ── Inpaint (preview res) ─────────────────────────────────────
   function scheduleProcess() {
     clearTimeout(debounceTimer);
+    setRightPreviewLoading(true);
     debounceTimer = setTimeout(runProcess, 350);
   }
 
@@ -1118,7 +1130,7 @@ def collect_images(input_dir: Path) -> list[Path]:
     const rad = parseInt(radSlider.value, 10);
     const H = cvPrevBGR.rows, W = cvPrevBGR.cols;
 
-    processingEl.classList.add('visible');
+    setRightPreviewLoading(true);
     requestAnimationFrame(() => {
       try {
         const mask = cv.Mat.zeros(H, W, cv.CV_8UC1);
@@ -1135,8 +1147,9 @@ def collect_images(input_dir: Path) -> list[Path]:
         mask.delete(); rgba.delete();
       } catch(e) {
         showUploadNotice('Не удалось обработать фото. Попробуй ещё раз.');
+      } finally {
+        setRightPreviewLoading(false);
       }
-      processingEl.classList.remove('visible');
     });
   }
 

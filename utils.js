@@ -46,10 +46,20 @@ function ensureHeic2anyLoaded() {
   return heic2anyLoadPromise;
 }
 
-/** Форматирует размер файла: байты → читаемый вид (B / KB / MB). */
+/** Форматирует размер файла: байты → читаемый вид (B / KB / MB / GB / TB). */
 function fmtSize(bytes) {
   if (!Number.isFinite(bytes)) return '—';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1048576).toFixed(1) + ' MB';
+  const abs = Math.max(0, Number(bytes));
+  if (abs < 1024) return `${Math.round(abs)} B`;
+
+  const units = ['KB', 'MB', 'GB', 'TB', 'PB'];
+  let val = abs / 1024;
+  let unitIdx = 0;
+  while (val >= 1024 && unitIdx < units.length - 1) {
+    val /= 1024;
+    unitIdx += 1;
+  }
+
+  const precision = unitIdx >= 2 ? 2 : 1; // GB+ показываем точнее
+  return `${val.toFixed(precision)} ${units[unitIdx]}`;
 }

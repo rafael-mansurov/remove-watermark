@@ -4,26 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Объединить PDF в один онлайн</title>
-  <meta name="description" content="Объединяй много PDF в один файл прямо в браузере. Без потери качества: страницы копируются без рендеринга и пересжатия.">
+  <meta name="description" content="Объединяй много PDF в один файл прямо в браузере. Без сжатия страницы просто копируются в общий файл — качество как в оригиналах.">
   <meta name="keywords" content="объединить pdf, склеить pdf онлайн, merge pdf, combine pdf, без потери качества">
   <meta name="author" content="Rafael Mansurov">
   <meta name="robots" content="index,follow">
 
-  <link rel="canonical" href="https://rafael-mansurov.github.io/browser-tools/merge-pdf.html">
+  <link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/merge-pdf.html">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://rafael-mansurov.github.io/browser-tools/merge-pdf.html">
+  <meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/merge-pdf.html">
   <meta property="og:title" content="Объединить PDF в один онлайн">
-  <meta property="og:description" content="Объединяй много PDF в один файл прямо в браузере. Без потери качества.">
+  <meta property="og:description" content="Несколько PDF → один файл в браузере. Без сжатия страницы не превращаются в картинки.">
   <meta property="og:locale" content="ru_RU">
-  <meta property="og:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
+  <meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og-home.webp">
   <meta property="og:image:type" content="image/webp">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Объединение PDF в один">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Объединить PDF в один онлайн">
-  <meta name="twitter:description" content="Без потери качества: страницы копируются без рендеринга и пересжатия.">
-  <meta name="twitter:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
+  <meta name="twitter:description" content="Без сжатия страницы просто копируются в один PDF — качество как в оригиналах.">
+  <meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og-home.webp">
   <meta name="twitter:image:alt" content="Объединение PDF в один">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -31,6 +31,68 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* Скелет поверх превью «До / После», пока идёт оценка сжатия и рендер */
+    #compressPreviewWrap .merge-preview-canvas-wrap {
+      position: relative;
+      width: 100%;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+    }
+
+    #compressPreviewWrap .merge-preview-skeleton {
+      display: none;
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+      background: var(--surface2);
+      contain: paint;
+    }
+
+    /* Блик через transform (композитинг), без анимации background-position — меньше лагов */
+    #compressPreviewWrap .merge-preview-skeleton::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 55%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(59, 130, 246, 0.16),
+        transparent
+      );
+      transform: translate3d(-100%, 0, 0);
+      animation: merge-preview-shimmer 1.45s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    #compressPreviewWrap.is-preview-loading .merge-preview-skeleton {
+      display: block;
+    }
+
+    @keyframes merge-preview-shimmer {
+      0% { transform: translate3d(-100%, 0, 0); }
+      100% { transform: translate3d(210%, 0, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #compressPreviewWrap .merge-preview-skeleton::after {
+        animation: none;
+        will-change: auto;
+        opacity: 0.35;
+        transform: translate3d(20%, 0, 0);
+      }
+    }
+  </style>
 
   <script type="application/ld+json">
   {
@@ -40,8 +102,8 @@
     "alternateName": "Склеить PDF в один файл онлайн",
     "operatingSystem": "Any",
     "applicationCategory": "MultimediaApplication",
-    "description": "Склеивает много PDF в один файл в браузере. Качество не портится: страницы копируются без рендеринга и пересжатия.",
-    "url": "https://rafael-mansurov.github.io/browser-tools/merge-pdf.html",
+    "description": "Склеивает много PDF в один файл в браузере. Без сжатия страницы переносятся как есть — без перевода в картинки.",
+    "url": "https://rafael-mansurov.github.io/remove-watermark/merge-pdf.html",
     "author": {
       "@type": "Person",
       "name": "Рафаэль Мансуров"
@@ -60,16 +122,14 @@
     <div class="badge">В браузере</div>
     <h1>Объединить PDF в <span>один</span></h1>
     <p class="subtitle">
-      Загрузи много PDF — в конце получишь один файл, где все страницы превратились в единый PDF.
-      Качество сохраняется: ничего не рендерится в картинку.
-      Чтобы открыть страницу и подгрузить шрифты и скрипты, нужен интернет; сами PDF остаются у&nbsp;тебя на устройстве
+      Загрузи несколько PDF и скачаешь один общий файл, где все страницы подряд
     </p>
   </header>
 
   <section class="section" id="pdf-tool">
     <div class="section-label">Онлайн-версия</div>
     <h2>Склейка PDF без потери качества</h2>
-    <p>Файлы обрабатываются локально на твоём устройстве. Интернет нужен для загрузки страницы, шрифтов и скриптов (CDN); готовый PDF никуда не отправляется</p>
+    <p>Файлы обрабатываются локально на твоём устройстве.</p>
 
     <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple class="is-hidden">
 
@@ -83,16 +143,17 @@
           <p class="upload-hint">Поддерживаются PDF. Можно несколько файлов за раз.</p>
         </div>
 
-        <div class="batch-progress merge-batch-progress" id="batchProgressBlock" style="display: none;">
+        <div class="batch-progress merge-batch-progress" id="batchProgressBlock" role="status" aria-live="polite" aria-atomic="true" style="display: none;">
           <div data-webp-loader></div>
           <div class="cv-status-head">
-            <span class="cv-dot"></span>
+            <span class="cv-dot" aria-hidden="true"></span>
             <span id="batchProgressTitle">Готовлю склейку…</span>
           </div>
           <div class="batch-progress-text" id="batchProgressText">0 / 0</div>
           <div class="cv-progress-track" aria-hidden="true">
             <div class="cv-progress-fill" id="batchProgressFill" style="width:0%"></div>
           </div>
+          <button type="button" class="btn btn-ghost" id="cancelMergeBtn">Отменить</button>
         </div>
 
         <p class="upload-notice" id="uploadNotice"></p>
@@ -101,7 +162,10 @@
       <div class="editor-wrap" id="editorWrap">
         <div class="editor-header">
           <span class="file-counter" id="fileCounter">—</span>
-          <span class="file-name" id="fileName">Объединённый PDF</span>
+          <span class="file-name-wrap" id="fileNameWrap">
+            <span class="file-name" id="fileName">—</span>
+            <span class="file-name-skel-chip skel-surface" id="fileNameSkeleton" aria-hidden="true"></span>
+          </span>
         </div>
         <p class="merge-meta" id="mergeMeta" aria-live="polite"></p>
 
@@ -112,15 +176,43 @@
 
               <div class="slider-row" style="margin-top: 12px;">
                 <div class="slider-group">
-                  <div class="merge-quality-row">
+                  <div class="merge-toggle-row">
                     <label class="apply-all-label merge-quality-toggle">
                       <span class="switch">
                         <input type="checkbox" id="compressToggle">
                         <span class="slider"></span>
                       </span>
-                      <span>Сжать итоговый PDF</span>
+                      <span class="merge-toggle-text-wrap">
+                        <span>Сжать PDF</span>
+                        <span
+                          class="merge-toggle-tip"
+                          tabindex="0"
+                          role="note"
+                          aria-label="Сжимает каждую страницу как картинку JPEG, а потом переводит в PDF. Файл становится легче, но мелкий текст и тонкие линии могут стать менее чёткими."
+                          data-tip="Сжимает каждую страницу как картинку JPEG, а потом переводит в PDF. Файл становится легче, но мелкий текст и тонкие линии могут стать менее чёткими."
+                        >?</span>
+                      </span>
                     </label>
-                    <span class="merge-est-size" id="mergeEstSize" aria-label="Приблизительный размер итогового PDF" aria-live="polite">—</span>
+                    <label class="apply-all-label merge-quality-toggle">
+                      <span class="switch">
+                        <input type="checkbox" id="optimizeToggle">
+                        <span class="slider"></span>
+                      </span>
+                      <span class="merge-toggle-text-wrap">
+                        <span>Оптимизировать PDF</span>
+                        <span
+                          class="merge-toggle-tip"
+                          tabindex="0"
+                          role="note"
+                          aria-label="Не трогает качество страниц. Просто упорядочивает внутреннюю структуру PDF и убирает лишнее. Выигрыш по размеру обычно небольшой."
+                          data-tip="Не трогает качество страниц. Просто упорядочивает внутреннюю структуру PDF и убирает лишнее. Выигрыш по размеру обычно небольшой."
+                        >?</span>
+                      </span>
+                    </label>
+                  </div>
+                  <div class="merge-est-size merge-est-size-chip" id="mergeEstSize" aria-label="Приблизительный размер итогового PDF" aria-live="polite">
+                    <i data-lucide="hard-drive-download" class="merge-est-size-icon" aria-hidden="true"></i>
+                    <span id="mergeEstSizeText">Примерный размер файла: <span class="merge-est-main">—</span></span>
                   </div>
                   <div id="compressControls" class="is-hidden">
                     <div class="slider-label">
@@ -128,7 +220,7 @@
                       <span id="qualityVal">100</span>
                     </div>
                     <input type="range" id="qualitySlider" min="1" max="100" value="100">
-                    <div class="slider-help-text">100 — максимально близко к оригиналу, ниже — меньше вес файла</div>
+                    <div class="slider-help-text">100% максимально близко к оригиналу, а ниже — меньше вес файла и качество</div>
                   </div>
                 </div>
               </div>
@@ -137,12 +229,18 @@
                 <div class="canvas-split">
                   <div class="canvas-panel">
                     <div class="canvas-label">До</div>
-                    <canvas id="leftPreviewCanvas"></canvas>
+                    <div class="merge-preview-canvas-wrap">
+                      <canvas id="leftPreviewCanvas"></canvas>
+                      <div class="merge-preview-skeleton" aria-hidden="true"></div>
+                    </div>
                     <div class="size-info" id="origSizeInfo">—</div>
                   </div>
                   <div class="canvas-panel">
                     <div class="canvas-label">После</div>
-                    <canvas id="rightPreviewCanvas"></canvas>
+                    <div class="merge-preview-canvas-wrap">
+                      <canvas id="rightPreviewCanvas"></canvas>
+                      <div class="merge-preview-skeleton" aria-hidden="true"></div>
+                    </div>
                     <div class="size-info" id="resultSizeInfo">—</div>
                   </div>
                 </div>
@@ -260,7 +358,7 @@
                 <span class="code-filename">windows/install-merge-pdf.ps1</span>
               </div>
             </div>
-            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/browser-tools/main/windows'
+            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows'
 $ErrorActionPreference = 'Stop'
 $installDir = Join-Path $env:LOCALAPPDATA 'MergePDF-ContextMenu'
 New-Item -Path $installDir -ItemType Directory -Force | Out-Null
@@ -344,14 +442,19 @@ irm "$root/install-merge-pdf.ps1" | iex
   const batchProgressTitle = document.getElementById('batchProgressTitle');
   const batchProgressText = document.getElementById('batchProgressText');
   const batchProgressFill = document.getElementById('batchProgressFill');
+  const cancelMergeBtn = document.getElementById('cancelMergeBtn');
 
   const fileCounter = document.getElementById('fileCounter');
+  const fileNameWrapEl = document.getElementById('fileNameWrap');
+  const mergedTitleEl = document.getElementById('fileName');
+  const fileNameSkeletonEl = document.getElementById('fileNameSkeleton');
   const mergeMeta = document.getElementById('mergeMeta');
   const downloadBtn = document.getElementById('downloadBtn');
   const addMoreBtn = document.getElementById('addMoreBtn');
   const resetBtn = document.getElementById('resetBtn');
   const orderListEl = document.getElementById('orderList');
   const compressToggle = document.getElementById('compressToggle');
+  const optimizeToggle = document.getElementById('optimizeToggle');
   const compressControls = document.getElementById('compressControls');
   const qualitySlider = document.getElementById('qualitySlider');
   const qualityVal = document.getElementById('qualityVal');
@@ -361,45 +464,271 @@ irm "$root/install-merge-pdf.ps1" | iex
   const origSizeInfo = document.getElementById('origSizeInfo');
   const resultSizeInfo = document.getElementById('resultSizeInfo');
   const mergeEstSizeEl = document.getElementById('mergeEstSize');
+  const mergeEstSizeTextEl = document.getElementById('mergeEstSizeText');
   const mergeActionHint = document.getElementById('mergeActionHint');
 
   // Пользовательский порядок перед склейкой.
   let selectedFiles = [];
+  let selectedSlotIds = [];
   let dragFromIdx = null;
   let previewDebounceTimer = null;
   let previewRunSeq = 0;
+  let pageCountHeaderSeq = 0;
+  let orderListLoadingSeq = 0;
+  let latestKnownTotalPages = 0;
+  let latestKnownPagesBySlot = new Map();
+  let mergeMetaTypeTimer = null;
+  let mergeMetaTypeSeq = 0;
+  let currentMergeRunToken = null;
+  let currentMergePhase = '';
+  let mergeStartedAtMs = 0;
+  let mergeElapsedTimer = null;
+  let mergeBaseProgressTitle = '';
+  let mergeBaseProgressText = '';
   let filePickerAppendMode = false;
 
+  function formatRuPagesCount(n) {
+    const abs = Math.max(0, Math.floor(Number(n) || 0));
+    const pretty = String(abs).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    if (abs === 0) return '0 страниц';
+    const mod100 = abs % 100;
+    if (mod100 >= 11 && mod100 <= 14) return `${pretty} страниц`;
+    const mod10 = abs % 10;
+    if (mod10 === 1) return `${pretty} страница`;
+    if (mod10 >= 2 && mod10 <= 4) return `${pretty} страницы`;
+    return `${pretty} страниц`;
+  }
+
+  function formatPagesCountShort(n) {
+    const abs = Math.max(0, Math.floor(Number(n) || 0));
+    const pretty = String(abs).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${pretty} шт`;
+  }
+
+  function setHeaderPagesLoading(on) {
+    if (fileNameWrapEl) fileNameWrapEl.classList.toggle('is-counting', !!on);
+    if (fileNameSkeletonEl) fileNameSkeletonEl.classList.toggle('is-hidden', !on);
+  }
+
+  function setOrderListLoading(on, rowsCount = 4) {
+    if (!orderListEl) return;
+    if (!on) {
+      orderListEl.classList.remove('is-loading');
+      delete orderListEl.dataset.loading;
+      delete orderListEl.dataset.skeletonRows;
+      return;
+    }
+    orderListEl.classList.add('is-loading');
+    orderListEl.dataset.loading = '1';
+    orderListEl.dataset.skeletonRows = String(Math.max(3, Math.min(5, Number(rowsCount) || 4)));
+    renderOrderList();
+  }
+
+  /** Сумма numPages по текущему списку (порядок как в склейке). */
+  async function refreshMergedPagesTitle() {
+    if (!mergedTitleEl) return;
+    const files = selectedFiles;
+    if (!files.length) {
+      setHeaderPagesLoading(false);
+      latestKnownTotalPages = 0;
+      latestKnownPagesBySlot = new Map();
+      mergedTitleEl.textContent = '—';
+      return;
+    }
+    pageCountHeaderSeq += 1;
+    const seq = pageCountHeaderSeq;
+    setHeaderPagesLoading(true);
+    mergedTitleEl.textContent = 'Считаю страницы…';
+    try {
+      await ensurePdfJsLoaded();
+      let total = 0;
+      const pagesBySlot = new Map();
+      for (let idx = 0; idx < files.length; idx++) {
+        const f = files[idx];
+        const slotId = selectedSlotIds[idx];
+        if (seq !== pageCountHeaderSeq) return;
+        const bytes = await f.arrayBuffer();
+        if (seq !== pageCountHeaderSeq) return;
+        const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+        try {
+          const pages = pdf.numPages || 0;
+          total += pages;
+          if (slotId) pagesBySlot.set(slotId, pages);
+        } finally {
+          try {
+            await pdf.destroy();
+          } catch (_) { /* ignore */ }
+        }
+      }
+      if (seq !== pageCountHeaderSeq) return;
+      latestKnownTotalPages = total;
+      latestKnownPagesBySlot = pagesBySlot;
+      mergedTitleEl.textContent = formatRuPagesCount(total);
+      setHeaderPagesLoading(false);
+    } catch (_) {
+      if (seq !== pageCountHeaderSeq) return;
+      latestKnownTotalPages = 0;
+      latestKnownPagesBySlot = new Map();
+      mergedTitleEl.textContent = 'Страницы не посчитались';
+      setHeaderPagesLoading(false);
+    }
+  }
+
   function setMergeMeta(text = '') {
-    if (mergeMeta) mergeMeta.textContent = text;
+    if (!mergeMeta) return;
+    const next = String(text || '');
+    if (!next) {
+      if (mergeMetaTypeTimer) {
+        window.clearInterval(mergeMetaTypeTimer);
+        mergeMetaTypeTimer = null;
+      }
+      mergeMeta.textContent = '';
+      return;
+    }
+
+    const shouldType = /^(Соединяю|Обрабатываю)\b/.test(next)
+      && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (!shouldType) {
+      if (mergeMetaTypeTimer) {
+        window.clearInterval(mergeMetaTypeTimer);
+        mergeMetaTypeTimer = null;
+      }
+      mergeMeta.textContent = next;
+      return;
+    }
+
+    mergeMetaTypeSeq += 1;
+    const seq = mergeMetaTypeSeq;
+    if (mergeMetaTypeTimer) {
+      window.clearInterval(mergeMetaTypeTimer);
+      mergeMetaTypeTimer = null;
+    }
+    const prev = String(mergeMeta.textContent || '');
+    let eraseIdx = prev.length;
+    let typeIdx = 0;
+    let phase = prev ? 'erase' : 'type';
+    mergeMetaTypeTimer = window.setInterval(() => {
+      if (seq !== mergeMetaTypeSeq) {
+        window.clearInterval(mergeMetaTypeTimer);
+        mergeMetaTypeTimer = null;
+        return;
+      }
+      if (phase === 'erase') {
+        eraseIdx -= 1;
+        if (eraseIdx <= 0) {
+          mergeMeta.textContent = '';
+          phase = 'type';
+          return;
+        }
+        mergeMeta.textContent = prev.slice(0, eraseIdx);
+        return;
+      }
+      typeIdx += 1;
+      mergeMeta.textContent = next.slice(0, typeIdx);
+      if (typeIdx >= next.length) {
+        window.clearInterval(mergeMetaTypeTimer);
+        mergeMetaTypeTimer = null;
+      }
+    }, 16);
   }
 
   function sumSelectedFilesBytes(files) {
     return (files || []).reduce((sum, f) => sum + (f && Number.isFinite(f.size) ? f.size : 0), 0);
   }
 
+  /** Одна округлённая секунда: грубо по числу PDF и суммарному размеру (без широкого интервала — его трудно угадать). */
+  function guessCompressionPreviewSecondsRounded(files, qualityPct) {
+    const n = Math.max(1, (files || []).length);
+    const totalMb = sumSelectedFilesBytes(files) / (1024 * 1024);
+    const mb = Math.min(totalMb, 100);
+    const light = qualityPct >= 100;
+    const base = light ? 0.8 : 1.2;
+    const perFile = light ? 0.55 : 1.15;
+    const perMb = light ? 0.08 : 0.2;
+    const maxSec = light ? 32 : 65;
+    let mid = base + n * perFile + mb * perMb;
+    mid = Math.min(maxSec, Math.max(2.2, mid));
+    return Math.max(2, Math.round(mid));
+  }
+
+  function formatEstimatingLabel(files, qualityPct) {
+    const s = guessCompressionPreviewSecondsRounded(files, qualityPct);
+    return `Оцениваю… ~${s} с`;
+  }
+
+  function setMergeEstSizeText(text) {
+    if (!mergeEstSizeTextEl) return;
+    const value = (text == null || text === '') ? '—' : String(text);
+    const m = value.match(/^(.*?)(\s+[↓↑][0-9]+%)$/);
+    if (m) {
+      const main = m[1];
+      const delta = m[2].trim();
+      const cls = delta.startsWith('↓')
+        ? 'merge-est-delta is-down'
+        : (delta.startsWith('↑') ? 'merge-est-delta is-up' : 'merge-est-delta is-neutral');
+      mergeEstSizeTextEl.innerHTML = `Примерный размер файла: <span class="merge-est-main">${main}</span> <span class="${cls}">${delta}</span>`;
+      return;
+    }
+    mergeEstSizeTextEl.innerHTML = `Примерный размер файла: <span class="merge-est-main">${value}</span>`;
+  }
+
+  /**
+   * Грубая оценка "lossless optimize": без перерендера страниц, обычно небольшой выигрыш.
+   * Это эвристика по размеру/количеству файлов (может быть и 0% на уже оптимизированных PDF).
+   */
+  function estimateOptimizedBytes(totalBytes, filesCount) {
+    if (!Number.isFinite(totalBytes) || totalBytes <= 0) return { bytes: 0, pct: 0 };
+    const mb = totalBytes / (1024 * 1024);
+    let pct = 2.5 + Math.min(3.5, mb / 250) + Math.min(2, Math.max(0, filesCount - 1) * 0.18);
+    pct = Math.max(1, Math.min(8, pct));
+    const bytes = Math.max(0, Math.round(totalBytes * (1 - pct / 100)));
+    return { bytes, pct: Math.round(pct) };
+  }
+
   function refreshMergeEstSizeLabel() {
     if (!mergeEstSizeEl) return;
     if (!selectedFiles.length) {
-      mergeEstSizeEl.textContent = '—';
+      setMergeEstSizeText('—');
       return;
     }
     const total = sumSelectedFilesBytes(selectedFiles);
     const compressOn = !!(compressToggle && compressToggle.checked);
+    const optimizeOn = !!(optimizeToggle && optimizeToggle.checked);
     const q = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
-    if (!compressOn || q >= 100) {
-      mergeEstSizeEl.textContent = `~${fmtSize(total)}`;
+    if (compressOn) {
+      if (q >= 100) {
+        setMergeEstSizeText(`~${fmtSize(total)}`);
+        return;
+      }
+      setMergeEstSizeText(formatEstimatingLabel(selectedFiles, q));
       return;
     }
-    mergeEstSizeEl.textContent = 'Оцениваю…';
+
+    if (optimizeOn) {
+      const est = estimateOptimizedBytes(total, selectedFiles.length);
+      setMergeEstSizeText(est.pct > 0 ? `~${fmtSize(est.bytes)} ↓${est.pct}%` : `~${fmtSize(total)}`);
+      return;
+    }
+
+    if (!compressOn) {
+      setMergeEstSizeText(`~${fmtSize(total)}`);
+      return;
+    }
   }
 
   function updateMergeActionHint() {
     if (!mergeActionHint) return;
-    const on = !!(compressToggle && compressToggle.checked);
-    mergeActionHint.textContent = on
-      ? 'Со сжатием каждая страница переводится в JPEG и заново собирается в PDF — чёткость текста и вектора может снизиться.'
-      : 'Без сжатия страницы копируются как есть: без растеризации, с сохранением исходного качества.';
+    const compressOn = !!(compressToggle && compressToggle.checked);
+    const optimizeOn = !!(optimizeToggle && optimizeToggle.checked);
+    if (compressOn) {
+      mergeActionHint.textContent = optimizeOn
+        ? 'Включено сжатие страниц в JPEG (качество может снизиться) + структурная оптимизация PDF без перерендера.'
+        : 'Каждая страница сохраняется как сжатая картинка и снова попадает в PDF — мелкий текст и тонкие линии могут стать мягче';
+      return;
+    }
+    mergeActionHint.textContent = optimizeOn
+      ? 'Без сжатия: страницы копируются как есть. Дополнительно — структурная оптимизация PDF (без перевода в картинки).'
+      : 'Страницы склеиваются в один файл, без потери качества';
   }
 
   /** Тот же масштаб рендера, что в mergePdfCompressed — оценка и превью «После» ближе к факту. */
@@ -407,10 +736,16 @@ irm "$root/install-merge-pdf.ps1" | iex
     return qualityPct >= 95 ? 1.8 : (qualityPct >= 75 ? 1.5 : 1.3);
   }
 
+  function clearCompressionPreviewSkeletonIfCurrent(runSeq) {
+    if (runSeq !== previewRunSeq) return;
+    if (compressPreviewWrap) compressPreviewWrap.classList.remove('is-preview-loading');
+  }
+
   function setCompressionPreviewFailed(runSeq) {
     if (runSeq !== previewRunSeq) return;
     if (resultSizeInfo) resultSizeInfo.textContent = 'Не удалось показать превью';
-    if (mergeEstSizeEl) mergeEstSizeEl.textContent = '—';
+    setMergeEstSizeText('—');
+    clearCompressionPreviewSkeletonIfCurrent(runSeq);
   }
 
   function computeInsertionIndex(clientY) {
@@ -434,19 +769,25 @@ irm "$root/install-merge-pdf.ps1" | iex
     const n = rows.length;
     if (!n) return hideDropIndicator();
 
-    const listRect = orderListEl.getBoundingClientRect();
     const insertIndex = computeInsertionIndex(clientY);
 
-    let anchorY;
-    if (insertIndex === 0) {
-      anchorY = rows[0].getBoundingClientRect().top;
-    } else if (insertIndex === n) {
-      anchorY = rows[n - 1].getBoundingClientRect().bottom;
-    } else {
-      anchorY = rows[insertIndex].getBoundingClientRect().top;
-    }
+    /* offsetTop + scroll в одной системе; середина flex-gap между строками (иначе линия визуально липнет к верху нижнего ряда). */
+    const gapRaw = getComputedStyle(orderListEl).gap || getComputedStyle(orderListEl).rowGap || '10px';
+    const gapPx = Math.max(0, parseFloat(gapRaw) || 10);
+    const lineHalf = 1;
 
-    indicator.style.top = (anchorY - listRect.top) + 'px';
+    let topPx;
+    if (insertIndex === 0) {
+      topPx = rows[0].offsetTop - gapPx / 2 - lineHalf;
+    } else if (insertIndex === n) {
+      const last = rows[n - 1];
+      topPx = last.offsetTop + last.offsetHeight + gapPx / 2 - lineHalf;
+    } else {
+      topPx = rows[insertIndex].offsetTop - gapPx / 2 - lineHalf;
+    }
+    topPx = Math.max(0, topPx);
+
+    indicator.style.top = `${topPx}px`;
     indicator.dataset.insertIndex = String(insertIndex);
     indicator.style.display = 'block';
   }
@@ -494,10 +835,93 @@ irm "$root/install-merge-pdf.ps1" | iex
     if (batchProgressBlock) batchProgressBlock.style.display = 'none';
   }
 
+  function formatProgressWithElapsed(baseText) {
+    const clean = String(baseText || '').trim();
+    if (!mergeInFlight || mergeStartedAtMs <= 0) return clean;
+    const elapsedSec = Math.max(0, Math.floor((Date.now() - mergeStartedAtMs) / 1000));
+    if (elapsedSec <= 0) return clean;
+    let elapsedText;
+    if (elapsedSec < 60) {
+      elapsedText = `${elapsedSec} с`;
+    } else {
+      const mins = Math.floor(elapsedSec / 60);
+      const secs = elapsedSec % 60;
+      elapsedText = secs > 0 ? `${mins} мин ${secs} с` : `${mins} мин`;
+    }
+    return clean ? `${clean} · ${elapsedText}` : elapsedText;
+  }
+
   function setProgress(pct, title, text) {
     if (batchProgressFill) batchProgressFill.style.width = pct + '%';
-    if (batchProgressTitle && title) batchProgressTitle.textContent = title;
-    if (batchProgressText && text) batchProgressText.textContent = text;
+    if (title) mergeBaseProgressTitle = title;
+    if (text) mergeBaseProgressText = text;
+    if (batchProgressTitle && mergeBaseProgressTitle) batchProgressTitle.textContent = mergeBaseProgressTitle;
+    if (batchProgressText && mergeBaseProgressText) {
+      batchProgressText.textContent = formatProgressWithElapsed(mergeBaseProgressText);
+    }
+  }
+
+  function startMergeElapsedTimer() {
+    if (mergeElapsedTimer) window.clearInterval(mergeElapsedTimer);
+    mergeStartedAtMs = Date.now();
+    mergeElapsedTimer = window.setInterval(() => {
+      if (!mergeInFlight || !batchProgressText || !mergeBaseProgressText) return;
+      batchProgressText.textContent = formatProgressWithElapsed(mergeBaseProgressText);
+    }, 1000);
+  }
+
+  function stopMergeElapsedTimer() {
+    if (mergeElapsedTimer) {
+      window.clearInterval(mergeElapsedTimer);
+      mergeElapsedTimer = null;
+    }
+    mergeStartedAtMs = 0;
+  }
+
+  function ensureMergeNotCancelled(runToken) {
+    if (runToken && runToken.cancelled) {
+      const err = new Error('merge_cancelled');
+      err.code = 'merge_cancelled';
+      throw err;
+    }
+  }
+
+  function ruFilesNounOnly(n) {
+    const t = Math.floor(Math.abs(Number(n) || 0));
+    const k = t % 10;
+    const k100 = t % 100;
+    if (k100 >= 11 && k100 <= 14) return 'файлов';
+    if (k === 1) return 'файл';
+    if (k >= 2 && k <= 4) return 'файла';
+    return 'файлов';
+  }
+
+  function quoteFileLabel(name) {
+    const n = String(name || '').trim();
+    return n ? `«${n}»` : '«PDF»';
+  }
+
+  /** Подпись к шкале при склейке без сжатия: понятная формулировка по текущему шагу. */
+  function formatMergeFileProgress(done, total, label, stats) {
+    if (!total) return '';
+    const allLabels = Array.isArray(stats && stats.allLabels) ? stats.allLabels.filter(Boolean) : [];
+    if (total === 2 && allLabels.length >= 2) {
+      return `Соединяю файл ${quoteFileLabel(allLabels[0])} с файлом ${quoteFileLabel(allLabels[1])}`;
+    }
+    if (label) {
+      if (/^файл\s+\d+$/i.test(label)) return `Обрабатываю ${label}`;
+      return `Обрабатываю файл ${quoteFileLabel(label)}`;
+    }
+    if (done <= 0) return `Подготовка: ${total} ${ruFilesNounOnly(total)}`;
+    return `Обрабатываю файл ${done} из ${total}`;
+  }
+
+  function formatFilesRangeLabel(start, end) {
+    const s = Number(start) || 0;
+    const e = Number(end) || 0;
+    if (s > 0 && e > 0 && s === e) return `файл ${s}`;
+    if (s > 0 && e > 0) return `файлы ${s}–${e}`;
+    return 'файлы';
   }
 
   // Load pdf-lib only when needed.
@@ -636,8 +1060,14 @@ irm "$root/install-merge-pdf.ps1" | iex
   }
 
   async function renderCompressionPreview(files, qualityPct, runSeq) {
-    if (!leftPreviewCanvas || !rightPreviewCanvas) return;
-    if (!files || !files.length) return;
+    if (!leftPreviewCanvas || !rightPreviewCanvas) {
+      clearCompressionPreviewSkeletonIfCurrent(runSeq);
+      return;
+    }
+    if (!files || !files.length) {
+      clearCompressionPreviewSkeletonIfCurrent(runSeq);
+      return;
+    }
 
     await ensurePdfJsLoaded();
     if (runSeq !== previewRunSeq) return;
@@ -645,8 +1075,9 @@ irm "$root/install-merge-pdf.ps1" | iex
     const totalOrigSize = files.reduce((sum, f) => sum + (f && Number.isFinite(f.size) ? f.size : 0), 0);
     if (origSizeInfo) origSizeInfo.textContent = fmtSize(totalOrigSize);
 
-    const panelWidth = (leftPreviewCanvas.parentElement && leftPreviewCanvas.parentElement.clientWidth)
-      ? leftPreviewCanvas.parentElement.clientWidth
+    const panelWrap = leftPreviewCanvas.closest('.merge-preview-canvas-wrap');
+    const panelWidth = (panelWrap && panelWrap.clientWidth)
+      ? panelWrap.clientWidth
       : 420;
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     const targetRenderWidth = Math.max(320, Math.round(panelWidth * dpr));
@@ -678,7 +1109,8 @@ irm "$root/install-merge-pdf.ps1" | iex
       rightCtx.clearRect(0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
       rightCtx.drawImage(leftPreviewCanvas, 0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
       if (resultSizeInfo) resultSizeInfo.innerHTML = `~${fmtSize(totalOrigSize)}`;
-      if (mergeEstSizeEl) mergeEstSizeEl.textContent = `~${fmtSize(totalOrigSize)}`;
+      setMergeEstSizeText(`~${fmtSize(totalOrigSize)}`);
+      clearCompressionPreviewSkeletonIfCurrent(runSeq);
       return;
     }
 
@@ -687,7 +1119,10 @@ irm "$root/install-merge-pdf.ps1" | iex
     try {
       for (let i = 0; i < files.length; i++) {
         const part = await measureFileJpegEstimateBytes(files[i], qualityPct, scratch, runSeq);
-        if (part == null) return;
+        if (part == null) {
+          clearCompressionPreviewSkeletonIfCurrent(runSeq);
+          return;
+        }
         estBytes += part.estBytes;
       }
     } catch (err) {
@@ -750,13 +1185,12 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     if (resultSizeInfo) {
       resultSizeInfo.innerHTML = `~${fmtSize(estBytes)}${pct > 0 ? ` <span class="saved">↓${pct}%</span>` : ''}`;
-      if (mergeEstSizeEl) {
-        mergeEstSizeEl.textContent = pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`;
-      }
+      setMergeEstSizeText(pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`);
     }
+    clearCompressionPreviewSkeletonIfCurrent(runSeq);
   }
 
-  async function mergePdfCompressed(files, qualityPct, onProgress) {
+  async function mergePdfCompressed(files, qualityPct, onProgress, runToken) {
     await ensurePdfJsLoaded();
     await ensureJsPdfLoaded();
 
@@ -772,6 +1206,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     const pageCounts = new Array(totalFiles).fill(0);
 
     for (let fileIdx = 0; fileIdx < totalFiles; fileIdx++) {
+      ensureMergeNotCancelled(runToken);
       const file = files[fileIdx];
       const bytes = await file.arrayBuffer();
       const srcPdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
@@ -782,6 +1217,7 @@ irm "$root/install-merge-pdf.ps1" | iex
         if (estimatedTotalPages < donePages) estimatedTotalPages = donePages;
 
         for (let p = 1; p <= pageCount; p++) {
+          ensureMergeNotCancelled(runToken);
           if (typeof onProgress === 'function') {
             onProgress(donePages, Math.max(estimatedTotalPages, donePages + 1), `${fileIdx + 1}/${totalFiles} · ${file.name} · стр. ${p}/${pageCount}`);
           }
@@ -830,25 +1266,41 @@ irm "$root/install-merge-pdf.ps1" | iex
       if (compressPreviewWrap) compressPreviewWrap.classList.toggle('is-hidden', !enabled);
 
       if (!enabled) {
+        // Мгновенно отменяем отложенный/текущий прогон превью при выключении сжатия.
+        clearTimeout(previewDebounceTimer);
+        previewRunSeq += 1;
         if (origSizeInfo) origSizeInfo.textContent = '—';
         if (resultSizeInfo) resultSizeInfo.textContent = '—';
         refreshMergeEstSizeLabel();
+        if (compressPreviewWrap) compressPreviewWrap.classList.remove('is-preview-loading');
         return;
       }
       if (!selectedFiles.length) {
+        clearTimeout(previewDebounceTimer);
+        previewRunSeq += 1;
         if (origSizeInfo) origSizeInfo.textContent = '—';
         if (resultSizeInfo) resultSizeInfo.textContent = '—';
-        if (mergeEstSizeEl) mergeEstSizeEl.textContent = '—';
+        setMergeEstSizeText('—');
+        if (compressPreviewWrap) compressPreviewWrap.classList.remove('is-preview-loading');
+        return;
+      }
+
+      if (!enabled) {
+        // Режим без сжатия: показываем только оценку итогового размера (и optimize-эвристику, если включен).
+        if (origSizeInfo) origSizeInfo.textContent = '—';
+        if (resultSizeInfo) resultSizeInfo.textContent = '—';
+        if (compressPreviewWrap) compressPreviewWrap.classList.remove('is-preview-loading');
+        refreshMergeEstSizeLabel();
         return;
       }
 
       const q = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
       if (qualityVal) qualityVal.textContent = String(q);
       const totalBytes = sumSelectedFilesBytes(selectedFiles);
-      if (mergeEstSizeEl) {
-        mergeEstSizeEl.textContent = q >= 100 ? `~${fmtSize(totalBytes)}` : 'Оцениваю…';
-      }
-      if (resultSizeInfo) resultSizeInfo.textContent = 'Оцениваю…';
+      const estimatingTxt = formatEstimatingLabel(selectedFiles, q);
+      setMergeEstSizeText(q >= 100 ? `~${fmtSize(totalBytes)}` : estimatingTxt);
+      if (resultSizeInfo) resultSizeInfo.textContent = estimatingTxt;
+      if (compressPreviewWrap) compressPreviewWrap.classList.add('is-preview-loading');
 
       clearTimeout(previewDebounceTimer);
       previewDebounceTimer = setTimeout(() => {
@@ -863,23 +1315,34 @@ irm "$root/install-merge-pdf.ps1" | iex
     }
   }
 
-  async function mergePdfSources(sources, onInnerProgress) {
+  async function mergePdfSources(sources, onInnerProgress, runToken) {
     await ensurePdfLibLoaded();
 
     const { PDFDocument } = window.PDFLib;
     const mergedPdf = await PDFDocument.create();
 
     const total = sources.length;
+    const totalPagesKnown = sources.reduce((sum, s) => sum + (Number(s.knownPages) || 0), 0);
+    let donePages = 0;
     if (typeof onInnerProgress === 'function') {
-      onInnerProgress(0, total, null);
+      onInnerProgress(0, total, null, {
+        donePages: 0,
+        totalPagesKnown: totalPagesKnown > 0 ? totalPagesKnown : null,
+        allLabels: sources.map(s => (s && s.name ? s.name : 'PDF'))
+      });
     }
 
     let pageCountTotal = 0;
     for (let i = 0; i < total; i++) {
+      ensureMergeNotCancelled(runToken);
       const src = sources[i];
       const label = src && src.name ? src.name : 'PDF';
       if (typeof onInnerProgress === 'function') {
-        onInnerProgress(i + 1, total, label);
+        onInnerProgress(i + 1, total, label, {
+          donePages,
+          totalPagesKnown: totalPagesKnown > 0 ? totalPagesKnown : null,
+          allLabels: sources.map(s => (s && s.name ? s.name : 'PDF'))
+        });
       }
 
       const bytes = await src.getBytes();
@@ -887,6 +1350,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
       const pageIndices = pdf.getPageIndices();
       pageCountTotal += pageIndices.length;
+      donePages += pageIndices.length;
       const pages = await mergedPdf.copyPages(pdf, pageIndices);
       pages.forEach(p => mergedPdf.addPage(p));
       // Let GC do the rest.
@@ -932,18 +1396,28 @@ irm "$root/install-merge-pdf.ps1" | iex
     return chunks;
   }
 
-  async function mergePdfWithBatches(chunks) {
+  async function mergePdfWithBatches(chunks, runToken) {
     // chunks: Array<{ files, start, end }>
     const N = chunks.length;
     if (N <= 1) {
+      currentMergePhase = 'merge';
       const files = (chunks[0] && chunks[0].files) ? chunks[0].files : [];
-      const sources = files.map(f => ({ name: f.name, getBytes: () => f.arrayBuffer() }));
-      const singleStageLabel = 'Склеиваю PDF';
+      const sources = files.map((f, idx) => ({
+        name: f.name,
+        getBytes: () => f.arrayBuffer(),
+        knownPages: Number((latestKnownPagesBySlot && latestKnownPagesBySlot.get(selectedSlotIds[idx])) || 0)
+      }));
+      const singleStageLabel = 'Соединяю PDF';
       setMergeMeta(singleStageLabel);
-      return mergePdfSources(sources, (done, total, label) => {
+      return mergePdfSources(sources, (done, total, label, stats) => {
         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-        setProgress(pct, singleStageLabel, `${done} / ${total}`);
-      });
+        if (stats && stats.totalPagesKnown) {
+          const donePages = Math.max(0, Number(stats.donePages) || 0);
+          setProgress(pct, singleStageLabel, `Стр. ${donePages} / ${stats.totalPagesKnown}${label ? ` · ${label}` : ''}`);
+        } else {
+          setProgress(pct, singleStageLabel, formatMergeFileProgress(done, total, label, stats));
+        }
+      }, runToken);
     }
 
     // Этапы:
@@ -956,19 +1430,24 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     // Phase 1: each chunk => intermediate
     for (let i = 0; i < N; i++) {
+      ensureMergeNotCancelled(runToken);
+      currentMergePhase = 'merge';
       const chunk = chunks[i];
       const stageStartPct = Math.round(((stageCounter - 1) / totalStages) * 100);
       const stageEndPct = Math.round((stageCounter / totalStages) * 100);
 
-      const stageLabel = `Этап ${stageCounter}/${totalStages}: объединить ${chunk.start}-${chunk.end}`;
+      const chunkLabel = formatFilesRangeLabel(chunk.start, chunk.end);
+      const stageLabel = /^файл\s+\d+$/i.test(chunkLabel)
+        ? `Обрабатываю ${chunkLabel}`
+        : `Соединяю ${chunkLabel}`;
       setMergeMeta(stageLabel);
 
       const sources = chunk.files.map(f => ({ name: f.name, getBytes: () => f.arrayBuffer() }));
-      const stageResult = await mergePdfSources(sources, (done, total, label) => {
+      const stageResult = await mergePdfSources(sources, (done, total, label, stats) => {
         const t = total > 0 ? (done / total) : 0;
         const pct = Math.round(stageStartPct + (stageEndPct - stageStartPct) * t);
-        setProgress(pct, stageLabel, `${done} / ${total}`);
-      });
+        setProgress(pct, stageLabel, formatMergeFileProgress(done, total, label, stats));
+      }, runToken);
 
       intermediates.push({ bytes: stageResult.bytes, pageCount: stageResult.pageCount, start: chunk.start, end: chunk.end });
       stageCounter++;
@@ -981,27 +1460,29 @@ irm "$root/install-merge-pdf.ps1" | iex
     let lastPageCount = intermediates[0].pageCount;
 
     for (let i = 1; i < intermediates.length; i++) {
+      ensureMergeNotCancelled(runToken);
+      currentMergePhase = 'merge';
       const next = intermediates[i];
       const stageStartPct = Math.round(((stageCounter - 1) / totalStages) * 100);
       const stageEndPct = Math.round((stageCounter / totalStages) * 100);
 
       const isFinalMerge = (i === intermediates.length - 1);
       const stageLabel = (intermediates.length === 2 && isFinalMerge)
-        ? `Этап ${stageCounter}/${totalStages}: объединить оба прошлых файла`
-        : `Этап ${stageCounter}/${totalStages}: объединить ${accStart}-${accEnd} и ${next.start}-${next.end}`;
+        ? 'Соединяю две части в один файл'
+        : `Соединяю ${formatFilesRangeLabel(accStart, accEnd)} и ${formatFilesRangeLabel(next.start, next.end)}`;
 
       setMergeMeta(stageLabel);
 
       const sources = [
-        { name: 'предыдущий результат', getBytes: () => Promise.resolve(accumulatorBytes) },
-        { name: `часть ${next.start}-${next.end}`, getBytes: () => Promise.resolve(next.bytes) }
+        { name: formatFilesRangeLabel(accStart, accEnd), getBytes: () => Promise.resolve(accumulatorBytes) },
+        { name: formatFilesRangeLabel(next.start, next.end), getBytes: () => Promise.resolve(next.bytes) }
       ];
 
-      const mergeResult = await mergePdfSources(sources, (done, total, label) => {
+      const mergeResult = await mergePdfSources(sources, (done, total, label, stats) => {
         const t = total > 0 ? (done / total) : 0;
         const pct = Math.round(stageStartPct + (stageEndPct - stageStartPct) * t);
-        setProgress(pct, stageLabel, `${done} / ${total}`);
-      });
+        setProgress(pct, stageLabel, formatMergeFileProgress(done, total, label, stats));
+      }, runToken);
 
       accumulatorBytes = mergeResult.bytes;
       lastPageCount = mergeResult.pageCount;
@@ -1010,6 +1491,15 @@ irm "$root/install-merge-pdf.ps1" | iex
     }
 
     return { bytes: accumulatorBytes, pageCount: lastPageCount };
+  }
+
+  /** Без перерендера: только пересборка структуры PDF (обычно уменьшает вес, но не всегда). */
+  async function optimizeMergedPdfLossless(inputBytes) {
+    if (!inputBytes) return inputBytes;
+    await ensurePdfLibLoaded();
+    const { PDFDocument } = window.PDFLib;
+    const pdf = await PDFDocument.load(inputBytes, { ignoreEncryption: true, updateMetadata: false });
+    return pdf.save({ useObjectStreams: true, addDefaultPage: false, updateFieldAppearances: false });
   }
 
   function sanitizeBaseName(name) {
@@ -1037,19 +1527,42 @@ irm "$root/install-merge-pdf.ps1" | iex
     return downloadedName;
   }
 
-  function setSelectedFiles(files) {
-    selectedFiles = files || [];
+  function newMergeSlotId() {
+    return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  /** slotIds: сохранить порядок id строк при перестановке/удалении; иначе — новые id на каждый файл. */
+  function setSelectedFiles(files, slotIds) {
+    const next = files || [];
+    selectedFiles = next;
+    if (slotIds && slotIds.length === next.length) {
+      selectedSlotIds = slotIds.slice();
+    } else {
+      selectedSlotIds = next.map(() => newMergeSlotId());
+    }
     fileCounter.textContent = selectedFiles.length ? `${selectedFiles.length} файлов` : '—';
     renderOrderList();
 
     downloadBtn.disabled = selectedFiles.length === 0;
     setMergeMeta('');
     updateCompressionUi();
+    void refreshMergedPagesTitle();
   }
 
   function renderOrderList() {
     if (!orderListEl) return;
     orderListEl.innerHTML = '';
+
+    if (orderListEl.dataset.loading === '1') {
+      const rows = Math.max(3, Math.min(5, Number(orderListEl.dataset.skeletonRows) || 4));
+      for (let i = 0; i < rows; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'order-row-skeleton skel-surface';
+        sk.setAttribute('aria-hidden', 'true');
+        orderListEl.appendChild(sk);
+      }
+      return;
+    }
 
     const indicator = document.createElement('div');
     indicator.className = 'drop-indicator';
@@ -1073,6 +1586,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       row.draggable = true;
       row.style.cursor = 'grab';
       row.dataset.orderIndex = String(i);
+      row.dataset.mergeSlotId = selectedSlotIds[i] || newMergeSlotId();
 
       const left = document.createElement('div');
       left.className = 'order-left';
@@ -1184,21 +1698,72 @@ irm "$root/install-merge-pdf.ps1" | iex
     });
   }
 
+  function prefersReorderMotion() {
+    return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
   function moveFile(fromIdx, toIdx) {
     if (fromIdx === toIdx) return;
     if (toIdx < 0 || toIdx >= selectedFiles.length) return;
+
+    const beforeRects = new Map();
+    if (orderListEl && prefersReorderMotion()) {
+      orderListEl.querySelectorAll('.order-row').forEach((el) => {
+        const k = el.dataset.mergeSlotId;
+        if (k) beforeRects.set(k, el.getBoundingClientRect());
+      });
+    }
+
     const next = selectedFiles.slice();
     const [item] = next.splice(fromIdx, 1);
     next.splice(toIdx, 0, item);
-    setSelectedFiles(next);
+    const nextSlots = selectedSlotIds.slice();
+    const [sid] = nextSlots.splice(fromIdx, 1);
+    nextSlots.splice(toIdx, 0, sid);
+    setSelectedFiles(next, nextSlots);
     if (selectedFiles.length) setMergeMeta('');
+
+    if (!orderListEl || beforeRects.size === 0) return;
+
+    requestAnimationFrame(() => {
+      const rows = Array.from(orderListEl.querySelectorAll('.order-row'));
+      const pairs = [];
+      rows.forEach((el) => {
+        const k = el.dataset.mergeSlotId;
+        const oldR = beforeRects.get(k);
+        if (!oldR) return;
+        const newR = el.getBoundingClientRect();
+        const dy = oldR.top - newR.top;
+        if (Math.abs(dy) < 0.5) return;
+        pairs.push({ el, dy });
+      });
+      if (!pairs.length) return;
+      pairs.forEach(({ el, dy }) => {
+        el.style.transform = `translateY(${dy}px)`;
+        el.style.transition = 'transform 0s';
+      });
+      requestAnimationFrame(() => {
+        pairs.forEach(({ el }) => {
+          el.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.82, 0.32, 1)';
+          el.style.transform = 'translateY(0)';
+        });
+        window.setTimeout(() => {
+          pairs.forEach(({ el }) => {
+            el.style.transition = '';
+            el.style.transform = '';
+          });
+        }, 280);
+      });
+    });
   }
 
   function removeFile(idx) {
     if (idx < 0 || idx >= selectedFiles.length) return;
     const next = selectedFiles.slice();
     next.splice(idx, 1);
-    setSelectedFiles(next);
+    const nextSlots = selectedSlotIds.slice();
+    nextSlots.splice(idx, 1);
+    setSelectedFiles(next, nextSlots);
     setMergeMeta('');
   }
 
@@ -1206,24 +1771,57 @@ irm "$root/install-merge-pdf.ps1" | iex
   async function startMerge(files, autoDownload) {
     if (mergeInFlight) return;
     mergeInFlight = true;
+    const runToken = { cancelled: false };
+    currentMergeRunToken = runToken;
 
     clearNotice();
     showUpload();
 
     const total = files.length;
+    currentMergePhase = 'prepare';
+    if (cancelMergeBtn) {
+      cancelMergeBtn.disabled = false;
+      cancelMergeBtn.textContent = 'Отменить';
+    }
     fileCounter.textContent = `${total} файлов`;
     downloadBtn.disabled = true;
     downloadBtn.classList.remove('is-hidden');
-    setProgress(0, 'Склеиваю PDF', `0 / ${total}`);
+    setProgress(0, 'Склеиваю PDF', `В списке ${total} ${ruFilesNounOnly(total)}`);
     setMergeMeta('Готовлю файл…');
 
     if (batchProgressBlock) batchProgressBlock.style.display = 'flex';
     if (uploadZone) uploadZone.classList.add('batch-loading');
+    startMergeElapsedTimer();
+    let optimizePulseTimer = null;
+
+    function startOptimizePulse() {
+      const phases = [
+        'Оптимизирую структуру PDF…',
+        'Упаковываю внутренние объекты…',
+        'Проверяю итоговую структуру…'
+      ];
+      let i = 0;
+      setMergeMeta(phases[0]);
+      setProgress(98, 'Почти готово', phases[0]);
+      optimizePulseTimer = window.setInterval(() => {
+        i = (i + 1) % phases.length;
+        const line = phases[i];
+        setMergeMeta(line);
+        setProgress(98, 'Почти готово', line);
+      }, 900);
+    }
+
+    function stopOptimizePulse() {
+      if (!optimizePulseTimer) return;
+      window.clearInterval(optimizePulseTimer);
+      optimizePulseTimer = null;
+    }
 
     try {
       const chunks = makeChunksWithRanges(files);
       const stageCount = chunks.length <= 1 ? 1 : (2 * chunks.length - 1);
       const useCompression = !!(compressToggle && compressToggle.checked);
+      const useOptimize = !!(optimizeToggle && optimizeToggle.checked);
       const quality = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
 
       if (!useCompression && stageCount > 1) {
@@ -1232,41 +1830,67 @@ irm "$root/install-merge-pdf.ps1" | iex
 
       const merged = useCompression
         ? (quality >= 100
-          ? await mergePdfWithBatches(chunks)
+          ? await mergePdfWithBatches(chunks, runToken)
           : await mergePdfCompressed(files, quality, (done, totalUnits, label) => {
+              currentMergePhase = 'compress';
               const pct = totalUnits > 0 ? Math.round((done / totalUnits) * 100) : 0;
-              const title = `Сжимаю и склеиваю PDF (${quality}%)`;
-              setProgress(pct, title, `${done} / ${totalUnits}`);
-              setMergeMeta(`Сжатие включено: качество ${quality}%`);
-            }))
-        : await mergePdfWithBatches(chunks);
+              const title = `Сжимаю страницы (${quality}% качества)`;
+              const detail = label || (totalUnits ? `Страница ${done} из ${totalUnits}` : '');
+              setProgress(pct, title, detail);
+              setMergeMeta(`Сжатие: ${quality}% — обрабатываю по страницам`);
+            }, runToken))
+        : await mergePdfWithBatches(chunks, runToken);
 
-      const mergedBytes = merged.bytes;
+      let mergedBytes = merged.bytes;
+      if (useOptimize) {
+        currentMergePhase = 'optimize';
+        ensureMergeNotCancelled(runToken);
+        startOptimizePulse();
+        try {
+          mergedBytes = await optimizeMergedPdfLossless(mergedBytes);
+        } catch (_) {
+          // Fallback: отдаём исходный mergedBytes, если оптимизация не сработала на конкретном PDF.
+        } finally {
+          stopOptimizePulse();
+        }
+      }
       const totalPages = merged.pageCount;
+      currentMergePhase = 'finalize';
       const size = mergedBytes && mergedBytes.byteLength ? mergedBytes.byteLength : null;
-      setMergeMeta(`Готово. Размер: ${fmtSize(size)}, страниц: ${totalPages}.`);
-      setProgress(100, 'Готово', `${total} / ${total}`);
+      setMergeMeta(`Готово. Размер: ${fmtSize(size)}, страниц: ${formatPagesCountShort(totalPages)}.`);
+      setProgress(100, 'Готово', `${totalPages} стр. · ${total} ${ruFilesNounOnly(total)}`);
 
       if (autoDownload) {
         makeDownload(mergedBytes, files);
-        showNotice(`Склейка завершена. В итоге страниц: ${totalPages}.`, 'success');
+        showNotice(`Склейка завершена. В итоге страниц: ${formatPagesCountShort(totalPages)}`, 'success');
         // Возвращаемся к зоне загрузки, чтобы пользователь видел "готово" как на остальных страницах.
         showUpload();
       } else {
-        showNotice(`Склейка завершена. В итоге страниц: ${totalPages}.`, 'success');
+        showNotice(`Склейка завершена. В итоге страниц: ${formatPagesCountShort(totalPages)}`, 'success');
         downloadBtn.disabled = false;
         showEditor();
       }
     } catch (err) {
-      setProgress(0, 'Ошибка', `0 / ${total}`);
+      if (err && (err.code === 'merge_cancelled' || err.message === 'merge_cancelled')) {
+        setProgress(0, 'Остановлено', 'Склейка отменена пользователем');
+        setMergeMeta('Склейка остановлена');
+        showNotice('Склейка остановлена.', 'info');
+        showEditor();
+        return;
+      }
+      setProgress(0, 'Ошибка', 'Склейка прервалась — попробуй другие файлы или обнови страницу');
       downloadBtn.disabled = false;
       setMergeMeta('Ошибка при склейке. Попробуй другие файлы или другой браузер.');
       showNotice('Не удалось объединить PDF. Попробуй обновить страницу или разбить на части.', 'error');
       showEditor();
     } finally {
+      stopOptimizePulse();
+      stopMergeElapsedTimer();
       if (batchProgressBlock) batchProgressBlock.style.display = 'none';
       if (uploadZone) uploadZone.classList.remove('batch-loading');
       mergeInFlight = false;
+      currentMergeRunToken = null;
+      currentMergePhase = '';
     }
   }
 
@@ -1278,8 +1902,31 @@ irm "$root/install-merge-pdf.ps1" | iex
       return;
     }
     const nextFiles = append ? selectedFiles.concat(pdfs) : pdfs;
-    setSelectedFiles(nextFiles);
+    orderListLoadingSeq += 1;
+    const currentLoadSeq = orderListLoadingSeq;
     showEditor();
+    const isMassAdd = pdfs.length >= 8 || nextFiles.length >= 14;
+    if (isMassAdd) {
+      setOrderListLoading(true, pdfs.length);
+      window.setTimeout(() => {
+        if (currentLoadSeq !== orderListLoadingSeq) return;
+        setOrderListLoading(false);
+        if (append && selectedFiles.length) {
+          const addedIds = pdfs.map(() => newMergeSlotId());
+          setSelectedFiles(nextFiles, selectedSlotIds.concat(addedIds));
+        } else {
+          setSelectedFiles(nextFiles);
+        }
+      }, 120);
+      return;
+    }
+    setOrderListLoading(false);
+    if (append && selectedFiles.length) {
+      const addedIds = pdfs.map(() => newMergeSlotId());
+      setSelectedFiles(nextFiles, selectedSlotIds.concat(addedIds));
+    } else {
+      setSelectedFiles(nextFiles);
+    }
   }
 
   function extractFirstNumberFromName(name) {
@@ -1364,9 +2011,21 @@ irm "$root/install-merge-pdf.ps1" | iex
     });
   }
 
+  if (cancelMergeBtn) {
+    cancelMergeBtn.addEventListener('click', () => {
+      if (!mergeInFlight || !currentMergeRunToken) return;
+      currentMergeRunToken.cancelled = true;
+      cancelMergeBtn.disabled = true;
+      cancelMergeBtn.textContent = 'Останавливаю…';
+      setMergeMeta('Останавливаю…');
+      setProgress(0, 'Останавливаю…', 'Пожалуйста, подожди или перезагрузи страницу');
+    });
+  }
+
   if (compressToggle) {
     compressToggle.addEventListener('change', () => {
       if (compressToggle.checked && qualitySlider) {
+        if (optimizeToggle) optimizeToggle.checked = false;
         qualitySlider.value = '88';
         if (qualityVal) qualityVal.textContent = '88';
       }
@@ -1374,6 +2033,15 @@ irm "$root/install-merge-pdf.ps1" | iex
       if (selectedFiles.length) {
         setMergeMeta('');
       }
+    });
+  }
+
+  if (optimizeToggle) {
+    optimizeToggle.addEventListener('change', () => {
+      if (optimizeToggle.checked && compressToggle) compressToggle.checked = false;
+      updateCompressionUi();
+      updateMergeActionHint();
+      if (selectedFiles.length) setMergeMeta('');
     });
   }
 
@@ -1393,6 +2061,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       setSelectedFiles([]);
       downloadBtn.disabled = true;
       if (compressToggle) compressToggle.checked = false;
+      if (optimizeToggle) optimizeToggle.checked = false;
       if (qualitySlider) qualitySlider.value = '100';
       if (qualityVal) qualityVal.textContent = '100';
       updateCompressionUi();

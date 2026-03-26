@@ -20,6 +20,30 @@
   --sans: 'Onest', sans-serif;
 }
 
+@keyframes ui-skeleton-shimmer {
+  0% { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(220%, 0, 0); }
+}
+
+.skel-surface {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface2);
+}
+
+.skel-surface::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.16), transparent);
+  transform: translate3d(-100%, 0, 0);
+  animation: ui-skeleton-shimmer 1.45s ease-in-out infinite;
+  will-change: transform;
+}
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -740,13 +764,12 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   cursor: pointer;
 }
 
-.merge-quality-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
+.merge-toggle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 10px 12px;
+  margin-bottom: 8px;
 }
 
 .merge-est-size {
@@ -754,13 +777,103 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   font-size: 12px;
   color: var(--text-dim);
   white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+.merge-est-size-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: rgba(8, 10, 13, 0.72);
+  border: 1px solid var(--border2);
+  margin-bottom: 10px;
+}
+
+.merge-est-size-icon {
+  width: 13px;
+  height: 13px;
+  color: var(--text-dim);
   flex-shrink: 0;
+  stroke-width: 1.8;
+}
+
+.merge-est-main {
+  color: var(--text);
+}
+
+.merge-est-delta.is-down {
+  color: var(--green);
+}
+
+.merge-est-delta.is-up {
+  color: #fca5a5;
+}
+
+.merge-est-delta.is-neutral {
+  color: var(--text-dim);
 }
 
 .merge-quality-toggle {
   justify-content: flex-start;
   gap: 8px;
   margin-bottom: 0;
+  min-width: 0;
+}
+
+.merge-toggle-text-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.merge-toggle-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  cursor: help;
+  flex-shrink: 0;
+}
+
+.merge-toggle-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: min(300px, 80vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(8, 10, 13, 0.96);
+  border: 1px solid var(--border2);
+  color: var(--text-mid);
+  font-family: var(--sans);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+  transition: opacity 0.16s ease;
+}
+
+.merge-toggle-tip:hover::after,
+.merge-toggle-tip:focus-visible::after {
+  opacity: 1;
 }
 
 /* Toggle switch for merge PDF quality */
@@ -945,6 +1058,9 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   filter:
     drop-shadow(0 0 14px var(--wl-three))
     drop-shadow(0 0 28px var(--wl-four));
+  width: 100px;
+  height: 100px;
+  flex: 0 0 auto;
 }
 
 /* Для страницы склейки PDF кружок стоит ближе к верху блока,
@@ -955,6 +1071,14 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
 .merge-batch-progress {
   overflow: visible !important;
+}
+
+.upload-zone.batch-loading .merge-batch-progress {
+  max-height: 340px;
+}
+
+.merge-batch-progress #cancelMergeBtn {
+  margin-top: 20px;
 }
 
 .webp-loader::before {
@@ -1109,6 +1233,12 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   min-height: 1.3em;
 }
 
+.merge-meta:empty {
+  display: none;
+  min-height: 0;
+  margin: 0;
+}
+
 .file-counter {
   font-family: var(--sans);
   font-size: 12px;
@@ -1129,6 +1259,26 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
+}
+
+.file-name-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.file-name-skel-chip {
+  display: none;
+  width: 82px;
+  height: 13px;
+  border-radius: 999px;
+}
+
+.file-name-wrap.is-counting .file-name-skel-chip {
+  display: block;
 }
 
 .editor-preview-area {
@@ -1188,6 +1338,11 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   overflow: hidden;
 }
 
+/* Читаемость на светлых превью: узкая подложка, не на всю ширину панели */
+#compressPreviewWrap .size-info {
+  white-space: nowrap;
+}
+
 .editor-viewport {
   position: relative;
   display: block;
@@ -1234,10 +1389,57 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   position: absolute;
   bottom: 8px;
   right: 10px;
+  left: auto;
   z-index: 2;
+  max-width: calc(100% - 20px);
+  width: max-content;
+  text-align: right;
+  line-height: 1.35;
+  pointer-events: none;
 }
 
-.size-info .saved { color: var(--green); }
+/* Подложка под цифрами на превью (merge-pdf, compress-webp); пустой блок — без «пятна» */
+.size-info:not(:empty) {
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--text-mid);
+  background: rgba(8, 10, 13, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.size-info .saved {
+  color: var(--green);
+  font-weight: 500;
+}
+
+.size-info.is-size-loading {
+  color: transparent !important;
+}
+
+.size-info.is-size-loading::before {
+  content: '';
+  display: block;
+  width: 86px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.canvas-panel .preview-skeleton-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  display: none;
+}
+
+.canvas-panel.is-preview-loading .preview-skeleton-overlay {
+  display: block;
+}
 
 .canvas-toolbar {
   position: absolute;
@@ -1552,6 +1754,16 @@ details[open] .details-body {
   position: relative;
 }
 
+.order-list.is-loading {
+  pointer-events: none;
+}
+
+.order-row-skeleton {
+  height: 42px;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+}
+
 .order-row {
   display: flex;
   align-items: center;
@@ -1559,6 +1771,15 @@ details[open] .details-body {
   gap: 10px;
   cursor: grab;
   position: relative;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 4px 6px 4px 12px;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.order-row:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.28);
 }
 
 .order-row.is-dragging {
@@ -1665,6 +1886,12 @@ details[open] .details-body {
     letter-spacing: 0.06em;
     padding: 4px 8px;
     gap: 4px;
+  }
+  .merge-est-size {
+    font-size: 11px;
+  }
+  .merge-toggle-row {
+    grid-template-columns: 1fr;
   }
   .canvas-split {
     grid-template-columns: 1fr;
