@@ -52,6 +52,10 @@
 
 <body>
 <div class="wrap">
+  <a href="index.html" class="back-link">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Все инструменты
+  </a>
   <header class="header">
     <div class="badge">В браузере</div>
     <h1>Объединить PDF в <span>один</span></h1>
@@ -98,6 +102,7 @@
           <span class="file-counter" id="fileCounter">—</span>
           <span class="file-name" id="fileName">Объединённый PDF</span>
         </div>
+        <p class="merge-meta" id="mergeMeta" aria-live="polite"></p>
 
         <div class="editor-preview-area">
           <div class="canvas-panel merge-editor-panel" style="min-height: 180px;">
@@ -106,13 +111,16 @@
 
               <div class="slider-row" style="margin-top: 12px;">
                 <div class="slider-group">
-                  <label class="apply-all-label merge-quality-toggle" style="margin-bottom:10px;">
-                    <span class="switch">
-                      <input type="checkbox" id="compressToggle">
-                      <span class="slider"></span>
-                    </span>
-                    <span>Сжать итоговый PDF</span>
-                  </label>
+                  <div class="merge-quality-row">
+                    <label class="apply-all-label merge-quality-toggle">
+                      <span class="switch">
+                        <input type="checkbox" id="compressToggle">
+                        <span class="slider"></span>
+                      </span>
+                      <span>Сжать итоговый PDF</span>
+                    </label>
+                    <span class="merge-est-size" id="mergeEstSize" aria-label="Приблизительный размер итогового PDF" aria-live="polite">—</span>
+                  </div>
                   <div id="compressControls" class="is-hidden">
                     <div class="slider-label">
                       Качество
@@ -152,9 +160,7 @@
                 <button class="btn btn-ghost" id="resetBtn">Начать заново</button>
               </div>
 
-              <p class="action-hint" style="margin-top:12px; text-align:center;">
-                Качество сохраняется: страницы копируются без рендеринга.
-              </p>
+              <p class="action-hint" id="mergeActionHint" style="margin-top:12px; text-align:center;"></p>
             </div>
           </div>
         </div>
@@ -220,9 +226,10 @@
 # Склейка (идея):
 #   qpdf --empty --pages "${sorted[@]}" -- "$out"</pre>
 
-            <!-- Lock overlay (визуально), без блокировки загрузки -->
-            <div class="paywall-overlay" style="display:flex; pointer-events:none;">
+            <!-- Lock overlay -->
+            <div class="paywall-overlay" style="display:flex;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <a id="mergePdfMacPaywallCta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за&nbsp;100 ₽</a>
             </div>
           </div>
         </div>
@@ -263,8 +270,9 @@ irm "$root/install-merge-pdf.ps1" | iex
 # Добавит пункт “Merge PDFs” в контекстное меню для PDF.</pre>
 
             <!-- Lock overlay -->
-            <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;pointer-events:none;">
+            <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <a id="mergePdfWinPaywallCta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за&nbsp;100 ₽</a>
             </div>
           </div>
         </div>
@@ -316,6 +324,8 @@ irm "$root/install-merge-pdf.ps1" | iex
   <footer class="footer" id="sharedFooter" data-primary-href="index.html" data-primary-label="Убрать водяной знак"></footer>
 </div>
 
+<script src="config.js"></script>
+<script src="utils.js"></script>
 <script src="loader.js"></script>
 <script src="footer.js"></script>
 <script src="instructions.js"></script>
@@ -349,6 +359,8 @@ irm "$root/install-merge-pdf.ps1" | iex
   const rightPreviewCanvas = document.getElementById('rightPreviewCanvas');
   const origSizeInfo = document.getElementById('origSizeInfo');
   const resultSizeInfo = document.getElementById('resultSizeInfo');
+  const mergeEstSizeEl = document.getElementById('mergeEstSize');
+  const mergeActionHint = document.getElementById('mergeActionHint');
 
   // Пользовательский порядок перед склейкой.
   let selectedFiles = [];
@@ -359,6 +371,45 @@ irm "$root/install-merge-pdf.ps1" | iex
 
   function setMergeMeta(text = '') {
     if (mergeMeta) mergeMeta.textContent = text;
+  }
+
+  function sumSelectedFilesBytes(files) {
+    return (files || []).reduce((sum, f) => sum + (f && Number.isFinite(f.size) ? f.size : 0), 0);
+  }
+
+  function refreshMergeEstSizeLabel() {
+    if (!mergeEstSizeEl) return;
+    if (!selectedFiles.length) {
+      mergeEstSizeEl.textContent = '—';
+      return;
+    }
+    const total = sumSelectedFilesBytes(selectedFiles);
+    const compressOn = !!(compressToggle && compressToggle.checked);
+    const q = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
+    if (!compressOn || q >= 100) {
+      mergeEstSizeEl.textContent = `~${fmtSize(total)}`;
+      return;
+    }
+    mergeEstSizeEl.textContent = 'Оцениваю…';
+  }
+
+  function updateMergeActionHint() {
+    if (!mergeActionHint) return;
+    const on = !!(compressToggle && compressToggle.checked);
+    mergeActionHint.textContent = on
+      ? 'Со сжатием каждая страница переводится в JPEG и заново собирается в PDF — чёткость текста и вектора может снизиться.'
+      : 'Без сжатия страницы копируются как есть: без растеризации, с сохранением исходного качества.';
+  }
+
+  /** Тот же масштаб рендера, что в mergePdfCompressed — оценка и превью «После» ближе к факту. */
+  function mergeMatchRenderScale(qualityPct) {
+    return qualityPct >= 95 ? 1.8 : (qualityPct >= 75 ? 1.5 : 1.3);
+  }
+
+  function setCompressionPreviewFailed(runSeq) {
+    if (runSeq !== previewRunSeq) return;
+    if (resultSizeInfo) resultSizeInfo.textContent = 'Не удалось показать превью';
+    if (mergeEstSizeEl) mergeEstSizeEl.textContent = '—';
   }
 
   function computeInsertionIndex(clientY) {
@@ -418,12 +469,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     uploadNotice.className = 'upload-notice';
   }
 
-  function fmtSize(bytes) {
-    if (!Number.isFinite(bytes)) return '—';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-  }
+  // fmtSize — в utils.js
 
   function isPdfFile(file) {
     const t = (file.type || '').toLowerCase();
@@ -544,6 +590,50 @@ irm "$root/install-merge-pdf.ps1" | iex
     return jsPdfPromise;
   }
 
+  /**
+   * Оценка сжатого итога по файлу: средний вес JPEG выборки страниц (1 / середина / последняя)
+   * × число страниц, масштаб и качество как в mergePdfCompressed. Порядок файлов не влияет.
+   */
+  async function measureFileJpegEstimateBytes(file, qualityPct, scratchCanvas, runSeq) {
+    if (!file || runSeq !== previewRunSeq) return null;
+    const scale = mergeMatchRenderScale(qualityPct);
+    const buf = await file.arrayBuffer();
+    if (runSeq !== previewRunSeq) return null;
+    const pdfDoc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    try {
+      const numPages = pdfDoc.numPages || 0;
+      if (numPages < 1) return { estBytes: 0 };
+      const sampleIdx = numPages === 1
+        ? [1]
+        : (numPages === 2 ? [1, 2] : [1, Math.ceil(numPages / 2), numPages]);
+      const q = Math.max(0.01, Math.min(1, qualityPct / 100));
+      let sumJ = 0;
+      for (const pi of sampleIdx) {
+        if (runSeq !== previewRunSeq) return null;
+        const page = await pdfDoc.getPage(pi);
+        const viewport = page.getViewport({ scale });
+        const w = Math.max(1, Math.round(viewport.width));
+        const h = Math.max(1, Math.round(viewport.height));
+        scratchCanvas.width = w;
+        scratchCanvas.height = h;
+        const ctx = scratchCanvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        if (runSeq !== previewRunSeq) return null;
+        const blob = await new Promise((resolve) => {
+          scratchCanvas.toBlob((b) => resolve(b), 'image/jpeg', q);
+        });
+        if (!blob || runSeq !== previewRunSeq) return null;
+        sumJ += blob.size;
+      }
+      const avgJ = sumJ / sampleIdx.length;
+      return { estBytes: Math.round(avgJ * numPages) };
+    } finally {
+      try {
+        await pdfDoc.destroy();
+      } catch (_) { /* ignore */ }
+    }
+  }
+
   async function renderCompressionPreview(files, qualityPct, runSeq) {
     if (!leftPreviewCanvas || !rightPreviewCanvas) return;
     if (!files || !files.length) return;
@@ -551,66 +641,117 @@ irm "$root/install-merge-pdf.ps1" | iex
     await ensurePdfJsLoaded();
     if (runSeq !== previewRunSeq) return;
 
-    const firstFile = files[0];
-    const bytes = await firstFile.arrayBuffer();
-    if (runSeq !== previewRunSeq) return;
+    const totalOrigSize = files.reduce((sum, f) => sum + (f && Number.isFinite(f.size) ? f.size : 0), 0);
+    if (origSizeInfo) origSizeInfo.textContent = fmtSize(totalOrigSize);
 
-    const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
-    const firstPage = await pdf.getPage(1);
-    const baseViewport = firstPage.getViewport({ scale: 1 });
     const panelWidth = (leftPreviewCanvas.parentElement && leftPreviewCanvas.parentElement.clientWidth)
       ? leftPreviewCanvas.parentElement.clientWidth
       : 420;
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     const targetRenderWidth = Math.max(320, Math.round(panelWidth * dpr));
-    const fitScale = Math.max(0.2, Math.min(2.5, targetRenderWidth / Math.max(1, baseViewport.width)));
-    const viewport = firstPage.getViewport({ scale: fitScale });
-
-    leftPreviewCanvas.width = Math.max(1, Math.round(viewport.width));
-    leftPreviewCanvas.height = Math.max(1, Math.round(viewport.height));
-    rightPreviewCanvas.width = Math.max(1, Math.round(viewport.width));
-    rightPreviewCanvas.height = Math.max(1, Math.round(viewport.height));
-
-    const leftCtx = leftPreviewCanvas.getContext('2d');
-    await firstPage.render({ canvasContext: leftCtx, viewport }).promise;
-    if (runSeq !== previewRunSeq) return;
 
     const rightCtx = rightPreviewCanvas.getContext('2d');
-    rightCtx.clearRect(0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
-    const totalOrigSize = files.reduce((sum, f) => sum + (f && Number.isFinite(f.size) ? f.size : 0), 0);
-    if (origSizeInfo) origSizeInfo.textContent = fmtSize(totalOrigSize);
 
     if (qualityPct >= 100) {
+      const firstFile = files[0];
+      const bytes = await firstFile.arrayBuffer();
+      if (runSeq !== previewRunSeq) return;
+      const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+      try {
+        const firstPage = await pdf.getPage(1);
+        const baseViewport = firstPage.getViewport({ scale: 1 });
+        const fitScale = Math.max(0.2, Math.min(2.5, targetRenderWidth / Math.max(1, baseViewport.width)));
+        const viewport = firstPage.getViewport({ scale: fitScale });
+        leftPreviewCanvas.width = Math.max(1, Math.round(viewport.width));
+        leftPreviewCanvas.height = Math.max(1, Math.round(viewport.height));
+        rightPreviewCanvas.width = leftPreviewCanvas.width;
+        rightPreviewCanvas.height = leftPreviewCanvas.height;
+        const leftCtx = leftPreviewCanvas.getContext('2d');
+        await firstPage.render({ canvasContext: leftCtx, viewport }).promise;
+        if (runSeq !== previewRunSeq) return;
+      } finally {
+        try {
+          await pdf.destroy();
+        } catch (_) { /* ignore */ }
+      }
+      rightCtx.clearRect(0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
       rightCtx.drawImage(leftPreviewCanvas, 0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
       if (resultSizeInfo) resultSizeInfo.innerHTML = `~${fmtSize(totalOrigSize)}`;
+      if (mergeEstSizeEl) mergeEstSizeEl.textContent = `~${fmtSize(totalOrigSize)}`;
       return;
+    }
+
+    let estBytes = 0;
+    const scratch = document.createElement('canvas');
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const part = await measureFileJpegEstimateBytes(files[i], qualityPct, scratch, runSeq);
+        if (part == null) return;
+        estBytes += part.estBytes;
+      }
+    } catch (err) {
+      setCompressionPreviewFailed(runSeq);
+      throw err;
+    }
+
+    estBytes = Math.max(0, estBytes);
+    const pct = totalOrigSize > 0 ? Math.round((1 - estBytes / totalOrigSize) * 100) : 0;
+
+    const scale = mergeMatchRenderScale(qualityPct);
+    const firstFile = files[0];
+    const bytes0 = await firstFile.arrayBuffer();
+    if (runSeq !== previewRunSeq) return;
+    const pdfVis = await window.pdfjsLib.getDocument({ data: bytes0 }).promise;
+    try {
+      const firstPage = await pdfVis.getPage(1);
+      const viewport = firstPage.getViewport({ scale });
+      leftPreviewCanvas.width = Math.max(1, Math.round(viewport.width));
+      leftPreviewCanvas.height = Math.max(1, Math.round(viewport.height));
+      rightPreviewCanvas.width = leftPreviewCanvas.width;
+      rightPreviewCanvas.height = leftPreviewCanvas.height;
+      rightCtx.clearRect(0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
+      const leftCtx = leftPreviewCanvas.getContext('2d');
+      await firstPage.render({ canvasContext: leftCtx, viewport }).promise;
+      if (runSeq !== previewRunSeq) return;
+    } finally {
+      try {
+        await pdfVis.destroy();
+      } catch (_) { /* ignore */ }
     }
 
     const q = Math.max(0.01, Math.min(1, qualityPct / 100));
     const previewBlob = await new Promise((resolve) => {
       leftPreviewCanvas.toBlob((b) => resolve(b), 'image/jpeg', q);
     });
-    if (!previewBlob || runSeq !== previewRunSeq) return;
-
-    const imageUrl = URL.createObjectURL(previewBlob);
-    const previewImg = await new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('preview image decode failed'));
-      img.src = imageUrl;
-    });
-    if (runSeq !== previewRunSeq) {
-      URL.revokeObjectURL(imageUrl);
+    if (!previewBlob || runSeq !== previewRunSeq) {
+      if (!previewBlob && runSeq === previewRunSeq) setCompressionPreviewFailed(runSeq);
       return;
     }
-    rightCtx.drawImage(previewImg, 0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
+
+    const imageUrl = URL.createObjectURL(previewBlob);
+    let previewImg;
+    try {
+      previewImg = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('preview image decode failed'));
+        img.src = imageUrl;
+      });
+    } catch (err) {
+      URL.revokeObjectURL(imageUrl);
+      setCompressionPreviewFailed(runSeq);
+      throw err;
+    }
     URL.revokeObjectURL(imageUrl);
 
+    if (runSeq !== previewRunSeq) return;
+    rightCtx.drawImage(previewImg, 0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
+
     if (resultSizeInfo) {
-      const ratio = firstFile.size > 0 ? (previewBlob.size / firstFile.size) : 1;
-      const estBytes = Math.max(0, Math.round(totalOrigSize * ratio));
-      const pct = totalOrigSize > 0 ? Math.round((1 - estBytes / totalOrigSize) * 100) : 0;
       resultSizeInfo.innerHTML = `~${fmtSize(estBytes)}${pct > 0 ? ` <span class="saved">↓${pct}%</span>` : ''}`;
+      if (mergeEstSizeEl) {
+        mergeEstSizeEl.textContent = pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`;
+      }
     }
   }
 
@@ -620,7 +761,7 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     const { jsPDF } = window.jspdf;
     const q = Math.max(0.01, Math.min(1, qualityPct / 100));
-    const renderScale = qualityPct >= 95 ? 1.8 : (qualityPct >= 75 ? 1.5 : 1.3);
+    const renderScale = mergeMatchRenderScale(qualityPct);
 
     let outPdf = null;
     const scratch = document.createElement('canvas');
@@ -633,74 +774,92 @@ irm "$root/install-merge-pdf.ps1" | iex
       const file = files[fileIdx];
       const bytes = await file.arrayBuffer();
       const srcPdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
-      const pageCount = srcPdf.numPages || 0;
-      pageCounts[fileIdx] = pageCount;
-      estimatedTotalPages += pageCount;
-      if (estimatedTotalPages < donePages) estimatedTotalPages = donePages;
+      try {
+        const pageCount = srcPdf.numPages || 0;
+        pageCounts[fileIdx] = pageCount;
+        estimatedTotalPages += pageCount;
+        if (estimatedTotalPages < donePages) estimatedTotalPages = donePages;
 
-      for (let p = 1; p <= pageCount; p++) {
-        if (typeof onProgress === 'function') {
-          onProgress(donePages, Math.max(estimatedTotalPages, donePages + 1), `${fileIdx + 1}/${totalFiles} · ${file.name} · стр. ${p}/${pageCount}`);
-        }
-        const page = await srcPdf.getPage(p);
-        const viewport = page.getViewport({ scale: renderScale });
-        const w = Math.max(1, Math.round(viewport.width));
-        const h = Math.max(1, Math.round(viewport.height));
-        scratch.width = w;
-        scratch.height = h;
+        for (let p = 1; p <= pageCount; p++) {
+          if (typeof onProgress === 'function') {
+            onProgress(donePages, Math.max(estimatedTotalPages, donePages + 1), `${fileIdx + 1}/${totalFiles} · ${file.name} · стр. ${p}/${pageCount}`);
+          }
+          const page = await srcPdf.getPage(p);
+          const viewport = page.getViewport({ scale: renderScale });
+          const w = Math.max(1, Math.round(viewport.width));
+          const h = Math.max(1, Math.round(viewport.height));
+          scratch.width = w;
+          scratch.height = h;
 
-        const ctx = scratch.getContext('2d');
-        await page.render({ canvasContext: ctx, viewport }).promise;
+          const ctx = scratch.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
 
-        const jpgUrl = scratch.toDataURL('image/jpeg', q);
-        const orientation = w >= h ? 'landscape' : 'portrait';
-        if (!outPdf) {
-          outPdf = new jsPDF({ orientation, unit: 'pt', format: [w, h], compress: true });
-        } else {
-          outPdf.addPage([w, h], orientation);
+          const jpgUrl = scratch.toDataURL('image/jpeg', q);
+          const orientation = w >= h ? 'landscape' : 'portrait';
+          if (!outPdf) {
+            outPdf = new jsPDF({ orientation, unit: 'pt', format: [w, h], compress: true });
+          } else {
+            outPdf.addPage([w, h], orientation);
+          }
+          outPdf.addImage(jpgUrl, 'JPEG', 0, 0, w, h, undefined, 'FAST');
+          donePages += 1;
+          if (typeof onProgress === 'function') {
+            onProgress(donePages, Math.max(estimatedTotalPages, donePages), `${fileIdx + 1}/${totalFiles} · ${file.name} · стр. ${p}/${pageCount}`);
+          }
         }
-        outPdf.addImage(jpgUrl, 'JPEG', 0, 0, w, h, undefined, 'FAST');
-        donePages += 1;
-        if (typeof onProgress === 'function') {
-          onProgress(donePages, Math.max(estimatedTotalPages, donePages), `${fileIdx + 1}/${totalFiles} · ${file.name} · стр. ${p}/${pageCount}`);
-        }
+      } finally {
+        try {
+          await srcPdf.destroy();
+        } catch (_) { /* ignore */ }
       }
     }
 
     if (!outPdf) {
       const empty = await window.PDFLib.PDFDocument.create();
-      return empty.save({ useObjectStreams: false });
+      const outBytes = await empty.save({ useObjectStreams: false });
+      return { bytes: outBytes, pageCount: 0 };
     }
-    return outPdf.output('arraybuffer');
+    return { bytes: outPdf.output('arraybuffer'), pageCount: donePages };
   }
 
   function updateCompressionUi() {
-    const enabled = !!(compressToggle && compressToggle.checked);
-    if (compressControls) compressControls.classList.toggle('is-hidden', !enabled);
-    if (compressPreviewWrap) compressPreviewWrap.classList.toggle('is-hidden', !enabled);
+    try {
+      const enabled = !!(compressToggle && compressToggle.checked);
+      if (compressControls) compressControls.classList.toggle('is-hidden', !enabled);
+      if (compressPreviewWrap) compressPreviewWrap.classList.toggle('is-hidden', !enabled);
 
-    if (!enabled) {
-      if (origSizeInfo) origSizeInfo.textContent = '—';
-      if (resultSizeInfo) resultSizeInfo.textContent = '—';
-      return;
+      if (!enabled) {
+        if (origSizeInfo) origSizeInfo.textContent = '—';
+        if (resultSizeInfo) resultSizeInfo.textContent = '—';
+        refreshMergeEstSizeLabel();
+        return;
+      }
+      if (!selectedFiles.length) {
+        if (origSizeInfo) origSizeInfo.textContent = '—';
+        if (resultSizeInfo) resultSizeInfo.textContent = '—';
+        if (mergeEstSizeEl) mergeEstSizeEl.textContent = '—';
+        return;
+      }
+
+      const q = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
+      if (qualityVal) qualityVal.textContent = String(q);
+      const totalBytes = sumSelectedFilesBytes(selectedFiles);
+      if (mergeEstSizeEl) {
+        mergeEstSizeEl.textContent = q >= 100 ? `~${fmtSize(totalBytes)}` : 'Оцениваю…';
+      }
+      if (resultSizeInfo) resultSizeInfo.textContent = 'Оцениваю…';
+
+      clearTimeout(previewDebounceTimer);
+      previewDebounceTimer = setTimeout(() => {
+        previewRunSeq += 1;
+        const runSeq = previewRunSeq;
+        renderCompressionPreview(selectedFiles, q, runSeq).catch(() => {
+          setCompressionPreviewFailed(runSeq);
+        });
+      }, 140);
+    } finally {
+      updateMergeActionHint();
     }
-    if (!selectedFiles.length) return;
-
-    const q = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
-    if (qualityVal) qualityVal.textContent = String(q);
-    if (resultSizeInfo) resultSizeInfo.textContent = 'Оцениваю…';
-
-    clearTimeout(previewDebounceTimer);
-    previewDebounceTimer = setTimeout(() => {
-      previewRunSeq += 1;
-      const runSeq = previewRunSeq;
-      renderCompressionPreview(selectedFiles, q, runSeq).catch((err) => {
-        console.error('preview render error', err);
-        if (runSeq === previewRunSeq && resultSizeInfo) {
-          resultSizeInfo.textContent = 'Не удалось показать превью';
-        }
-      });
-    }, 140);
   }
 
   async function mergePdfSources(sources, onInnerProgress) {
@@ -714,6 +873,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       onInnerProgress(0, total, null);
     }
 
+    let pageCountTotal = 0;
     for (let i = 0; i < total; i++) {
       const src = sources[i];
       const label = src && src.name ? src.name : 'PDF';
@@ -725,6 +885,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       // copyPages preserves vector data & images (no rendering / no quality drop).
       const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
       const pageIndices = pdf.getPageIndices();
+      pageCountTotal += pageIndices.length;
       const pages = await mergedPdf.copyPages(pdf, pageIndices);
       pages.forEach(p => mergedPdf.addPage(p));
       // Let GC do the rest.
@@ -732,8 +893,8 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     // Для "качество не меняется" важно не рендерить (мы делаем copyPages),
     // а также не включать лишнюю оптимизацию структуры при save.
-    const mergedBytes = await mergedPdf.save({ useObjectStreams: false });
-    return mergedBytes;
+    const outBytes = await mergedPdf.save({ useObjectStreams: false });
+    return { bytes: outBytes, pageCount: pageCountTotal };
   }
 
   function makeChunksWithRanges(files) {
@@ -802,13 +963,13 @@ irm "$root/install-merge-pdf.ps1" | iex
       setMergeMeta(stageLabel);
 
       const sources = chunk.files.map(f => ({ name: f.name, getBytes: () => f.arrayBuffer() }));
-      const mergedBytes = await mergePdfSources(sources, (done, total, label) => {
+      const stageResult = await mergePdfSources(sources, (done, total, label) => {
         const t = total > 0 ? (done / total) : 0;
         const pct = Math.round(stageStartPct + (stageEndPct - stageStartPct) * t);
         setProgress(pct, stageLabel, `${done} / ${total}`);
       });
 
-      intermediates.push({ bytes: mergedBytes, start: chunk.start, end: chunk.end });
+      intermediates.push({ bytes: stageResult.bytes, pageCount: stageResult.pageCount, start: chunk.start, end: chunk.end });
       stageCounter++;
     }
 
@@ -816,6 +977,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     let accumulatorBytes = intermediates[0].bytes;
     let accStart = intermediates[0].start;
     let accEnd = intermediates[0].end;
+    let lastPageCount = intermediates[0].pageCount;
 
     for (let i = 1; i < intermediates.length; i++) {
       const next = intermediates[i];
@@ -834,17 +996,19 @@ irm "$root/install-merge-pdf.ps1" | iex
         { name: `часть ${next.start}-${next.end}`, getBytes: () => Promise.resolve(next.bytes) }
       ];
 
-      accumulatorBytes = await mergePdfSources(sources, (done, total, label) => {
+      const mergeResult = await mergePdfSources(sources, (done, total, label) => {
         const t = total > 0 ? (done / total) : 0;
         const pct = Math.round(stageStartPct + (stageEndPct - stageStartPct) * t);
         setProgress(pct, stageLabel, `${done} / ${total}`);
       });
 
+      accumulatorBytes = mergeResult.bytes;
+      lastPageCount = mergeResult.pageCount;
       accEnd = next.end;
       stageCounter++;
     }
 
-    return accumulatorBytes;
+    return { bytes: accumulatorBytes, pageCount: lastPageCount };
   }
 
   function sanitizeBaseName(name) {
@@ -1065,7 +1229,7 @@ irm "$root/install-merge-pdf.ps1" | iex
         setMergeMeta(`Склейка в ${stageCount} этапа…`);
       }
 
-      const mergedBytes = useCompression
+      const merged = useCompression
         ? (quality >= 100
           ? await mergePdfWithBatches(chunks)
           : await mergePdfCompressed(files, quality, (done, totalUnits, label) => {
@@ -1076,22 +1240,23 @@ irm "$root/install-merge-pdf.ps1" | iex
             }))
         : await mergePdfWithBatches(chunks);
 
+      const mergedBytes = merged.bytes;
+      const totalPages = merged.pageCount;
       const size = mergedBytes && mergedBytes.byteLength ? mergedBytes.byteLength : null;
-      setMergeMeta(`Готово. Размер: ${fmtSize(size)}.`);
+      setMergeMeta(`Готово. Размер: ${fmtSize(size)}, страниц: ${totalPages}.`);
       setProgress(100, 'Готово', `${total} / ${total}`);
 
       if (autoDownload) {
         makeDownload(mergedBytes, files);
-        showNotice(`Склейка завершена. Итого листов: ${total}`, 'success');
+        showNotice(`Склейка завершена. В итоге страниц: ${totalPages}.`, 'success');
         // Возвращаемся к зоне загрузки, чтобы пользователь видел "готово" как на остальных страницах.
         showUpload();
       } else {
-        showNotice(`Склейка завершена. Итого листов: ${total}`, 'success');
+        showNotice(`Склейка завершена. В итоге страниц: ${totalPages}.`, 'success');
         downloadBtn.disabled = false;
         showEditor();
       }
     } catch (err) {
-      console.error('mergePdfWithBatches error', err);
       setProgress(0, 'Ошибка', `0 / ${total}`);
       downloadBtn.disabled = false;
       setMergeMeta('Ошибка при склейке. Попробуй другие файлы или другой браузер.');
@@ -1238,7 +1403,14 @@ irm "$root/install-merge-pdf.ps1" | iex
   }
 
   // Initial state
+  updateMergeActionHint();
   showUpload();
+
+  // Устанавливаем href для платёжных ссылок из config.js
+  const _mergeMacCta = document.getElementById('mergePdfMacPaywallCta');
+  const _mergeWinCta = document.getElementById('mergePdfWinPaywallCta');
+  if (_mergeMacCta) _mergeMacCta.href = APP_CONFIG.MERGE_PDF_MAC_URL;
+  if (_mergeWinCta) _mergeWinCta.href = APP_CONFIG.MERGE_PDF_WINDOWS_URL;
 })();
 </script>
 </body>

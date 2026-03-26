@@ -201,7 +201,7 @@
   function ensureFaqLastQuestion() {
     // В разных страницах есть одинаковый "последний вопрос" в FAQ.
     // Подставляем его автоматически, чтобы не дублировать HTML.
-    const telegramHref = 'https://t.me/mansurov_rafael';
+    const telegramHref = APP_CONFIG.TELEGRAM_URL;
     const telegramLinkSelector = `a[href="${telegramHref}"]`;
 
     const detailsHtml = `

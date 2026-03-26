@@ -49,6 +49,11 @@
 <body>
 <div class="wrap">
 
+  <a href="index.html" class="back-link">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Все инструменты
+  </a>
+
   <header class="header">
     <div class="badge">В&nbsp;браузере</div>
     <h1>Сжать фото в&nbsp;<span>WebP</span></h1>
@@ -172,11 +177,11 @@
                 <span class="code-filename">Convert to WebP.workflow</span>
               </div>
               <div class="code-toolbar-right">
-                <button class="btn btn-ghost" onclick="window.open('https://web.tribute.tg/p/tfS','_blank')">
+                <button class="btn btn-ghost" onclick="window.open(APP_CONFIG.WEBP_MAC_URL,'_blank')">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Копировать
                 </button>
-                <a class="btn btn-primary" href="https://web.tribute.tg/p/tfS" target="_blank" rel="noopener noreferrer">
+                <a class="btn btn-primary" id="webpMacDownloadBtn" href="#" target="_blank" rel="noopener noreferrer">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Скачать .workflow
                 </a>
@@ -198,7 +203,7 @@ presets=(10 20 30 40 50 60 70 80 90 100)
             <!-- PAYWALL OVERLAY -->
             <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <a href="https://web.tribute.tg/p/tfS" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за&nbsp;100 ₽</a>
+              <a id="webpMacPaywallCta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за&nbsp;100 ₽</a>
             </div>
           </div>
         </div>
@@ -235,11 +240,11 @@ presets=(10 20 30 40 50 60 70 80 90 100)
                 <span class="code-filename">windows/install.ps1</span>
               </div>
               <div class="code-toolbar-right">
-                <button class="btn btn-ghost" onclick="window.open('https://web.tribute.tg/p/tfO','_blank')">
+                <button class="btn btn-ghost" onclick="window.open(APP_CONFIG.WEBP_WINDOWS_URL,'_blank')">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Копировать
                 </button>
-                <button class="btn btn-primary" onclick="window.open('https://web.tribute.tg/p/tfO','_blank')">
+                <button class="btn btn-primary" onclick="window.open(APP_CONFIG.WEBP_WINDOWS_URL,'_blank')">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Скачать
                 </button>
@@ -260,7 +265,7 @@ irm "$root/install.ps1" | iex
 # - скрипт с&nbsp;выбором качества (1-100)</pre>
             <div style="position:absolute;inset:-1px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <a href="https://web.tribute.tg/p/tfO" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за&nbsp;100 ₽</a>
+              <a id="webpWinPaywallCta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:14px;padding:10px 22px;">Купить за&nbsp;100 ₽</a>
             </div>
           </div>
         </div>
@@ -335,6 +340,8 @@ irm "$root/install.ps1" | iex
 
 </div>
 
+<script src="config.js"></script>
+<script src="utils.js"></script>
 <script src="loader.js"></script>
 <script src="footer.js"></script>
 <script src="instructions.js"></script>
@@ -377,49 +384,7 @@ irm "$root/install.ps1" | iex
     uploadNotice.className = 'upload-notice';
   }
 
-  function fmtSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-  }
-
-  function isSupportedImage(file) {
-    const t = (file.type || '').toLowerCase();
-    const ok = /^image\/(jpeg|png|webp|bmp|gif|heic|heif)$/i.test(t) || t.includes('heic') || t.includes('heif');
-    if (ok) return true;
-    return /\.(jpe?g|png|webp|bmp|gif|heic|heif)$/i.test(file.name || '');
-  }
-
-  function isHeicLike(file) {
-    const t = (file.type || '').toLowerCase();
-    if (t === 'image/heic' || t === 'image/heif' || t.includes('heic') || t.includes('heif')) return true;
-    return /\.(heic|heif)$/i.test(file.name || '');
-  }
-
-  const HEIC2ANY_SRC = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-  let heic2anyLoadPromise = null;
-  function ensureHeic2anyLoaded() {
-    if (typeof window.heic2any === 'function') return Promise.resolve();
-    if (heic2anyLoadPromise) return heic2anyLoadPromise;
-    heic2anyLoadPromise = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = HEIC2ANY_SRC;
-      s.async = true;
-      s.onload = () => {
-        if (typeof window.heic2any === 'function') resolve();
-        else {
-          heic2anyLoadPromise = null;
-          reject(new Error('heic2any'));
-        }
-      };
-      s.onerror = () => {
-        heic2anyLoadPromise = null;
-        reject(new Error('heic2any network'));
-      };
-      document.head.appendChild(s);
-    });
-    return heic2anyLoadPromise;
-  }
+  // fmtSize, isSupportedImage, isHeicLike, ensureHeic2anyLoaded — в utils.js
 
   async function prepareImageFiles(fileList) {
     const out = [];
@@ -474,7 +439,6 @@ irm "$root/install.ps1" | iex
       }
       loadFiles(prepared);
     } catch (err) {
-      console.error(err);
       showNotice('Не удалось открыть HEIC. Проверь интернет или сохрани фото как JPEG.');
     }
     e.target.value = '';
@@ -503,7 +467,6 @@ irm "$root/install.ps1" | iex
       }
       loadFiles(prepared);
     } catch (err) {
-      console.error(err);
       showNotice('Не удалось открыть HEIC. Проверь интернет или сохрани фото как JPEG.');
     }
   });
@@ -519,7 +482,6 @@ irm "$root/install.ps1" | iex
         if (!prepared.length) return;
         loadFiles(prepared);
       } catch (err) {
-        console.error(err);
         showNotice('Не удалось открыть HEIC. Проверь интернет или сохрани фото как JPEG.');
       }
     }
@@ -594,7 +556,7 @@ irm "$root/install.ps1" | iex
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       if (!imgEl) return;
-      const q = parseInt(qualitySlider.value) / 100;
+      const q = parseInt(qualitySlider.value, 10) / 100;
       const w = rightCanvas.width;
       const h = rightCanvas.height;
 
@@ -643,7 +605,7 @@ irm "$root/install.ps1" | iex
 
   document.getElementById('downloadBtn').addEventListener('click', async () => {
     if (!files.length) return;
-    const q = parseInt(qualitySlider.value) / 100;
+    const q = parseInt(qualitySlider.value, 10) / 100;
     const doAll = applyToAllCheck && applyToAllCheck.checked && files.length > 1;
 
     if (doAll) {
@@ -737,7 +699,15 @@ irm "$root/install.ps1" | iex
     clearNotice();
   });
 
+  // Устанавливаем href для платёжных ссылок из config.js
+  const _macDownload = document.getElementById('webpMacDownloadBtn');
+  const _macCta = document.getElementById('webpMacPaywallCta');
+  const _winCta = document.getElementById('webpWinPaywallCta');
+  if (_macDownload) _macDownload.href = APP_CONFIG.WEBP_MAC_URL;
+  if (_macCta) _macCta.href = APP_CONFIG.WEBP_MAC_URL;
+  if (_winCta) _winCta.href = APP_CONFIG.WEBP_WINDOWS_URL;
+
 </script>
-<script src="https://unpkg.com/lucide@latest" defer onload="window.lucide&&window.lucide.createIcons()"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js" integrity="sha384-8nT3SpButyvenpAdKYPJzXdSz3zidMGduMoaMvwjKnAWVv238n6P1mhveiJJQWrV" crossorigin="anonymous" defer onload="window.lucide&&window.lucide.createIcons()"></script>
 </body>
 </html>

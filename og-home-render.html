@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #080a0d;
+    font-family: 'IBM Plex Mono', monospace;
+    color: #e2e8f0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(#1e2530 1px, transparent 1px),
+      linear-gradient(90deg, #1e2530 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .glow-cyan {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 65%);
+    top: -200px;
+    left: -150px;
+  }
+
+  .glow-blue {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 65%);
+    bottom: -150px;
+    right: -50px;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    width: 100%;
+    padding: 0 100px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #22d3ee;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid rgba(34,211,238,0.25);
+    border-radius: 5px;
+    background: rgba(34,211,238,0.06);
+    margin-bottom: 36px;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22d3ee;
+  }
+
+  h1 {
+    font-family: 'Onest', sans-serif;
+    font-size: 58px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: #fff;
+    margin-bottom: 28px;
+  }
+
+  h1 span { color: #3b82f6; }
+
+  .desc {
+    font-family: 'Onest', sans-serif;
+    font-size: 20px;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 52px;
+  }
+
+  .author {
+    font-size: 13px;
+    color: #1e2a38;
+    letter-spacing: 0.06em;
+  }
+
+  .author span { color: #22d3ee; opacity: 0.7; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="glow-cyan"></div>
+  <div class="glow-blue"></div>
+
+  <div class="content">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      Набор инструментов
+    </div>
+    <h1>Работаем с файлами<br><span>прямо в браузере</span></h1>
+    <p class="desc">Без установки. Без регистрации. Файлы остаются у вас.</p>
+    <div class="author"><span>@mansurov_rafael</span> &nbsp;·&nbsp; github.com/rafael-mansurov</div>
+  </div>
+</body>
+</html>
