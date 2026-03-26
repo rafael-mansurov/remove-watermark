@@ -1,5 +1,5 @@
 param(
-  [string]$RepoBaseUrl = "https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows"
+  [string]$RepoBaseUrl = "https://raw.githubusercontent.com/rafael-mansurov/browser-tools/main/windows"
 )
 
 $ErrorActionPreference = "Stop"
