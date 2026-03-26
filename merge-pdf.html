@@ -150,6 +150,7 @@
             <span id="batchProgressTitle">Готовлю склейку…</span>
           </div>
           <div class="batch-progress-text" id="batchProgressText">0 / 0</div>
+          <div class="batch-progress-elapsed" id="batchProgressElapsed" aria-live="off"></div>
           <div class="cv-progress-track" aria-hidden="true">
             <div class="cv-progress-fill" id="batchProgressFill" style="width:0%"></div>
           </div>
@@ -162,10 +163,7 @@
       <div class="editor-wrap" id="editorWrap">
         <div class="editor-header">
           <span class="file-counter" id="fileCounter">—</span>
-          <span class="file-name-wrap" id="fileNameWrap">
-            <span class="file-name" id="fileName">—</span>
-            <span class="file-name-skel-chip skel-surface" id="fileNameSkeleton" aria-hidden="true"></span>
-          </span>
+          <span class="file-name" id="fileName">—</span>
         </div>
         <p class="merge-meta" id="mergeMeta" aria-live="polite"></p>
 
@@ -415,7 +413,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     <details>
       <summary>Можно ли объединять очень много PDF?</summary>
       <div class="details-body">
-        <p>Технически — да, но упирается в память браузера. Лучше пробовать частями, если у тебя тысячи файлов или очень большие PDF.</p>
+        <p>Да. Сервис сам делит склейку на этапы, чтобы не упираться в память. В редких случаях с очень большими PDF или тысячами файлов браузер всё равно может ограничить процесс — тогда уже стоит запускать в несколько заходов.</p>
       </div>
     </details>
   </section>
@@ -441,13 +439,12 @@ irm "$root/install-merge-pdf.ps1" | iex
   const batchProgressBlock = document.getElementById('batchProgressBlock');
   const batchProgressTitle = document.getElementById('batchProgressTitle');
   const batchProgressText = document.getElementById('batchProgressText');
+  const batchProgressElapsed = document.getElementById('batchProgressElapsed');
   const batchProgressFill = document.getElementById('batchProgressFill');
   const cancelMergeBtn = document.getElementById('cancelMergeBtn');
 
   const fileCounter = document.getElementById('fileCounter');
-  const fileNameWrapEl = document.getElementById('fileNameWrap');
   const mergedTitleEl = document.getElementById('fileName');
-  const fileNameSkeletonEl = document.getElementById('fileNameSkeleton');
   const mergeMeta = document.getElementById('mergeMeta');
   const downloadBtn = document.getElementById('downloadBtn');
   const addMoreBtn = document.getElementById('addMoreBtn');
@@ -475,6 +472,11 @@ irm "$root/install-merge-pdf.ps1" | iex
   let previewRunSeq = 0;
   let pageCountHeaderSeq = 0;
   let orderListLoadingSeq = 0;
+  let estimateDotsTimer = null;
+  let estimateDotsFrame = 0;
+  let estimateDotsEtaSec = 0;
+  let pageCountDotsTimer = null;
+  let pageCountDotsFrame = 0;
   let latestKnownTotalPages = 0;
   let latestKnownPagesBySlot = new Map();
   let mergeMetaTypeTimer = null;
@@ -486,6 +488,7 @@ irm "$root/install-merge-pdf.ps1" | iex
   let mergeBaseProgressTitle = '';
   let mergeBaseProgressText = '';
   let filePickerAppendMode = false;
+  const compressionEstimateCache = new Map();
 
   function formatRuPagesCount(n) {
     const abs = Math.max(0, Math.floor(Number(n) || 0));
@@ -505,11 +508,6 @@ irm "$root/install-merge-pdf.ps1" | iex
     return `${pretty} шт`;
   }
 
-  function setHeaderPagesLoading(on) {
-    if (fileNameWrapEl) fileNameWrapEl.classList.toggle('is-counting', !!on);
-    if (fileNameSkeletonEl) fileNameSkeletonEl.classList.toggle('is-hidden', !on);
-  }
-
   function setOrderListLoading(on, rowsCount = 4) {
     if (!orderListEl) return;
     if (!on) {
@@ -524,21 +522,83 @@ irm "$root/install-merge-pdf.ps1" | iex
     renderOrderList();
   }
 
+  function nextDots(frame) {
+    const phases = ['...', '..', '.', '..'];
+    return phases[Math.abs(frame) % phases.length];
+  }
+
+  function stopEstimateDots() {
+    if (!estimateDotsTimer) return;
+    window.clearInterval(estimateDotsTimer);
+    estimateDotsTimer = null;
+  }
+
+  function setEstimateDotsEta(sec) {
+    const n = Math.max(0, Math.round(Number(sec) || 0));
+    estimateDotsEtaSec = n;
+  }
+
+  function formatEtaShort(sec) {
+    const s = Math.max(0, Math.round(Number(sec) || 0));
+    if (s <= 0) return '';
+    if (s < 60) return `${s} с`;
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return secs > 0 ? `${mins} мин ${secs} с` : `${mins} мин`;
+  }
+
+  function startEstimateDots(initialSeconds) {
+    stopEstimateDots();
+    estimateDotsFrame = 0;
+    setEstimateDotsEta(initialSeconds);
+    const render = () => {
+      const dots = nextDots(estimateDotsFrame++);
+      const etaText = formatEtaShort(estimateDotsEtaSec);
+      const etaPart = etaText ? ` ~${etaText} осталось` : '';
+      const chipLine = `Оцениваю${dots}${etaPart}`;
+      setMergeEstSizeText(chipLine);
+      if (resultSizeInfo) resultSizeInfo.textContent = `Оцениваю${dots}`;
+    };
+    render();
+    estimateDotsTimer = window.setInterval(render, 320);
+  }
+
+  function stopPageCountDots() {
+    if (!pageCountDotsTimer) return;
+    window.clearInterval(pageCountDotsTimer);
+    pageCountDotsTimer = null;
+  }
+
+  function startPageCountDots() {
+    stopPageCountDots();
+    pageCountDotsFrame = 0;
+    const seq = pageCountHeaderSeq;
+    const render = () => {
+      if (seq !== pageCountHeaderSeq) {
+        stopPageCountDots();
+        return;
+      }
+      if (!mergedTitleEl) return;
+      mergedTitleEl.textContent = `Считаю страницы${nextDots(pageCountDotsFrame++)}`;
+    };
+    render();
+    pageCountDotsTimer = window.setInterval(render, 320);
+  }
+
   /** Сумма numPages по текущему списку (порядок как в склейке). */
   async function refreshMergedPagesTitle() {
     if (!mergedTitleEl) return;
+    pageCountHeaderSeq += 1;
+    const seq = pageCountHeaderSeq;
     const files = selectedFiles;
+    stopPageCountDots();
     if (!files.length) {
-      setHeaderPagesLoading(false);
       latestKnownTotalPages = 0;
       latestKnownPagesBySlot = new Map();
       mergedTitleEl.textContent = '—';
       return;
     }
-    pageCountHeaderSeq += 1;
-    const seq = pageCountHeaderSeq;
-    setHeaderPagesLoading(true);
-    mergedTitleEl.textContent = 'Считаю страницы…';
+    startPageCountDots();
     try {
       await ensurePdfJsLoaded();
       let total = 0;
@@ -561,16 +621,16 @@ irm "$root/install-merge-pdf.ps1" | iex
         }
       }
       if (seq !== pageCountHeaderSeq) return;
+      stopPageCountDots();
       latestKnownTotalPages = total;
       latestKnownPagesBySlot = pagesBySlot;
       mergedTitleEl.textContent = formatRuPagesCount(total);
-      setHeaderPagesLoading(false);
     } catch (_) {
       if (seq !== pageCountHeaderSeq) return;
+      stopPageCountDots();
       latestKnownTotalPages = 0;
       latestKnownPagesBySlot = new Map();
       mergedTitleEl.textContent = 'Страницы не посчитались';
-      setHeaderPagesLoading(false);
     }
   }
 
@@ -653,7 +713,35 @@ irm "$root/install-merge-pdf.ps1" | iex
 
   function formatEstimatingLabel(files, qualityPct) {
     const s = guessCompressionPreviewSecondsRounded(files, qualityPct);
-    return `Оцениваю… ~${s} с`;
+    return { text: `Оцениваю... ~${formatEtaShort(s)} осталось`, seconds: s };
+  }
+
+  function buildCompressionEstimateKey(files, qualityPct) {
+    const q = Math.max(1, Math.min(100, Number.parseInt(qualityPct, 10) || 100));
+    const parts = (files || []).map((f) => {
+      const name = String((f && f.name) || '');
+      const size = Number(f && f.size) || 0;
+      const mtime = Number(f && f.lastModified) || 0;
+      const type = String((f && f.type) || '');
+      return `${name}::${size}::${mtime}::${type}`;
+    }).sort();
+    return `q=${q}|n=${parts.length}|${parts.join('|')}`;
+  }
+
+  function getCachedCompressionEstimate(files, qualityPct) {
+    if (!files || !files.length) return null;
+    const key = buildCompressionEstimateKey(files, qualityPct);
+    return compressionEstimateCache.get(key) || null;
+  }
+
+  function putCachedCompressionEstimate(files, qualityPct, value) {
+    if (!files || !files.length || !value) return;
+    const key = buildCompressionEstimateKey(files, qualityPct);
+    compressionEstimateCache.set(key, value);
+    if (compressionEstimateCache.size > 40) {
+      const oldestKey = compressionEstimateCache.keys().next().value;
+      if (oldestKey) compressionEstimateCache.delete(oldestKey);
+    }
   }
 
   function setMergeEstSizeText(text) {
@@ -700,7 +788,13 @@ irm "$root/install-merge-pdf.ps1" | iex
         setMergeEstSizeText(`~${fmtSize(total)}`);
         return;
       }
-      setMergeEstSizeText(formatEstimatingLabel(selectedFiles, q));
+      const cached = getCachedCompressionEstimate(selectedFiles, q);
+      if (cached && cached.mergeEstText) {
+        setMergeEstSizeText(cached.mergeEstText);
+        return;
+      }
+      const est = formatEstimatingLabel(selectedFiles, q);
+      setMergeEstSizeText(est.text);
       return;
     }
 
@@ -743,6 +837,7 @@ irm "$root/install-merge-pdf.ps1" | iex
 
   function setCompressionPreviewFailed(runSeq) {
     if (runSeq !== previewRunSeq) return;
+    stopEstimateDots();
     if (resultSizeInfo) resultSizeInfo.textContent = 'Не удалось показать превью';
     setMergeEstSizeText('—');
     clearCompressionPreviewSkeletonIfCurrent(runSeq);
@@ -835,20 +930,19 @@ irm "$root/install-merge-pdf.ps1" | iex
     if (batchProgressBlock) batchProgressBlock.style.display = 'none';
   }
 
-  function formatProgressWithElapsed(baseText) {
-    const clean = String(baseText || '').trim();
-    if (!mergeInFlight || mergeStartedAtMs <= 0) return clean;
+  function formatElapsedOnly() {
+    if (!mergeInFlight || mergeStartedAtMs <= 0) return '';
     const elapsedSec = Math.max(0, Math.floor((Date.now() - mergeStartedAtMs) / 1000));
-    if (elapsedSec <= 0) return clean;
-    let elapsedText;
-    if (elapsedSec < 60) {
-      elapsedText = `${elapsedSec} с`;
-    } else {
-      const mins = Math.floor(elapsedSec / 60);
-      const secs = elapsedSec % 60;
-      elapsedText = secs > 0 ? `${mins} мин ${secs} с` : `${mins} мин`;
-    }
-    return clean ? `${clean} · ${elapsedText}` : elapsedText;
+    if (elapsedSec <= 0) return '';
+    if (elapsedSec < 60) return `Время: ${elapsedSec} с`;
+    const mins = Math.floor(elapsedSec / 60);
+    const secs = elapsedSec % 60;
+    return secs > 0 ? `Время: ${mins} мин ${secs} с` : `Время: ${mins} мин`;
+  }
+
+  function refreshProgressElapsed() {
+    if (!batchProgressElapsed) return;
+    batchProgressElapsed.textContent = formatElapsedOnly();
   }
 
   function setProgress(pct, title, text) {
@@ -856,17 +950,17 @@ irm "$root/install-merge-pdf.ps1" | iex
     if (title) mergeBaseProgressTitle = title;
     if (text) mergeBaseProgressText = text;
     if (batchProgressTitle && mergeBaseProgressTitle) batchProgressTitle.textContent = mergeBaseProgressTitle;
-    if (batchProgressText && mergeBaseProgressText) {
-      batchProgressText.textContent = formatProgressWithElapsed(mergeBaseProgressText);
-    }
+    if (batchProgressText && mergeBaseProgressText) batchProgressText.textContent = mergeBaseProgressText;
+    refreshProgressElapsed();
   }
 
   function startMergeElapsedTimer() {
     if (mergeElapsedTimer) window.clearInterval(mergeElapsedTimer);
     mergeStartedAtMs = Date.now();
+    refreshProgressElapsed();
     mergeElapsedTimer = window.setInterval(() => {
-      if (!mergeInFlight || !batchProgressText || !mergeBaseProgressText) return;
-      batchProgressText.textContent = formatProgressWithElapsed(mergeBaseProgressText);
+      if (!mergeInFlight) return;
+      refreshProgressElapsed();
     }, 1000);
   }
 
@@ -876,6 +970,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       mergeElapsedTimer = null;
     }
     mergeStartedAtMs = 0;
+    if (batchProgressElapsed) batchProgressElapsed.textContent = '';
   }
 
   function ensureMergeNotCancelled(runToken) {
@@ -1019,7 +1114,7 @@ irm "$root/install-merge-pdf.ps1" | iex
    * Оценка сжатого итога по файлу: средний вес JPEG выборки страниц (1 / середина / последняя)
    * × число страниц, масштаб и качество как в mergePdfCompressed. Порядок файлов не влияет.
    */
-  async function measureFileJpegEstimateBytes(file, qualityPct, scratchCanvas, runSeq) {
+  async function measureFileJpegEstimateBytes(file, qualityPct, scratchCanvas, runSeq, onBenchProgress) {
     if (!file || runSeq !== previewRunSeq) return null;
     const scale = mergeMatchRenderScale(qualityPct);
     const buf = await file.arrayBuffer();
@@ -1031,6 +1126,9 @@ irm "$root/install-merge-pdf.ps1" | iex
       const sampleIdx = numPages === 1
         ? [1]
         : (numPages === 2 ? [1, 2] : [1, Math.ceil(numPages / 2), numPages]);
+      if (typeof onBenchProgress === 'function') {
+        onBenchProgress({ type: 'file_plan', sampleCount: sampleIdx.length });
+      }
       const q = Math.max(0.01, Math.min(1, qualityPct / 100));
       let sumJ = 0;
       for (const pi of sampleIdx) {
@@ -1049,9 +1147,12 @@ irm "$root/install-merge-pdf.ps1" | iex
         });
         if (!blob || runSeq !== previewRunSeq) return null;
         sumJ += blob.size;
+        if (typeof onBenchProgress === 'function') {
+          onBenchProgress({ type: 'sample_done' });
+        }
       }
       const avgJ = sumJ / sampleIdx.length;
-      return { estBytes: Math.round(avgJ * numPages) };
+      return { estBytes: Math.round(avgJ * numPages), sampleCount: sampleIdx.length };
     } finally {
       try {
         await pdfDoc.destroy();
@@ -1059,7 +1160,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     }
   }
 
-  async function renderCompressionPreview(files, qualityPct, runSeq) {
+  async function renderCompressionPreview(files, qualityPct, runSeq, cachedEstimate = null) {
     if (!leftPreviewCanvas || !rightPreviewCanvas) {
       clearCompressionPreviewSkeletonIfCurrent(runSeq);
       return;
@@ -1114,24 +1215,50 @@ irm "$root/install-merge-pdf.ps1" | iex
       return;
     }
 
+    const useCachedEstimate = !!(cachedEstimate && cachedEstimate.resultSizeHtml && cachedEstimate.mergeEstText);
     let estBytes = 0;
-    const scratch = document.createElement('canvas');
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const part = await measureFileJpegEstimateBytes(files[i], qualityPct, scratch, runSeq);
-        if (part == null) {
-          clearCompressionPreviewSkeletonIfCurrent(runSeq);
-          return;
+    let pct = 0;
+    if (!useCachedEstimate) {
+      const scratch = document.createElement('canvas');
+      const benchStartedAt = performance.now();
+      let benchDoneSamples = 0;
+      let benchKnownTotalSamples = 0;
+      const assumedSamplesPerUnknownFile = 3;
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const part = await measureFileJpegEstimateBytes(files[i], qualityPct, scratch, runSeq, (evt) => {
+            if (!evt || runSeq !== previewRunSeq) return;
+            if (evt.type === 'file_plan') {
+              benchKnownTotalSamples += Math.max(1, Number(evt.sampleCount) || 1);
+              return;
+            }
+            if (evt.type !== 'sample_done') return;
+            benchDoneSamples += 1;
+            const elapsedMs = Math.max(1, performance.now() - benchStartedAt);
+            const msPerSample = elapsedMs / benchDoneSamples;
+            const unknownFiles = Math.max(0, files.length - (i + 1));
+            const totalSamplesEstimate = Math.max(
+              benchDoneSamples,
+              benchKnownTotalSamples + unknownFiles * assumedSamplesPerUnknownFile
+            );
+            const remainingSamples = Math.max(0, totalSamplesEstimate - benchDoneSamples);
+            const etaSec = Math.max(1, Math.round((msPerSample * remainingSamples) / 1000));
+            setEstimateDotsEta(etaSec);
+          });
+          if (part == null) {
+            clearCompressionPreviewSkeletonIfCurrent(runSeq);
+            return;
+          }
+          estBytes += part.estBytes;
         }
-        estBytes += part.estBytes;
+      } catch (err) {
+        setCompressionPreviewFailed(runSeq);
+        throw err;
       }
-    } catch (err) {
-      setCompressionPreviewFailed(runSeq);
-      throw err;
-    }
 
-    estBytes = Math.max(0, estBytes);
-    const pct = totalOrigSize > 0 ? Math.round((1 - estBytes / totalOrigSize) * 100) : 0;
+      estBytes = Math.max(0, estBytes);
+      pct = totalOrigSize > 0 ? Math.round((1 - estBytes / totalOrigSize) * 100) : 0;
+    }
 
     const scale = mergeMatchRenderScale(qualityPct);
     const firstFile = files[0];
@@ -1182,10 +1309,20 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     if (runSeq !== previewRunSeq) return;
     rightCtx.drawImage(previewImg, 0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
+    stopEstimateDots();
 
+    const resultSizeHtml = useCachedEstimate
+      ? cachedEstimate.resultSizeHtml
+      : `~${fmtSize(estBytes)}${pct > 0 ? ` <span class="saved">↓${pct}%</span>` : ''}`;
+    const mergeEstText = useCachedEstimate
+      ? cachedEstimate.mergeEstText
+      : (pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`);
     if (resultSizeInfo) {
-      resultSizeInfo.innerHTML = `~${fmtSize(estBytes)}${pct > 0 ? ` <span class="saved">↓${pct}%</span>` : ''}`;
-      setMergeEstSizeText(pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`);
+      resultSizeInfo.innerHTML = resultSizeHtml;
+      setMergeEstSizeText(mergeEstText);
+    }
+    if (!useCachedEstimate) {
+      putCachedCompressionEstimate(files, qualityPct, { resultSizeHtml, mergeEstText });
     }
     clearCompressionPreviewSkeletonIfCurrent(runSeq);
   }
@@ -1269,6 +1406,7 @@ irm "$root/install-merge-pdf.ps1" | iex
         // Мгновенно отменяем отложенный/текущий прогон превью при выключении сжатия.
         clearTimeout(previewDebounceTimer);
         previewRunSeq += 1;
+        stopEstimateDots();
         if (origSizeInfo) origSizeInfo.textContent = '—';
         if (resultSizeInfo) resultSizeInfo.textContent = '—';
         refreshMergeEstSizeLabel();
@@ -1278,6 +1416,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       if (!selectedFiles.length) {
         clearTimeout(previewDebounceTimer);
         previewRunSeq += 1;
+        stopEstimateDots();
         if (origSizeInfo) origSizeInfo.textContent = '—';
         if (resultSizeInfo) resultSizeInfo.textContent = '—';
         setMergeEstSizeText('—');
@@ -1298,15 +1437,28 @@ irm "$root/install-merge-pdf.ps1" | iex
       if (qualityVal) qualityVal.textContent = String(q);
       const totalBytes = sumSelectedFilesBytes(selectedFiles);
       const estimatingTxt = formatEstimatingLabel(selectedFiles, q);
-      setMergeEstSizeText(q >= 100 ? `~${fmtSize(totalBytes)}` : estimatingTxt);
-      if (resultSizeInfo) resultSizeInfo.textContent = estimatingTxt;
+      let cachedEstimate = null;
+      if (q >= 100) {
+        stopEstimateDots();
+        setMergeEstSizeText(`~${fmtSize(totalBytes)}`);
+        if (resultSizeInfo) resultSizeInfo.textContent = `~${fmtSize(totalBytes)}`;
+      } else {
+        cachedEstimate = getCachedCompressionEstimate(selectedFiles, q);
+        if (cachedEstimate) {
+          stopEstimateDots();
+          if (resultSizeInfo && cachedEstimate.resultSizeHtml) resultSizeInfo.innerHTML = cachedEstimate.resultSizeHtml;
+          if (cachedEstimate.mergeEstText) setMergeEstSizeText(cachedEstimate.mergeEstText);
+        } else {
+          startEstimateDots(estimatingTxt.seconds);
+        }
+      }
       if (compressPreviewWrap) compressPreviewWrap.classList.add('is-preview-loading');
 
       clearTimeout(previewDebounceTimer);
       previewDebounceTimer = setTimeout(() => {
         previewRunSeq += 1;
         const runSeq = previewRunSeq;
-        renderCompressionPreview(selectedFiles, q, runSeq).catch(() => {
+        renderCompressionPreview(selectedFiles, q, runSeq, cachedEstimate).catch(() => {
           setCompressionPreviewFailed(runSeq);
         });
       }, 140);
@@ -1669,6 +1821,14 @@ irm "$root/install-merge-pdf.ps1" | iex
   // поэтому вставка всегда ровно в одну позицию (между элементами), а не "к двум".
   if (orderListEl) {
     orderListEl.addEventListener('dragover', (e) => {
+      const isExternal = hasExternalFiles(e.dataTransfer);
+      if (isExternal && dragFromIdx === null) {
+        if (mergeInFlight) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (editorWrap) editorWrap.classList.add('dragover');
+        return;
+      }
       if (dragFromIdx === null) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
@@ -1676,13 +1836,24 @@ irm "$root/install-merge-pdf.ps1" | iex
     });
 
     orderListEl.addEventListener('drop', (e) => {
+      const isExternal = hasExternalFiles(e.dataTransfer);
+      if (isExternal && dragFromIdx === null) {
+        if (mergeInFlight) return;
+        const list = getDroppedFiles(e.dataTransfer);
+        if (!list.length) return;
+        e.preventDefault();
+        e.stopPropagation();
+        clearExternalDragUi();
+        pickAndLoad(list, true);
+        return;
+      }
       if (dragFromIdx === null) return;
       e.preventDefault();
       const from = dragFromIdx;
       const insertIndex = computeInsertionIndex(e.clientY);
 
       dragFromIdx = null;
-      hideDropIndicator();
+      clearExternalDragUi();
 
       const toIdxPostRemoval = insertIndex > from ? insertIndex - 1 : insertIndex;
       moveFile(from, toIdxPostRemoval);
@@ -1694,7 +1865,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       // Это best-effort, UI может чуть мигать в отдельных браузерах.
       const related = e.relatedTarget;
       if (related && orderListEl.contains(related)) return;
-      hideDropIndicator();
+      clearExternalDragUi();
     });
   }
 
@@ -1764,6 +1935,10 @@ irm "$root/install-merge-pdf.ps1" | iex
     const nextSlots = selectedSlotIds.slice();
     nextSlots.splice(idx, 1);
     setSelectedFiles(next, nextSlots);
+    if (next.length === 0) {
+      showUpload();
+      clearNotice();
+    }
     setMergeMeta('');
   }
 
@@ -1875,6 +2050,7 @@ irm "$root/install-merge-pdf.ps1" | iex
         setProgress(0, 'Остановлено', 'Склейка отменена пользователем');
         setMergeMeta('Склейка остановлена');
         showNotice('Склейка остановлена.', 'info');
+        if (downloadBtn) downloadBtn.disabled = selectedFiles.length === 0;
         showEditor();
         return;
       }
@@ -1956,6 +2132,45 @@ irm "$root/install-merge-pdf.ps1" | iex
       .map(x => x.f);
   }
 
+  function isEditorVisible() {
+    if (!editorWrap) return false;
+    return editorWrap.style.display === 'block';
+  }
+
+  function hasExternalFiles(dt) {
+    if (!dt) return false;
+    if (dt.files && dt.files.length) return true;
+    const t = dt.types;
+    if (!t) return false;
+    if (typeof t.includes === 'function') return t.includes('Files');
+    if (typeof t.contains === 'function') return t.contains('Files');
+    return false;
+  }
+
+  function getDroppedFiles(dt) {
+    return (dt && dt.files && dt.files.length) ? dt.files : [];
+  }
+
+  function getClipboardPdfFiles(dt) {
+    if (!dt) return [];
+    const direct = dt.files ? Array.from(dt.files) : [];
+    if (direct.length) return direct.filter(isPdfFile);
+    const items = dt.items ? Array.from(dt.items) : [];
+    const out = [];
+    for (const item of items) {
+      if (!item || item.kind !== 'file') continue;
+      const f = item.getAsFile ? item.getAsFile() : null;
+      if (f && isPdfFile(f)) out.push(f);
+    }
+    return out;
+  }
+
+  function clearExternalDragUi() {
+    hideDropIndicator();
+    if (editorWrap) editorWrap.classList.remove('dragover');
+    if (uploadZone) uploadZone.classList.remove('dragover');
+  }
+
   if (uploadPickBtn && fileInput) {
     uploadPickBtn.addEventListener('click', () => fileInput.click());
   }
@@ -1973,26 +2188,86 @@ irm "$root/install-merge-pdf.ps1" | iex
   if (uploadZone) {
     uploadZone.addEventListener('dragover', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       uploadZone.classList.add('dragover');
     });
     uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
     uploadZone.addEventListener('drop', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       uploadZone.classList.remove('dragover');
-      const list = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : [];
+      const list = getDroppedFiles(e.dataTransfer);
       if (!list.length) return;
       pickAndLoad(list);
     });
   }
 
+  // Поддержка dnd в уже открытом редакторе: добавляем PDF в текущий список.
+  if (editorWrap) {
+    editorWrap.addEventListener('dragover', (e) => {
+      if (mergeInFlight) return;
+      const dt = e.dataTransfer;
+      const hasFiles = hasExternalFiles(dt);
+      if (!hasFiles) return;
+      e.preventDefault();
+      e.stopPropagation();
+      editorWrap.classList.add('dragover');
+    });
+    editorWrap.addEventListener('dragleave', (e) => {
+      const related = e.relatedTarget;
+      if (related && editorWrap.contains(related)) return;
+      editorWrap.classList.remove('dragover');
+    });
+    editorWrap.addEventListener('drop', (e) => {
+      if (mergeInFlight) return;
+      const list = getDroppedFiles(e.dataTransfer);
+      if (!list.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      editorWrap.classList.remove('dragover');
+      pickAndLoad(list, true);
+    });
+  }
+
+  // Надёжный fallback: если редактор открыт, внешний drop PDF всегда добавляет в список.
+  document.addEventListener('dragover', (e) => {
+    if (mergeInFlight) return;
+    if (isEditorVisible() && dragFromIdx === null) {
+      e.preventDefault();
+      return;
+    }
+    if (dragFromIdx !== null) return; // внутренний reorder
+    if (!hasExternalFiles(e.dataTransfer)) return;
+    e.preventDefault();
+  });
+
+  document.addEventListener('drop', (e) => {
+    if (e.defaultPrevented) return;
+    if (mergeInFlight) return;
+    const editorOn = isEditorVisible();
+    const uploadOn = !!(uploadZone && uploadZone.style.display !== 'none');
+    if (!editorOn && !uploadOn) return;
+    if (dragFromIdx !== null) return; // внутренний reorder
+    if (!hasExternalFiles(e.dataTransfer)) return;
+    const list = getDroppedFiles(e.dataTransfer);
+    if (!list || !list.length) return;
+    e.preventDefault();
+    clearExternalDragUi();
+    pickAndLoad(list, editorOn);
+  });
+
+  // Страховка от "залипания" подсветки при нестандартном завершении DnD.
+  document.addEventListener('dragend', clearExternalDragUi);
+  window.addEventListener('blur', clearExternalDragUi);
+
   // Allow paste PDFs from clipboard only if browser provides files.
   document.addEventListener('paste', (e) => {
     const dt = e.clipboardData;
-    if (!dt || !dt.files || !dt.files.length) return;
-    const list = Array.from(dt.files).filter(isPdfFile);
+    const list = getClipboardPdfFiles(dt);
     if (!list.length) return;
+    const append = isEditorVisible() && selectedFiles.length > 0;
     e.preventDefault();
-    pickAndLoad(list);
+    pickAndLoad(list, append);
   });
 
   if (downloadBtn) {
@@ -2014,6 +2289,8 @@ irm "$root/install-merge-pdf.ps1" | iex
   if (cancelMergeBtn) {
     cancelMergeBtn.addEventListener('click', () => {
       if (!mergeInFlight || !currentMergeRunToken) return;
+      const ok = confirm('Остановить текущую склейку PDF?');
+      if (!ok) return;
       currentMergeRunToken.cancelled = true;
       cancelMergeBtn.disabled = true;
       cancelMergeBtn.textContent = 'Останавливаю…';
@@ -2055,6 +2332,10 @@ irm "$root/install-merge-pdf.ps1" | iex
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       if (mergeInFlight) return;
+      if (selectedFiles.length) {
+        const ok = confirm('Все загруженные PDF исчезнут из редактора. Начать заново?');
+        if (!ok) return;
+      }
       showUpload();
       clearNotice();
 

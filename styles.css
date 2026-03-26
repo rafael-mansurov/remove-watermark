@@ -640,6 +640,11 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   background: var(--blue-glow);
 }
 
+.editor-wrap.dragover .merge-editor-panel {
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) inset;
+}
+
 .upload-zone.cv-loading,
 .upload-zone.cv-failed,
 .upload-zone.batch-loading {
@@ -1040,6 +1045,18 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   color: var(--text-mid);
   font-family: var(--sans);
   text-align: center;
+  max-width: min(92vw, 760px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.batch-progress-elapsed {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--sans);
+  text-align: center;
+  min-height: 16px;
 }
 
 /* ── WEBP BATCH LOADER ── */
@@ -1259,26 +1276,6 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
-}
-
-.file-name-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.file-name-skel-chip {
-  display: none;
-  width: 82px;
-  height: 13px;
-  border-radius: 999px;
-}
-
-.file-name-wrap.is-counting .file-name-skel-chip {
-  display: block;
 }
 
 .editor-preview-area {
