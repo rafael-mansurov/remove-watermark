@@ -1,15 +1,19 @@
 # remove_watermark
 
-Проект для работы с фото в браузере и офлайн-утилитами:
+Набор инструментов для работы с файлами в браузере и офлайн-утилитами:
 
-- **Удаление белого текста и водяных знаков** — веб (`index.html`) и Python CLI (`remove_watermark.py`).
-- **Конвертация в WebP** — веб (`compress-webp.html`) и скрипты для macOS / Windows (контекстное меню).
+- **Главная-хаб** — навигация по всем инструментам (`index.html`).
+- **Удаление водяных знаков** — веб (`watermark.html`) и Python CLI (`remove_watermark.py`).
+- **Объединение PDF** — веб (`merge-pdf.html`).
+- **Конвертация в WebP** — веб (`compress-webp.html`) и скрипты для macOS / Windows.
 
 ## Сайт
 
-[remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
+[rafael-mansurov.github.io/remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
 
-- Главная (водяные знаки): [`index.html`](index.html)
+- Все инструменты: [`index.html`](index.html)
+- Удаление водяных знаков: [`watermark.html`](watermark.html)
+- Объединение PDF: [`merge-pdf.html`](merge-pdf.html)
 - Сжатие в WebP: [`compress-webp.html`](compress-webp.html)
 
 ## Важно
@@ -20,18 +24,22 @@
 
 | Файл / папка | Назначение |
 |--------------|------------|
-| `index.html` | Удаление водяных знаков в браузере (OpenCV.js, локально на клиенте). |
+| `index.html` | Главная-хаб: навигация по всем инструментам. |
+| `watermark.html` | Удаление водяных знаков в браузере (OpenCV.js, локально на клиенте). |
+| `merge-pdf.html` | Объединение PDF в один файл (pdf-lib, локально). |
 | `compress-webp.html` | Конвертация в WebP в браузере (canvas, локально). |
-| `styles.css` | Общие стили для страниц. |
-| `footer.js` | Общий футер для обеих HTML-страниц. |
-| `favicon.svg`, `og.webp` | Иконка и превью для соцсетей. |
+| `styles.css` | Общие стили для всех страниц. |
+| `config.js` | Централизованные URL и настройки проекта. |
+| `utils.js` | Общие утилиты (форматирование, загрузка HEIC и др.). |
+| `footer.js` | Общий футер с навигацией. |
+| `favicon.svg`, `og.webp`, `og-home.webp` | Иконка и превью для соцсетей. |
 | `robots.txt`, `sitemap.xml` | Для публикации на GitHub Pages. |
 | `remove_watermark.py` | CLI: пакетная обработка с интерактивной зоной. |
 | `requirements.txt` | Зависимости Python. |
 | `Convert-to-WebP.workflow/` | Quick Action для macOS (Finder): исходник bundle в репозитории. **Готовый ZIP для пользователей** выдаётся после оплаты (Tribute со страницы `compress-webp.html`), не через публичную ссылку на Releases. |
 | `windows/` | PowerShell: установка пункта «Convert to WebP» в контекстное меню Windows (`install.ps1`, `ConvertToWebP.ps1`, `uninstall.ps1`). |
 
-## Веб: водяные знаки (`index.html`)
+## Веб: водяные знаки (`watermark.html`)
 
 - Настройка порога и радиуса inpainting, зоны на canvas.
 - Пакет нескольких файлов, HEIC через heic2any (CDN).
