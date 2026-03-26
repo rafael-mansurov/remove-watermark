@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://rafael-mansurov.github.io/remove-watermark/sitemap.xml
+Sitemap: https://rafael-mansurov.github.io/browser-tools/sitemap.xml

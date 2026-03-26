@@ -8,13 +8,13 @@
 <meta name="keywords" content="удалить водяной знак с&nbsp;фото, убрать белый текст с&nbsp;картинки, watermark remover онлайн, python скрипт, macOS, браузер">
 <meta name="author" content="Rafael Mansurov">
 <meta name="robots" content="index,follow">
-<link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/watermark">
+<link rel="canonical" href="https://rafael-mansurov.github.io/browser-tools/watermark.html">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/watermark">
+<meta property="og:url" content="https://rafael-mansurov.github.io/browser-tools/watermark.html">
 <meta property="og:title" content="Удалить водяной знак с&nbsp;фото онлайн">
 <meta property="og:description" content="Удаляй водяные знаки с&nbsp;фото прямо в&nbsp;браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без&nbsp;регистрации">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta property="og:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
 <meta property="og:image:type" content="image/webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,7 +22,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Удалить водяной знак с&nbsp;фото онлайн">
 <meta name="twitter:description" content="Удаляй водяные знаки с&nbsp;фото прямо в&nbsp;браузере: загрузи изображение, выдели область и скачай результат. Обработка полностью локально, без&nbsp;регистрации">
-<meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta name="twitter:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
 <meta name="twitter:image:alt" content="Удаление водяного знака с&nbsp;фото">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +39,7 @@
   "operatingSystem": "Any",
   "applicationCategory": "MultimediaApplication",
   "description": "Удаляет белый текст и водяные знаки с\u00a0фотографий прямо в\u00a0браузере — обработка локальная, файлы никуда не\u00a0уходят. Также доступен Python-скрипт для\u00a0пакетной обработки.",
-  "url": "https://rafael-mansurov.github.io/remove-watermark/watermark",
+  "url": "https://rafael-mansurov.github.io/browser-tools/watermark.html",
   "author": {
     "@type": "Person",
     "name": "Рафаэль Мансуров"
@@ -59,12 +59,13 @@
   <header class="header">
     <div class="badge">
       <i data-lucide="shield-check" class="badge-icon" aria-hidden="true"></i>
-      <span>Для&nbsp;работы включи VPN</span>
+      <span>Первый визит — загрузка движка из сети</span>
     </div>
     <h1>Убрать водяной знак с&nbsp;фото</h1>
     <p class="subtitle">
       Загрузи фото и водяной знак исчезнет прямо в&nbsp;браузере.
-      Файлы никуда не уходят, всё происходит на&nbsp;твоём устройстве
+      Файлы никуда не уходят, всё происходит на&nbsp;твоём устройстве.
+      Страница и движок обработки приходят из интернета; если что-то не грузится — попробуй VPN или другой браузер
     </p>
   </header>
 
@@ -72,7 +73,7 @@
   <section class="section" id="browser-tool">
     <div class="section-label">Онлайн-версия</div>
     <h2>Удалить в&nbsp;браузере</h2>
-    <p>Выдели зону с&nbsp;водяным знаком, подстрой параметры и скачай результат</p>
+    <p>Выдели зону с&nbsp;водяным знаком, подстрой параметры и скачай результат. Подключение нужно для подгрузки скриптов и шрифтов; сами фото на сервер не отправляются</p>
 
     <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/bmp,image/gif,image/heic,image/heif" multiple class="is-hidden">
 
@@ -379,7 +380,7 @@ def collect_images(input_dir: Path) -> list[Path]:
   </section>
 
   <!-- FOOTER -->
-  <footer class="footer" id="sharedFooter" data-primary-href="compress-webp.html" data-primary-label="Сжать в&nbsp;WebP"></footer>
+  <footer class="footer" id="sharedFooter"></footer>
 
 </div>
 
@@ -1448,22 +1449,6 @@ def collect_images(input_dir: Path) -> list[Path]:
     endDrag();
   }
 
-  let lucideIconsInited = false;
-  function scheduleLucideIcons() {
-    if (lucideIconsInited) return;
-    if (!window.lucide || typeof window.lucide.createIcons !== 'function') return;
-    const run = () => {
-      if (lucideIconsInited) return;
-      window.lucide.createIcons();
-      lucideIconsInited = true;
-    };
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback(run, { timeout: 1200 });
-      return;
-    }
-    setTimeout(run, 80);
-  }
-
   function showOpenCvLoadError() {
     const uz = document.getElementById('uploadZone');
     if (uz) {
@@ -1511,27 +1496,10 @@ def collect_images(input_dir: Path) -> list[Path]:
     tryLoad();
   }
 
-  function loadLucideScript() {
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      scheduleLucideIcons();
-      return;
-    }
-    const existing = document.getElementById('lucideLoaderScript');
-    if (existing) return;
-    const s = document.createElement('script');
-    s.id = 'lucideLoaderScript';
-    s.src = 'https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js';
-    s.integrity = 'sha384-8nT3SpButyvenpAdKYPJzXdSz3zidMGduMoaMvwjKnAWVv238n6P1mhveiJJQWrV';
-    s.crossOrigin = 'anonymous';
-    s.defer = true;
-    s.onload = () => scheduleLucideIcons();
-    document.body.appendChild(s);
-  }
-
   document.addEventListener('DOMContentLoaded', () => {
-    loadLucideScript();
     loadOpenCvScript();
   });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js" integrity="sha384-8nT3SpButyvenpAdKYPJzXdSz3zidMGduMoaMvwjKnAWVv238n6P1mhveiJJQWrV" crossorigin="anonymous" defer onload="window.lucide&&window.lucide.createIcons()"></script>
 </body>
 </html>

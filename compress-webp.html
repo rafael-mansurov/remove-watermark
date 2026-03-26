@@ -8,13 +8,13 @@
 <meta name="keywords" content="сжать фото WebP, конвертировать в&nbsp;WebP, сжатие изображений онлайн, macOS Quick Action">
 <meta name="author" content="Rafael Mansurov">
 <meta name="robots" content="index,follow">
-<link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/compress-webp.html">
+<link rel="canonical" href="https://rafael-mansurov.github.io/browser-tools/compress-webp.html">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/compress-webp.html">
+<meta property="og:url" content="https://rafael-mansurov.github.io/browser-tools/compress-webp.html">
 <meta property="og:title" content="Сжать фото в&nbsp;WebP онлайн">
 <meta property="og:description" content="Сжимай фото в&nbsp;WebP прямо в&nbsp;браузере: загрузи изображение, подбери качество и скачай. Обработка локально, без&nbsp;регистрации">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta property="og:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
 <meta property="og:image:type" content="image/webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,7 +22,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Сжать фото в&nbsp;WebP онлайн">
 <meta name="twitter:description" content="Сжимай фото в&nbsp;WebP прямо в&nbsp;браузере: загрузи изображение, подбери качество и скачай. Обработка локально, без&nbsp;регистрации">
-<meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+<meta name="twitter:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
 <meta name="twitter:image:alt" content="Сжатие фото в&nbsp;WebP онлайн">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,7 +38,7 @@
   "operatingSystem": "Any",
   "applicationCategory": "MultimediaApplication",
   "description": "Сжимает изображения в\u00a0WebP прямо в\u00a0браузере. Обработка локальная, файлы никуда не отправляются.",
-  "url": "https://rafael-mansurov.github.io/remove-watermark/compress-webp.html",
+  "url": "https://rafael-mansurov.github.io/browser-tools/compress-webp.html",
   "author": {
     "@type": "Person",
     "name": "Рафаэль Мансуров"
@@ -58,14 +58,15 @@
     <div class="badge">В&nbsp;браузере</div>
     <h1>Сжать фото в&nbsp;<span>WebP</span></h1>
     <p class="subtitle">
-      Загрузи фото. Слева оригинал, справа результат. Подстрой качество и скачай
+      Загрузи фото. Слева оригинал, справа результат. Подстрой качество и скачай.
+      Для страницы и CDN нужен интернет; сжатие происходит локально
     </p>
   </header>
 
   <section class="section" id="webp-tool">
     <div class="section-label">Онлайн-версия</div>
     <h2>Конвертер WebP</h2>
-    <p>Обработка локально — файлы не покидают твой компьютер</p>
+    <p>Обработка локально — сами фото не покидают твой компьютер. Для открытия страницы и подгрузки шрифтов и скриптов нужен интернет</p>
 
     <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/bmp,image/gif,image/heic,image/heif" multiple class="is-hidden">
 
@@ -250,7 +251,7 @@ presets=(10 20 30 40 50 60 70 80 90 100)
                 </button>
               </div>
             </div>
-            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows'
+            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/browser-tools/main/windows'
 $ErrorActionPreference = 'Stop'
 $installDir = Join-Path $env:LOCALAPPDATA 'WebP-ContextMenu'
 New-Item -Path $installDir -ItemType Directory -Force | Out-Null
@@ -336,7 +337,7 @@ irm "$root/install.ps1" | iex
     </details>
   </section>
 
-  <footer class="footer" id="sharedFooter" data-primary-href="index.html" data-primary-label="Убрать водяной знак"></footer>
+  <footer class="footer" id="sharedFooter"></footer>
 
 </div>
 

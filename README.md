@@ -9,7 +9,7 @@
 
 ## Сайт
 
-[rafael-mansurov.github.io/remove-watermark/](https://rafael-mansurov.github.io/remove-watermark/)
+[rafael-mansurov.github.io/browser-tools/](https://rafael-mansurov.github.io/browser-tools/)
 
 - Все инструменты: [`index.html`](index.html)
 - Удаление водяных знаков: [`watermark.html`](watermark.html)
@@ -32,7 +32,7 @@
 | `config.js` | Централизованные URL и настройки проекта. |
 | `utils.js` | Общие утилиты (форматирование, загрузка HEIC и др.). |
 | `footer.js` | Общий футер с навигацией. |
-| `favicon.svg`, `og.webp`, `og-home.webp` | Иконка и превью для соцсетей. |
+| `favicon.svg`, `og-home.webp` | Иконка и превью для соцсетей (главная и страницы инструментов). |
 | `robots.txt`, `sitemap.xml` | Для публикации на GitHub Pages. |
 | `remove_watermark.py` | CLI: пакетная обработка с интерактивной зоной. |
 | `requirements.txt` | Зависимости Python. |
@@ -59,7 +59,7 @@
 После деплоя на GitHub (ветка `main`):
 
 ```powershell
-irm "https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows/install.ps1" | iex
+irm "https://raw.githubusercontent.com/rafael-mansurov/browser-tools/main/windows/install.ps1" | iex
 ```
 
 Скрипт кладёт файлы в `%LOCALAPPDATA%\WebP-ContextMenu`, добавляет пункт меню, при необходимости предлагает поставить `cwebp` через `winget`. Удаление: `uninstall.ps1` в той же папке (см. вывод `install.ps1`).
@@ -105,7 +105,7 @@ python3 remove_watermark.py --help
 
 ## Поддерживаемые форматы (Python)
 
-`jpg`, `jpeg`, `png`, `bmp`, `tiff`, `tif`, `webp`
+`jpg`, `jpeg`, `png`, `bmp`, `tiff`, `tif`, `webp`, `gif`
 
 ## Как это работает (водяные знаки)
 
@@ -116,8 +116,8 @@ python3 remove_watermark.py --help
 ## Локальная разработка
 
 ```bash
-git clone https://github.com/rafael-mansurov/remove-watermark.git
-cd remove-watermark
+git clone https://github.com/rafael-mansurov/browser-tools.git
+cd browser-tools
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt

@@ -1,4 +1,4 @@
-/* ── Общие стили для index.html и compress-webp.html ── */
+/* ── Общие стили: index.html, watermark.html, merge-pdf.html, compress-webp.html ── */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -425,53 +425,6 @@ pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.footer-pages {
-  display: flex;
-  gap: 2px;
-  flex-wrap: wrap;
-  align-items: center;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 3px;
-}
-
-.footer-pages-current {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
-  border-radius: 7px;
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-  background: rgba(34, 211, 238, 0.15);
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.footer-pages-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
-  border-radius: 7px;
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--text-dim);
-  text-decoration: none;
-  border: 1px solid transparent;
-  line-height: 1;
-  white-space: nowrap;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-}
-.footer-pages-link:hover {
-  color: var(--text);
-  background: rgba(255,255,255,0.07);
-  border-color: var(--border);
 }
 
 /* ── BACK LINK ── */

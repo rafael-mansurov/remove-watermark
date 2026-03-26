@@ -9,13 +9,13 @@
   <meta name="author" content="Rafael Mansurov">
   <meta name="robots" content="index,follow">
 
-  <link rel="canonical" href="https://rafael-mansurov.github.io/remove-watermark/merge-pdf.html">
+  <link rel="canonical" href="https://rafael-mansurov.github.io/browser-tools/merge-pdf.html">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://rafael-mansurov.github.io/remove-watermark/merge-pdf.html">
+  <meta property="og:url" content="https://rafael-mansurov.github.io/browser-tools/merge-pdf.html">
   <meta property="og:title" content="Объединить PDF в один онлайн">
   <meta property="og:description" content="Объединяй много PDF в один файл прямо в браузере. Без потери качества.">
   <meta property="og:locale" content="ru_RU">
-  <meta property="og:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+  <meta property="og:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
   <meta property="og:image:type" content="image/webp">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -23,7 +23,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Объединить PDF в один онлайн">
   <meta name="twitter:description" content="Без потери качества: страницы копируются без рендеринга и пересжатия.">
-  <meta name="twitter:image" content="https://rafael-mansurov.github.io/remove-watermark/og.webp">
+  <meta name="twitter:image" content="https://rafael-mansurov.github.io/browser-tools/og-home.webp">
   <meta name="twitter:image:alt" content="Объединение PDF в один">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -41,7 +41,7 @@
     "operatingSystem": "Any",
     "applicationCategory": "MultimediaApplication",
     "description": "Склеивает много PDF в один файл в браузере. Качество не портится: страницы копируются без рендеринга и пересжатия.",
-    "url": "https://rafael-mansurov.github.io/remove-watermark/merge-pdf.html",
+    "url": "https://rafael-mansurov.github.io/browser-tools/merge-pdf.html",
     "author": {
       "@type": "Person",
       "name": "Рафаэль Мансуров"
@@ -62,13 +62,14 @@
     <p class="subtitle">
       Загрузи много PDF — в конце получишь один файл, где все страницы превратились в единый PDF.
       Качество сохраняется: ничего не рендерится в картинку.
+      Чтобы открыть страницу и подгрузить шрифты и скрипты, нужен интернет; сами PDF остаются у&nbsp;тебя на устройстве
     </p>
   </header>
 
   <section class="section" id="pdf-tool">
     <div class="section-label">Онлайн-версия</div>
     <h2>Склейка PDF без потери качества</h2>
-    <p>Файлы обрабатываются локально на твоём устройстве. Интернет нужен только для загрузки скрипта.</p>
+    <p>Файлы обрабатываются локально на твоём устройстве. Интернет нужен для загрузки страницы, шрифтов и скриптов (CDN); готовый PDF никуда не отправляется</p>
 
     <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple class="is-hidden">
 
@@ -259,7 +260,7 @@
                 <span class="code-filename">windows/install-merge-pdf.ps1</span>
               </div>
             </div>
-            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/remove-watermark/main/windows'
+            <pre style="pointer-events:none;user-select:none;-webkit-user-select:none;overflow:hidden;">$base='https://raw.githubusercontent.com/rafael-mansurov/browser-tools/main/windows'
 $ErrorActionPreference = 'Stop'
 $installDir = Join-Path $env:LOCALAPPDATA 'MergePDF-ContextMenu'
 New-Item -Path $installDir -ItemType Directory -Force | Out-Null
@@ -321,7 +322,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     </details>
   </section>
 
-  <footer class="footer" id="sharedFooter" data-primary-href="index.html" data-primary-label="Убрать водяной знак"></footer>
+  <footer class="footer" id="sharedFooter"></footer>
 </div>
 
 <script src="config.js"></script>

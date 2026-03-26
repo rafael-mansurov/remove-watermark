@@ -2,34 +2,7 @@
   const footer = document.getElementById('sharedFooter');
   if (!footer) return;
 
-  const pages = [
-    { href: 'watermark.html', label: 'Убрать водяной знак' },
-    { href: 'merge-pdf.html', label: 'Объединить PDF' },
-    { href: 'compress-webp.html', label: 'Сжать в&nbsp;WebP' },
-  ];
-
-  const pathname = (window.location && window.location.pathname) ? window.location.pathname : '';
-  // Сравниваем и с .html, и без — сервер может убирать расширение из URL.
-  const stripHtml = (s) => s.replace(/\.html$/, '');
-  const currentHref = pages.find((p) => pathname.endsWith(p.href) || pathname.endsWith(stripHtml(p.href)))?.href || '';
-  let normalizedCurrentHref = currentHref;
-  if (!normalizedCurrentHref && (pathname === '/' || pathname === '' || pathname.endsWith('/index'))) {
-    normalizedCurrentHref = 'index.html';
-  }
-
-  const internalNavHtml = pages
-    .map((p) => {
-      if (p.href === normalizedCurrentHref) {
-        return `<span class="footer-pages-current" aria-current="page">${p.label}</span>`;
-      }
-      return `<a href="${p.href}" class="footer-pages-link">${p.label}</a>`;
-    })
-    .join('');
-
   footer.innerHTML = `
-    <div class="footer-pages">
-      ${internalNavHtml}
-    </div>
     <div class="footer-actions">
       <a class="btn btn-ghost" href="${APP_CONFIG.DONATE_URL}" target="_blank" rel="noopener noreferrer">
         <i data-lucide="coffee" style="width:13px;height:13px;stroke-width:2" aria-hidden="true"></i>

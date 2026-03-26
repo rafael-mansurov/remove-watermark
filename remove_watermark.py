@@ -21,7 +21,7 @@ import cv2
 import numpy as np
 
 
-SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
+SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".gif"}
 
 # Max display width for the combined preview (fits 13" MacBook Air)
 MAX_DISPLAY_W = 1100
