@@ -33,68 +33,6 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="context-menu-demo.css">
 
-  <style>
-    /* Скелет поверх превью «До / После», пока идёт оценка сжатия и рендер */
-    #compressPreviewWrap .merge-preview-canvas-wrap {
-      position: relative;
-      width: 100%;
-      flex: 1 1 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 140px;
-    }
-
-    #compressPreviewWrap .merge-preview-skeleton {
-      display: none;
-      position: absolute;
-      inset: 0;
-      border-radius: 6px;
-      pointer-events: none;
-      z-index: 1;
-      overflow: hidden;
-      background: var(--surface2);
-      contain: paint;
-    }
-
-    /* Блик через transform (композитинг), без анимации background-position — меньше лагов */
-    #compressPreviewWrap .merge-preview-skeleton::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 55%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(59, 130, 246, 0.16),
-        transparent
-      );
-      transform: translate3d(-100%, 0, 0);
-      animation: merge-preview-shimmer 1.45s ease-in-out infinite;
-      will-change: transform;
-    }
-
-    #compressPreviewWrap.is-preview-loading .merge-preview-skeleton {
-      display: block;
-    }
-
-    @keyframes merge-preview-shimmer {
-      0% { transform: translate3d(-100%, 0, 0); }
-      100% { transform: translate3d(210%, 0, 0); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #compressPreviewWrap .merge-preview-skeleton::after {
-        animation: none;
-        will-change: auto;
-        opacity: 0.35;
-        transform: translate3d(20%, 0, 0);
-      }
-    }
-  </style>
-
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -228,21 +166,37 @@
                 <div class="canvas-split">
                   <div class="canvas-panel">
                     <div class="canvas-label">До</div>
-                    <div class="merge-preview-canvas-wrap">
+                    <div class="preview-canvas-wrap">
                       <canvas id="leftPreviewCanvas"></canvas>
-                      <div class="merge-preview-skeleton" aria-hidden="true"></div>
+                      <div class="preview-skeleton" aria-hidden="true"></div>
                     </div>
                     <div class="size-info" id="origSizeInfo">—</div>
                   </div>
                   <div class="canvas-panel">
                     <div class="canvas-label">После</div>
-                    <div class="merge-preview-canvas-wrap">
+                    <div class="preview-canvas-wrap">
                       <canvas id="rightPreviewCanvas"></canvas>
-                      <div class="merge-preview-skeleton" aria-hidden="true"></div>
+                      <div class="preview-skeleton" aria-hidden="true"></div>
                     </div>
                     <div class="size-info" id="resultSizeInfo">—</div>
                   </div>
                 </div>
+              </div>
+
+              <div class="merge-output-name-row" style="margin-top: 14px;">
+                <label class="slider-label" for="mergeOutputNameInput" style="display: block; margin-bottom: 6px;">Имя файла</label>
+                <input
+                  type="text"
+                  id="mergeOutputNameInput"
+                  class="merge-output-name-input"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="200"
+                  disabled
+                  aria-describedby="mergeOutputNameHint"
+                  placeholder="например, отчёт"
+                >
+                <div id="mergeOutputNameHint" class="slider-help-text" style="margin-top: 6px;">Расширение .pdf добавится само. Запрещённые символы заменятся на «_».</div>
               </div>
 
               <div class="action-row" style="justify-content:center; margin-top: 14px;">
@@ -321,7 +275,7 @@
 # 2) числовая сортировка по первому числу в имени (stable: если чисел нет — порядок не ломается)
 # 3) объединяет через qpdf (страницы копируются, без рендеринга)
 #
-# out: ~/Desktop/Merged-PDF/&lt;base&gt;-merged.pdf
+# out: ~/Desktop/Merged-PDF/&lt;base&gt;.pdf
 #
 # Сортировка (идея):
 #   python3 - <<'PY' "$@"  → печатает пути в нужном порядке
@@ -472,9 +426,12 @@ irm "$root/install-merge-pdf.ps1" | iex
   const mergeEstSizeEl = document.getElementById('mergeEstSize');
   const mergeEstSizeTextEl = document.getElementById('mergeEstSizeText');
   const mergeActionHint = document.getElementById('mergeActionHint');
+  const mergeOutputNameInput = document.getElementById('mergeOutputNameInput');
 
   // Пользовательский порядок перед склейкой.
   let selectedFiles = [];
+  /** Пока false — имя подставляем из первого PDF при смене списка / порядка. */
+  let mergeOutputNameUserEdited = false;
   let selectedSlotIds = [];
   let dragFromIdx = null;
   let previewDebounceTimer = null;
@@ -643,6 +600,26 @@ irm "$root/install-merge-pdf.ps1" | iex
     }
   }
 
+  /**
+   * Итоговое число страниц при смене только порядка: сумма по slot id из уже известных numPages.
+   * Без повторного чтения PDF (сумма слагаемых от перестановки не меняется).
+   */
+  function applyMergedPagesTitleFromSlotCache() {
+    if (!mergedTitleEl || !selectedFiles.length) return false;
+    if (!latestKnownPagesBySlot || latestKnownPagesBySlot.size === 0) return false;
+    let total = 0;
+    for (let i = 0; i < selectedSlotIds.length; i++) {
+      const sid = selectedSlotIds[i];
+      if (!sid || !latestKnownPagesBySlot.has(sid)) return false;
+      const n = latestKnownPagesBySlot.get(sid);
+      if (!Number.isFinite(n) || n < 0) return false;
+      total += n;
+    }
+    latestKnownTotalPages = total;
+    mergedTitleEl.textContent = formatRuPagesCount(total);
+    return true;
+  }
+
   function setMergeMeta(text = '') {
     if (!mergeMeta) return;
     const next = String(text || '');
@@ -770,8 +747,8 @@ irm "$root/install-merge-pdf.ps1" | iex
   }
 
   /**
-   * Грубая оценка "lossless optimize": без перерендера страниц, обычно небольшой выигрыш.
-   * Это эвристика по размеру/количеству файлов (может быть и 0% на уже оптимизированных PDF).
+   * Оценка структурной оптимизации (pdf-lib): эвристика, не фактический прогон.
+   * pct — ожидаемое уменьшение относительно переданного размера (после JPEG, если сжатие включено).
    */
   function estimateOptimizedBytes(totalBytes, filesCount) {
     if (!Number.isFinite(totalBytes) || totalBytes <= 0) return { bytes: 0, pct: 0 };
@@ -780,6 +757,63 @@ irm "$root/install-merge-pdf.ps1" | iex
     pct = Math.max(1, Math.min(8, pct));
     const bytes = Math.max(0, Math.round(totalBytes * (1 - pct / 100)));
     return { bytes, pct: Math.round(pct) };
+  }
+
+  /**
+   * Сжатие (JPEG): pct от суммы исходных PDF → estCompressed.
+   * + оптимизация: отдельный pct и итоговый размер (эвристика).
+   */
+  function buildMergeEstCompressOptimize(totalOrig, estCompressed, filesCount, optimizeOn) {
+    const pctC = totalOrig > 0 ? Math.round((1 - estCompressed / totalOrig) * 100) : 0;
+    let finalBytes = estCompressed;
+    let pctO = 0;
+    const deltas = [];
+    if (optimizeOn) {
+      const opt = estimateOptimizedBytes(estCompressed, filesCount);
+      finalBytes = opt.bytes;
+      pctO = opt.pct;
+      if (pctC > 0) deltas.push({ dir: 'down', pct: pctC, label: 'сжатие' });
+      if (pctO > 0) deltas.push({ dir: 'down', pct: pctO, label: 'очистка' });
+    } else if (pctC > 0) {
+      deltas.push({ dir: 'down', pct: pctC });
+    }
+    return { finalBytes, deltas, pctC, pctO };
+  }
+
+  function setMergeEstSizeWithDeltas(mainText, deltas) {
+    if (!mergeEstSizeTextEl) return;
+    const main = (mainText == null || mainText === '') ? '—' : String(mainText);
+    if (!deltas || deltas.length === 0) {
+      mergeEstSizeTextEl.innerHTML = `Примерный размер файла: <span class="merge-est-main">${main}</span>`;
+      return;
+    }
+    const spans = deltas.map((d) => {
+      const cls = d.dir === 'up'
+        ? 'merge-est-delta is-up'
+        : (d.dir === 'neutral' ? 'merge-est-delta is-neutral' : 'merge-est-delta is-down');
+      const arrow = d.dir === 'up' ? '↑' : (d.dir === 'neutral' ? '' : '↓');
+      const note = d.label ? `<span class="merge-est-delta-note"> ${d.label}</span>` : '';
+      return `<span class="${cls}">${arrow}${d.pct}%</span>${note}`;
+    });
+    const sep = '<span class="merge-est-delta-sep">·</span>';
+    mergeEstSizeTextEl.innerHTML = `Примерный размер файла: <span class="merge-est-main">${main}</span> ${spans.join(` ${sep} `)}`;
+  }
+
+  function buildCompressPreviewResultHtml(totalOrig, estCompressed, filesCount, optimizeOn) {
+    const { finalBytes, pctC, pctO } = buildMergeEstCompressOptimize(totalOrig, estCompressed, filesCount, optimizeOn);
+    let h = `~${fmtSize(finalBytes)}`;
+    if (optimizeOn) {
+      if (pctC > 0) {
+        h += ` <span class="saved">↓${pctC}%</span><span class="size-info-note"> сжатие</span>`;
+      }
+      if (pctO > 0) {
+        h += pctC > 0 ? ` <span class="size-info-sep">·</span> ` : ' ';
+        h += `<span class="saved">↓${pctO}%</span><span class="size-info-note"> очистка</span>`;
+      }
+    } else if (pctC > 0) {
+      h += ` <span class="saved">↓${pctC}%</span>`;
+    }
+    return h;
   }
 
   function refreshMergeEstSizeLabel() {
@@ -794,10 +828,28 @@ irm "$root/install-merge-pdf.ps1" | iex
     const q = qualitySlider ? Number.parseInt(qualitySlider.value, 10) || 100 : 100;
     if (compressOn) {
       if (q >= 100) {
-        setMergeEstSizeText(`~${fmtSize(total)}`);
+        if (optimizeOn) {
+          const est = estimateOptimizedBytes(total, selectedFiles.length);
+          setMergeEstSizeWithDeltas(
+            `~${fmtSize(est.bytes)}`,
+            est.pct > 0 ? [{ dir: 'down', pct: est.pct, label: 'очистка' }] : []
+          );
+        } else {
+          setMergeEstSizeText(`~${fmtSize(total)}`);
+        }
         return;
       }
       const cached = getCachedCompressionEstimate(selectedFiles, q);
+      if (cached && Number.isFinite(cached.estBytes) && Number.isFinite(cached.totalOrigSize)) {
+        const { finalBytes, deltas } = buildMergeEstCompressOptimize(
+          cached.totalOrigSize,
+          cached.estBytes,
+          selectedFiles.length,
+          optimizeOn
+        );
+        setMergeEstSizeWithDeltas(`~${fmtSize(finalBytes)}`, deltas);
+        return;
+      }
       if (cached && cached.mergeEstText) {
         setMergeEstSizeText(cached.mergeEstText);
         return;
@@ -809,7 +861,10 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     if (optimizeOn) {
       const est = estimateOptimizedBytes(total, selectedFiles.length);
-      setMergeEstSizeText(est.pct > 0 ? `~${fmtSize(est.bytes)} ↓${est.pct}%` : `~${fmtSize(total)}`);
+      setMergeEstSizeWithDeltas(
+        `~${fmtSize(est.bytes)}`,
+        est.pct > 0 ? [{ dir: 'down', pct: est.pct, label: 'очистка' }] : []
+      );
       return;
     }
 
@@ -1185,7 +1240,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     const totalOrigSize = files.reduce((sum, f) => sum + (f && Number.isFinite(f.size) ? f.size : 0), 0);
     if (origSizeInfo) origSizeInfo.textContent = fmtSize(totalOrigSize);
 
-    const panelWrap = leftPreviewCanvas.closest('.merge-preview-canvas-wrap');
+    const panelWrap = leftPreviewCanvas.closest('.preview-canvas-wrap');
     const panelWidth = (panelWrap && panelWrap.clientWidth)
       ? panelWrap.clientWidth
       : 420;
@@ -1227,6 +1282,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     const useCachedEstimate = !!(cachedEstimate && cachedEstimate.resultSizeHtml && cachedEstimate.mergeEstText);
     let estBytes = 0;
     let pct = 0;
+    let estimateReady = false;
     if (!useCachedEstimate) {
       const scratch = document.createElement('canvas');
       const benchStartedAt = performance.now();
@@ -1267,6 +1323,13 @@ irm "$root/install-merge-pdf.ps1" | iex
 
       estBytes = Math.max(0, estBytes);
       pct = totalOrigSize > 0 ? Math.round((1 - estBytes / totalOrigSize) * 100) : 0;
+      estimateReady = true;
+    } else if (cachedEstimate && Number.isFinite(cachedEstimate.estBytes) && Number.isFinite(cachedEstimate.totalOrigSize)) {
+      estBytes = Math.max(0, cachedEstimate.estBytes);
+      pct = cachedEstimate.totalOrigSize > 0
+        ? Math.round((1 - estBytes / cachedEstimate.totalOrigSize) * 100)
+        : 0;
+      estimateReady = true;
     }
 
     const scale = mergeMatchRenderScale(qualityPct);
@@ -1320,18 +1383,38 @@ irm "$root/install-merge-pdf.ps1" | iex
     rightCtx.drawImage(previewImg, 0, 0, rightPreviewCanvas.width, rightPreviewCanvas.height);
     stopEstimateDots();
 
-    const resultSizeHtml = useCachedEstimate
-      ? cachedEstimate.resultSizeHtml
-      : `~${fmtSize(estBytes)}${pct > 0 ? ` <span class="saved">↓${pct}%</span>` : ''}`;
-    const mergeEstText = useCachedEstimate
-      ? cachedEstimate.mergeEstText
-      : (pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`);
-    if (resultSizeInfo) {
-      resultSizeInfo.innerHTML = resultSizeHtml;
-      setMergeEstSizeText(mergeEstText);
+    const optimizeOn = !!(optimizeToggle && optimizeToggle.checked);
+    let resultSizeHtml;
+    let mergeEstText;
+    if (estimateReady) {
+      resultSizeHtml = buildCompressPreviewResultHtml(totalOrigSize, estBytes, files.length, optimizeOn);
+      const { finalBytes, deltas } = buildMergeEstCompressOptimize(totalOrigSize, estBytes, files.length, optimizeOn);
+      mergeEstText = deltas.length
+        ? `~${fmtSize(finalBytes)}` + deltas.map((d) => ` ${d.dir === 'up' ? '↑' : '↓'}${d.pct}%`).join('')
+        : `~${fmtSize(finalBytes)}`;
+      if (resultSizeInfo) {
+        resultSizeInfo.innerHTML = resultSizeHtml;
+        setMergeEstSizeWithDeltas(`~${fmtSize(finalBytes)}`, deltas);
+      }
+    } else {
+      resultSizeHtml = useCachedEstimate && cachedEstimate.resultSizeHtml
+        ? cachedEstimate.resultSizeHtml
+        : `~${fmtSize(estBytes)}${pct > 0 ? ` <span class="saved">↓${pct}%</span>` : ''}`;
+      mergeEstText = useCachedEstimate && cachedEstimate.mergeEstText
+        ? cachedEstimate.mergeEstText
+        : (pct > 0 ? `~${fmtSize(estBytes)} ↓${pct}%` : `~${fmtSize(estBytes)}`);
+      if (resultSizeInfo) {
+        resultSizeInfo.innerHTML = resultSizeHtml;
+        setMergeEstSizeText(mergeEstText);
+      }
     }
-    if (!useCachedEstimate) {
-      putCachedCompressionEstimate(files, qualityPct, { resultSizeHtml, mergeEstText });
+    if (!useCachedEstimate && estimateReady) {
+      putCachedCompressionEstimate(files, qualityPct, {
+        resultSizeHtml,
+        mergeEstText,
+        estBytes,
+        totalOrigSize: totalOrigSize
+      });
     }
     clearCompressionPreviewSkeletonIfCurrent(runSeq);
   }
@@ -1449,14 +1532,52 @@ irm "$root/install-merge-pdf.ps1" | iex
       let cachedEstimate = null;
       if (q >= 100) {
         stopEstimateDots();
-        setMergeEstSizeText(`~${fmtSize(totalBytes)}`);
-        if (resultSizeInfo) resultSizeInfo.textContent = `~${fmtSize(totalBytes)}`;
+        if (optimizeToggle && optimizeToggle.checked) {
+          const estOpt = estimateOptimizedBytes(totalBytes, selectedFiles.length);
+          setMergeEstSizeWithDeltas(
+            `~${fmtSize(estOpt.bytes)}`,
+            estOpt.pct > 0 ? [{ dir: 'down', pct: estOpt.pct, label: 'очистка' }] : []
+          );
+          if (resultSizeInfo) {
+            resultSizeInfo.innerHTML = estOpt.pct > 0
+              ? `~${fmtSize(estOpt.bytes)} <span class="saved">↓${estOpt.pct}%</span><span class="size-info-note"> очистка</span>`
+              : `~${fmtSize(totalBytes)}`;
+          }
+        } else {
+          setMergeEstSizeText(`~${fmtSize(totalBytes)}`);
+          if (resultSizeInfo) resultSizeInfo.textContent = `~${fmtSize(totalBytes)}`;
+        }
       } else {
         cachedEstimate = getCachedCompressionEstimate(selectedFiles, q);
         if (cachedEstimate) {
           stopEstimateDots();
-          if (resultSizeInfo && cachedEstimate.resultSizeHtml) resultSizeInfo.innerHTML = cachedEstimate.resultSizeHtml;
-          if (cachedEstimate.mergeEstText) setMergeEstSizeText(cachedEstimate.mergeEstText);
+          const optOn = !!(optimizeToggle && optimizeToggle.checked);
+          if (
+            Number.isFinite(cachedEstimate.estBytes)
+            && Number.isFinite(cachedEstimate.totalOrigSize)
+          ) {
+            const html = buildCompressPreviewResultHtml(
+              cachedEstimate.totalOrigSize,
+              cachedEstimate.estBytes,
+              selectedFiles.length,
+              optOn
+            );
+            if (resultSizeInfo) resultSizeInfo.innerHTML = html;
+            const { finalBytes, deltas } = buildMergeEstCompressOptimize(
+              cachedEstimate.totalOrigSize,
+              cachedEstimate.estBytes,
+              selectedFiles.length,
+              optOn
+            );
+            setMergeEstSizeWithDeltas(`~${fmtSize(finalBytes)}`, deltas);
+          } else {
+            if (resultSizeInfo && cachedEstimate.resultSizeHtml) {
+              resultSizeInfo.innerHTML = cachedEstimate.resultSizeHtml;
+            }
+            if (cachedEstimate.mergeEstText) {
+              setMergeEstSizeText(cachedEstimate.mergeEstText);
+            }
+          }
         } else {
           startEstimateDots(estimatingTxt.seconds);
         }
@@ -1668,6 +1789,38 @@ irm "$root/install-merge-pdf.ps1" | iex
     return raw.replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').slice(0, 80);
   }
 
+  function defaultMergeOutputBasename(files) {
+    if (!files || !files.length || !files[0] || !files[0].name) return 'merged';
+    const stem = files[0].name.replace(/\.pdf$/i, '');
+    return sanitizeBaseName(stem) || 'merged';
+  }
+
+  function syncMergeOutputFilenameFromFiles() {
+    if (!mergeOutputNameInput) return;
+    const has = selectedFiles && selectedFiles.length > 0;
+    mergeOutputNameInput.disabled = !has;
+    if (!has) {
+      mergeOutputNameInput.value = '';
+      return;
+    }
+    if (!mergeOutputNameUserEdited) {
+      mergeOutputNameInput.value = defaultMergeOutputBasename(selectedFiles);
+    }
+  }
+
+  function getMergeDownloadFilename(files) {
+    const raw = (mergeOutputNameInput && mergeOutputNameInput.value != null)
+      ? mergeOutputNameInput.value.trim()
+      : '';
+    const noExt = raw.replace(/\.pdf$/i, '');
+    if (noExt) {
+      const safe = sanitizeBaseName(noExt);
+      return `${safe || 'merged'}.pdf`;
+    }
+    const base = sanitizeBaseName((files && files[0] && files[0].name) ? files[0].name.replace(/\.pdf$/i, '') : 'merged');
+    return `${base}.pdf`;
+  }
+
   function makeDownload(mergedBytes, files, runSeq) {
     const blob = new Blob([mergedBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
@@ -1675,9 +1828,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     const a = document.createElement('a');
     a.href = url;
 
-    const base = sanitizeBaseName((files && files[0] && files[0].name) ? files[0].name.replace(/\.pdf$/i, '') : 'merged');
-    // Имя по итогу: без даты и дополнительных суффиксов.
-    a.download = `${base}-merged.pdf`;
+    a.download = getMergeDownloadFilename(files);
     const downloadedName = a.download;
 
     document.body.appendChild(a);
@@ -1692,8 +1843,11 @@ irm "$root/install-merge-pdf.ps1" | iex
     return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
-  /** slotIds: сохранить порядок id строк при перестановке/удалении; иначе — новые id на каждый файл. */
-  function setSelectedFiles(files, slotIds) {
+  /**
+   * slotIds: сохранить порядок id строк при перестановке/удалении; иначе — новые id на каждый файл.
+   * options.reorderOnly: только переставили строки — страницы не перечитываем, сумма из кэша по слотам.
+   */
+  function setSelectedFiles(files, slotIds, options) {
     const next = files || [];
     selectedFiles = next;
     if (slotIds && slotIds.length === next.length) {
@@ -1706,8 +1860,19 @@ irm "$root/install-merge-pdf.ps1" | iex
 
     downloadBtn.disabled = selectedFiles.length === 0;
     setMergeMeta('');
+    syncMergeOutputFilenameFromFiles();
     updateCompressionUi();
-    void refreshMergedPagesTitle();
+
+    const reorderOnly = options && options.reorderOnly;
+    if (reorderOnly) {
+      pageCountHeaderSeq += 1;
+      stopPageCountDots();
+      if (!applyMergedPagesTitleFromSlotCache()) {
+        void refreshMergedPagesTitle();
+      }
+    } else {
+      void refreshMergedPagesTitle();
+    }
   }
 
   function renderOrderList() {
@@ -1900,7 +2065,7 @@ irm "$root/install-merge-pdf.ps1" | iex
     const nextSlots = selectedSlotIds.slice();
     const [sid] = nextSlots.splice(fromIdx, 1);
     nextSlots.splice(toIdx, 0, sid);
-    setSelectedFiles(next, nextSlots);
+    setSelectedFiles(next, nextSlots, { reorderOnly: true });
     if (selectedFiles.length) setMergeMeta('');
 
     if (!orderListEl || beforeRects.size === 0) return;
@@ -2087,6 +2252,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       return;
     }
     const nextFiles = append ? selectedFiles.concat(pdfs) : pdfs;
+    if (!append) mergeOutputNameUserEdited = false;
     orderListLoadingSeq += 1;
     const currentLoadSeq = orderListLoadingSeq;
     showEditor();
@@ -2287,6 +2453,12 @@ irm "$root/install-merge-pdf.ps1" | iex
     });
   }
 
+  if (mergeOutputNameInput) {
+    mergeOutputNameInput.addEventListener('input', () => {
+      mergeOutputNameUserEdited = true;
+    });
+  }
+
   if (addMoreBtn && fileInput) {
     addMoreBtn.addEventListener('click', () => {
       if (mergeInFlight) return;
@@ -2311,7 +2483,6 @@ irm "$root/install-merge-pdf.ps1" | iex
   if (compressToggle) {
     compressToggle.addEventListener('change', () => {
       if (compressToggle.checked && qualitySlider) {
-        if (optimizeToggle) optimizeToggle.checked = false;
         qualitySlider.value = '88';
         if (qualityVal) qualityVal.textContent = '88';
       }
@@ -2324,9 +2495,7 @@ irm "$root/install-merge-pdf.ps1" | iex
 
   if (optimizeToggle) {
     optimizeToggle.addEventListener('change', () => {
-      if (optimizeToggle.checked && compressToggle) compressToggle.checked = false;
       updateCompressionUi();
-      updateMergeActionHint();
       if (selectedFiles.length) setMergeMeta('');
     });
   }
@@ -2348,6 +2517,7 @@ irm "$root/install-merge-pdf.ps1" | iex
       showUpload();
       clearNotice();
 
+      mergeOutputNameUserEdited = false;
       setSelectedFiles([]);
       downloadBtn.disabled = true;
       if (compressToggle) compressToggle.checked = false;
