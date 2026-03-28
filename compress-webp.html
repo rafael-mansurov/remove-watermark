@@ -29,6 +29,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="context-menu-demo.css">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -148,6 +149,12 @@
     <div class="section-label">Альтернатива</div>
     <h2>Из контекстного меню macOS или Windows</h2>
     <p style="margin-bottom:20px;">Конвертируй в&nbsp;WebP прямо из&nbsp;Finder / Проводника по&nbsp;правому клику — без&nbsp;интернета, без&nbsp;запуска браузера и всегда под&nbsp;рукой</p>
+
+    <div class="ctxd-card" style="background:#0f1318; border:1px solid #1e2530; border-radius:14px; padding:32px 24px; display:flex; justify-content:center; align-items:flex-start; margin-bottom:28px;">
+    <div data-context-menu-demo
+         data-action-label="Convert to WebP"
+         data-done-sub="Файлы сконвертированы и сохранены рядом с оригиналами"></div>
+    </div><!-- /demo card -->
 
     <details>
       <summary><svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>Как встроить в&nbsp;контекстное меню Mac</summary>
@@ -346,6 +353,8 @@ irm "$root/install.ps1" | iex
 <script src="loader.js"></script>
 <script src="footer.js"></script>
 <script src="instructions.js"></script>
+<script src="context-menu-demo-data.js"></script>
+<script src="context-menu-demo.js"></script>
 <script>
   const uploadZone = document.getElementById('uploadZone');
   const uploadPickBtn = document.getElementById('uploadPickBtn');

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convert to WebP — macOS Quick Action</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 880px;
+      height: 540px;
+      max-width: 880px;
+      max-height: 540px;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(ellipse 700px 380px at 20% 10%, rgba(255, 200, 160, 0.55), transparent 55%),
+        radial-gradient(ellipse 600px 340px at 80% 25%, rgba(170, 210, 255, 0.45), transparent 55%),
+        radial-gradient(ellipse 500px 280px at 50% 90%, rgba(140, 100, 70, 0.3), transparent 60%),
+        linear-gradient(160deg, #e2d5c5 0%, #c8aa8c 50%, #a8876a 100%);
+      position: relative;
+    }
+
+    /* Background desktop icons */
+    .bg-icon {
+      position: absolute;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* File thumbnail */
+    .file-thumb {
+      position: absolute;
+      top: 48px;
+      right: 80px;
+      width: 64px;
+      height: 52px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    .file-thumb-inner {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #3a2010 0%, #6b3520 40%, #2a1508 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* macOS menu base */
+    .menu {
+      position: absolute;
+      border-radius: 12px;
+      padding: 5px;
+      background: rgba(245, 245, 248, 0.82);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 0 0 0.5px rgba(0,0,0,0.12),
+        0 8px 32px rgba(0, 0, 0, 0.28),
+        0 2px 8px rgba(0,0,0,0.14);
+    }
+
+    .main-menu {
+      left: 48px;
+      top: 28px;
+      width: 270px;
+    }
+
+    .sub-menu {
+      left: 320px;
+      top: 245px;
+      width: 242px;
+    }
+
+    /* Menu items */
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 10px;
+      height: 24px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 400;
+      color: #1c1c1e;
+      letter-spacing: -0.1px;
+      white-space: nowrap;
+      cursor: default;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .item .chevron {
+      margin-left: auto;
+      font-size: 11px;
+      color: #636366;
+      font-weight: 500;
+    }
+
+    .item.active {
+      background: #1475ff;
+      color: #fff;
+    }
+    .item.active .chevron { color: rgba(255,255,255,0.85); }
+
+    .item.highlighted {
+      background: #1475ff;
+      color: #fff;
+    }
+    .item.highlighted .chevron { color: rgba(255,255,255,0.85); }
+
+    .item-icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3a3a3c;
+    }
+    .item-icon svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 1.75;
+    }
+    .item.active .item-icon,
+    .item.highlighted .item-icon { color: #fff; }
+
+    .separator {
+      height: 1px;
+      margin: 4px 6px;
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Tag dots row */
+    .tags-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      height: 28px;
+    }
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex: 0 0 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background desktop icons -->
+  <div class="bg-icon" style="width:64px;height:52px;top:116px;right:80px"></div>
+  <div class="bg-icon" style="width:64px;height:52px;top:184px;right:80px"></div>
+
+  <!-- File thumbnail -->
+  <div class="file-thumb">
+    <div class="file-thumb-inner">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="3" fill="rgba(255,255,255,0.08)"/>
+        <path d="M4 8 Q12 2 20 8 L20 20 Q12 16 4 20 Z" fill="rgba(255,200,140,0.4)"/>
+        <circle cx="12" cy="11" r="4" fill="rgba(255,220,160,0.5)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Main context menu -->
+  <div class="menu main-menu">
+
+    <div class="item">
+      <span class="item-icon"><i data-lucide="square-arrow-out-up-right"></i></span>
+      Открыть
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="layout-grid"></i></span>
+      Открыть в приложении
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="item">
+      <span class="item-icon"><i data-lucide="trash-2"></i></span>
+      Переместить в Корзину
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="item">
+      <span class="item-icon"><i data-lucide="info"></i></span>
+      Свойства
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="pencil"></i></span>
+      Переименовать
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="archive"></i></span>
+      Сжать файл «Обои.png»
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="copy"></i></span>
+      Дублировать
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="link"></i></span>
+      Создать псевдоним
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="eye"></i></span>
+      Быстрый просмотр
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="item">
+      <span class="item-icon"><i data-lucide="clipboard"></i></span>
+      Скопировать
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="share-2"></i></span>
+      Поделиться...
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="tags-row">
+      <div class="dot" style="background:#ff5c5c"></div>
+      <div class="dot" style="background:#ff9f0a"></div>
+      <div class="dot" style="background:#ffd60a"></div>
+      <div class="dot" style="background:#30d158"></div>
+      <div class="dot" style="background:#0a84ff"></div>
+      <div class="dot" style="background:#bf5af2"></div>
+      <div class="dot" style="background:#98989d"></div>
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="tag"></i></span>
+      Теги...
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="item highlighted">
+      <span class="item-icon"><i data-lucide="zap"></i></span>
+      Быстрые действия
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="item" style="font-size:12px;color:#3a3a3c">Установить картинку Рабочего стола</div>
+    <div class="item" style="font-size:12px;color:#3a3a3c">Add to Dropover</div>
+
+  </div>
+
+  <!-- Submenu -->
+  <div class="menu sub-menu">
+    <div class="item">
+      <span class="item-icon"><i data-lucide="rotate-ccw"></i></span>
+      Повернуть влево
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="highlighter"></i></span>
+      Разметить
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="file-text"></i></span>
+      Создать PDF
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="image"></i></span>
+      Преобразовать изображение
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="eraser"></i></span>
+      Удалить фон
+    </div>
+    <div class="item">
+      <span class="item-icon"><i data-lucide="spline"></i></span>
+      Конвертация в SVG
+    </div>
+
+    <div class="item active">
+      <span class="item-icon"><i data-lucide="image-down"></i></span>
+      Convert to WebP
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="item" style="color:#636366;font-size:12px">
+      <span class="item-icon"><i data-lucide="settings-2"></i></span>
+      Настроить...
+    </div>
+  </div>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

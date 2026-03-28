@@ -31,6 +31,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="context-menu-demo.css">
 
   <style>
     /* Скелет поверх превью «До / После», пока идёт оценка сжатия и рендер */
@@ -270,6 +271,12 @@
     <h2>Объединять PDF из контекстного меню</h2>
     <p class="mb-20" style="margin-bottom:20px;">macOS Quick Action: правый клик по файлам → “Merge PDFs”. Порядок не берётся как есть — делается числовая сортировка по имени (1,2,3…). Качество сохраняется: страницы копируются.</p>
 
+    <div class="ctxd-card" style="background:#0f1318; border:1px solid #1e2530; border-radius:14px; padding:32px 24px; display:flex; justify-content:center; align-items:flex-start; margin-bottom:28px;">
+      <div data-context-menu-demo
+           data-action-label="Merge PDFs"
+           data-done-sub="PDF объединён и сохранён рядом с оригиналами"></div>
+    </div>
+
     <details>
       <summary>
         <svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -426,6 +433,8 @@ irm "$root/install-merge-pdf.ps1" | iex
 <script src="loader.js"></script>
 <script src="footer.js"></script>
 <script src="instructions.js"></script>
+<script src="context-menu-demo-data.js"></script>
+<script src="context-menu-demo.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js" integrity="sha384-8nT3SpButyvenpAdKYPJzXdSz3zidMGduMoaMvwjKnAWVv238n6P1mhveiJJQWrV" crossorigin="anonymous" defer onload="window.lucide&&window.lucide.createIcons()"></script>
 
 <script>
